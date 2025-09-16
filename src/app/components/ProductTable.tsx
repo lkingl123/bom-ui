@@ -4,10 +4,10 @@ import Link from "next/link";
 
 type Product = {
   name: string;
-  sku: string;
-  cost: number;
+  sku?: string;
+  cost?: number; // optional because API may not always provide it
   components: number;
-  category: string;
+  category?: string;
 };
 
 export default function ProductTable({ products }: { products: Product[] }) {
@@ -15,7 +15,7 @@ export default function ProductTable({ products }: { products: Product[] }) {
     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((p) => (
         <Link
-          key={p.name}
+          key={p.sku || p.name} // ✅ unique key (uses sku first, falls back to name)
           href={`/products/${encodeURIComponent(p.name)}`}
           className="group block rounded-2xl border border-gray-200 bg-white p-6 shadow-md hover:shadow-xl transition transform hover:-translate-y-1"
         >
@@ -36,7 +36,7 @@ export default function ProductTable({ products }: { products: Product[] }) {
             <div className="flex justify-between">
               <span className="text-gray-600">Cost / kg</span>
               <span className="font-semibold text-[#0e5439]">
-                ${p.cost.toFixed(2)}
+                {p.cost !== undefined ? `$${p.cost}` : "N/A"}
               </span>
             </div>
             <div className="flex justify-between">
