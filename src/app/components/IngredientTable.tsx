@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { RotateCcw, Plus, Minus } from "lucide-react";
 import type { Component } from "../types";
+import IngredientSearch from "./IngredientSearch";
 
 interface IngredientTableProps {
   components: Component[];
@@ -23,6 +24,7 @@ export default function IngredientTable({
   setLaborCost,
   originalComponents,
 }: IngredientTableProps): React.ReactElement {
+  const [showSearch, setShowSearch] = useState(false);
   const handleReset = (): void => {
     setComponents([...originalComponents]); // restore snapshot
     setPackagingCost(100.5);
@@ -30,11 +32,15 @@ export default function IngredientTable({
   };
 
   const handleAddIngredient = (): void => {
+    setShowSearch(true);
+  };
+
+  const handleIngredientSelect = (ingredient: any): void => {
     const newIngredient: Component = {
-      name: "New Ingredient",
+      name: ingredient.name,
       percent: 0,
-      uom: "kg",
-      unit_cost: 0,
+      uom: ingredient.uom || "kg",
+      unit_cost: ingredient.cost || 0,
       line_cost: 0,
       quantity: 0,
     };
@@ -87,6 +93,13 @@ export default function IngredientTable({
 
   return (
     <div>
+      {showSearch && (
+        <IngredientSearch
+          onSelect={handleIngredientSelect}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
+      
       {/* Toolbar */}
       <div className="flex justify-between mb-4">
         <button
