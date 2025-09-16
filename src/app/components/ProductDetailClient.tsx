@@ -44,9 +44,18 @@ export default function ProductDetailClient({ name }: { name: string }) {
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          {product.product_name}
+        {/* Editable Product Name */}
+        <h1 className="mb-4">
+          <input
+            type="text"
+            value={product.product_name}
+            onChange={(e) =>
+              setProduct({ ...product, product_name: e.target.value })
+            }
+            className="border rounded px-3 py-2 w-full text-3xl font-bold text-gray-900"
+          />
         </h1>
+
         <p className="text-gray-600 mb-6">
           SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"}
         </p>

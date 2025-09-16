@@ -27,23 +27,36 @@ export default function ExportPDFButton({
 
     // Title
     doc.setFontSize(16);
-    doc.text(product.product_name, 14, 20);
+    doc.text(product.product_name || "Untitled Product", 14, 20);
 
     // SKU + Barcode
     doc.setFontSize(11);
     doc.text(`SKU: ${product.sku || "-"}`, 14, 30);
     doc.text(`Barcode: ${product.barcode || "-"}`, 14, 36);
 
+    // Totals
+    const totalQuantity = components.reduce(
+      (sum, c) => sum + (Number(c.quantity) || 0),
+      0
+    );
+
     // Ingredients table
     autoTable(doc, {
       startY: 50,
-      head: [["Ingredient", "Qty", "Unit Cost", "Line Cost"]],
-      body: components.map((c) => [
-        c.name,
-        `${parseFloat(c.quantity.toString()).toFixed(3)} ${c.uom}`,
-        `$${parseFloat(c.unit_cost.toString()).toFixed(2)}`,
-        `$${parseFloat(c.line_cost.toString()).toFixed(2)}`,
-      ]),
+      head: [["Ingredient", "% of Formula", "Unit Cost", "Line Cost"]],
+      body: components.map((c) => {
+        const percent =
+          totalQuantity > 0
+            ? ((Number(c.quantity) || 0) / totalQuantity) * 100
+            : 0;
+
+        return [
+          c.name,
+          `${percent.toFixed(2)} %`,
+          `$${parseFloat(c.unit_cost.toString()).toFixed(2)}`,
+          `$${parseFloat(c.line_cost.toString()).toFixed(2)}`,
+        ];
+      }),
       theme: "grid",
       styles: { fontSize: 10, halign: "right" },
       headStyles: { fillColor: [14, 84, 57], halign: "center" },
@@ -68,7 +81,7 @@ export default function ExportPDFButton({
     const finalCost = baseCost + packagingCost + laborCost;
 
     autoTable(doc, {
-      startY:doc.lastAutoTable.finalY + 10,
+      startY: doc.lastAutoTable.finalY + 10,
       body: [
         [`Base Cost / kg: $${baseCost.toFixed(2)}`],
         [`Packaging: $${packagingCost.toFixed(2)}`],
@@ -78,7 +91,9 @@ export default function ExportPDFButton({
       ],
       theme: "plain",
       styles: { fontSize: 12, halign: "right" },
-      didParseCell: (data: Parameters<NonNullable<UserOptions["didParseCell"]>>[0]) => {
+      didParseCell: (
+        data: Parameters<NonNullable<UserOptions["didParseCell"]>>[0]
+      ) => {
         if (
           data.row.index === 4 &&
           data.cell.raw?.toString().startsWith("Final Cost")
@@ -89,7 +104,7 @@ export default function ExportPDFButton({
       },
     });
 
-    doc.save(`${product.product_name}.pdf`);
+    doc.save(`${product.product_name || "product"}.pdf`);
   };
 
   return (
