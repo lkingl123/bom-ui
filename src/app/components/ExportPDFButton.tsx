@@ -1,8 +1,8 @@
 "use client";
 
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import type { Product } from "../types";
+import autoTable, { type UserOptions } from "jspdf-autotable";
+import type { Product, Component } from "../types";
 
 // Fix TS type error for lastAutoTable
 declare module "jspdf" {
@@ -11,7 +11,17 @@ declare module "jspdf" {
   }
 }
 
-export default function ExportPDFButton({ product }: { product: Product }) {
+export default function ExportPDFButton({
+  product,
+  components,
+  packagingCost,
+  laborCost,
+}: {
+  product: Product;
+  components: Component[];
+  packagingCost: number;
+  laborCost: number;
+}) {
   const handleExport = () => {
     const doc = new jsPDF();
 
@@ -28,11 +38,11 @@ export default function ExportPDFButton({ product }: { product: Product }) {
     autoTable(doc, {
       startY: 50,
       head: [["Ingredient", "Qty", "Unit Cost", "Line Cost"]],
-      body: product.components.map((c) => [
+      body: components.map((c) => [
         c.name,
-        `${c.quantity.toFixed(3)} ${c.uom}`,
-        `$${c.unit_cost.toFixed(2)}`,
-        `$${c.line_cost.toFixed(2)}`,
+        `${parseFloat(c.quantity.toString()).toFixed(3)} ${c.uom}`,
+        `$${parseFloat(c.unit_cost.toString()).toFixed(2)}`,
+        `$${parseFloat(c.line_cost.toString()).toFixed(2)}`,
       ]),
       theme: "grid",
       styles: { fontSize: 10, halign: "right" },
@@ -46,23 +56,29 @@ export default function ExportPDFButton({ product }: { product: Product }) {
     });
 
     // Costs summary
-    const baseCost = product.calculated_cost ?? 0;
-    const packaging = product.packaging_cost ?? 0;
-    const labor = product.labor_cost ?? 0;
-    const finalCost = baseCost + packaging + labor;
+    const baseCost = components.reduce(
+      (sum, c) =>
+        sum +
+        (parseFloat(c.line_cost.toString()) ||
+          parseFloat(c.quantity.toString()) *
+            parseFloat(c.unit_cost.toString())),
+      0
+    );
+
+    const finalCost = baseCost + packagingCost + laborCost;
 
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
       body: [
         [`Base Cost / kg: $${baseCost.toFixed(2)}`],
-        [`Packaging: $${packaging.toFixed(2)}`],
-        [`Labor: $${labor.toFixed(2)}`],
+        [`Packaging: $${packagingCost.toFixed(2)}`],
+        [`Labor: $${laborCost.toFixed(2)}`],
         [""],
         [`Final Cost / kg: $${finalCost.toFixed(2)}`],
       ],
       theme: "plain",
       styles: { fontSize: 12, halign: "right" },
-      didParseCell: (data) => {
+      didParseCell: (data: Parameters<NonNullable<UserOptions["didParseCell"]>>[0]) => {
         if (
           data.row.index === 4 &&
           data.cell.raw?.toString().startsWith("Final Cost")
@@ -79,7 +95,7 @@ export default function ExportPDFButton({ product }: { product: Product }) {
   return (
     <button
       onClick={handleExport}
-      className="px-4 py-2 rounded-lg bg-[#0e5439] text-white font-medium shadow hover:bg-[#0c4630] transition cursor-pointer"
+      className="px-4 py-2 rounded-lg bg-[#0e5439] text-white font-medium shadow hover:bg-[#0c4630] transition"
     >
       Export PDF
     </button>

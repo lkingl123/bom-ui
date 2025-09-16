@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
 import ExportPDFButton from "./ExportPDFButton";
-import type { Product } from "../types";
+import type { Product, Component } from "../types";
 
 export default function ProductDetailClient({ name }: { name: string }) {
   const [product, setProduct] = useState<Product | null>(null);
+
+  // lifted states
+  const [editableComponents, setEditableComponents] = useState<Component[]>([]);
+  const [packagingCost, setPackagingCost] = useState<number>(100.5);
+  const [laborCost, setLaborCost] = useState<number>(200.5);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,7 +20,9 @@ export default function ProductDetailClient({ name }: { name: string }) {
         `https://bom-api.fly.dev/products/${encodeURIComponent(name)}`
       );
       if (res.ok) {
-        setProduct(await res.json());
+        const data = await res.json();
+        setProduct(data);
+        setEditableComponents(data.components); // initialize editable components
       }
     };
     fetchData();
@@ -44,9 +51,23 @@ export default function ProductDetailClient({ name }: { name: string }) {
           SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"}
         </p>
 
-        <IngredientTable components={product.components} />
+        {/* Ingredient Table now receives setters */}
+        <IngredientTable
+          components={editableComponents}
+          setComponents={setEditableComponents}
+          packagingCost={packagingCost}
+          setPackagingCost={setPackagingCost}
+          laborCost={laborCost}
+          setLaborCost={setLaborCost}
+        />
+
         <div className="mt-6 flex justify-end">
-          <ExportPDFButton product={product} />
+          <ExportPDFButton
+            product={product}
+            components={editableComponents}
+            packagingCost={packagingCost}
+            laborCost={laborCost}
+          />
         </div>
       </section>
     </main>

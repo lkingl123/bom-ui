@@ -1,66 +1,60 @@
 "use client";
 
-import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import type { Component } from "../types";
 
 export default function IngredientTable({
   components,
+  setComponents,
+  packagingCost,
+  setPackagingCost,
+  laborCost,
+  setLaborCost,
 }: {
   components: Component[];
+  setComponents: (c: Component[]) => void;
+  packagingCost: number;
+  setPackagingCost: (v: number) => void;
+  laborCost: number;
+  setLaborCost: (v: number) => void;
 }) {
-  const [editableComponents, setEditableComponents] = useState(
-    components.map((c) => ({
-      ...c,
-      quantity: c.quantity.toString(),
-      unit_cost: c.unit_cost.toString(),
-      line_cost: c.line_cost.toFixed(2),
-    }))
-  );
-
-  const [packagingCost, setPackagingCost] = useState("100.50");
-  const [laborCost, setLaborCost] = useState("200.50");
-
   const handleReset = () => {
-    setEditableComponents(
+    setComponents(
       components.map((c) => ({
         ...c,
-        quantity: c.quantity.toString(),
-        unit_cost: c.unit_cost.toString(),
-        line_cost: c.line_cost.toFixed(2),
+        quantity: c.quantity,
+        unit_cost: c.unit_cost,
+        line_cost: c.line_cost,
       }))
     );
-    setPackagingCost("100.50");
-    setLaborCost("200.50");
+    setPackagingCost(100.5);
+    setLaborCost(200.5);
   };
 
-  const updatedTotal = editableComponents.reduce((sum, c) => {
-    const qty = parseFloat(c.quantity) || 0;
-    const unit = parseFloat(c.unit_cost) || 0;
-    const line = parseFloat(c.line_cost) || qty * unit;
-    return sum + line;
+  const updatedTotal = components.reduce((sum, c) => {
+    const qty = Number(c.quantity) || 0;
+    const unit = Number(c.unit_cost) || 0;
+    return sum + qty * unit;
   }, 0);
 
-  const finalCost =
-    updatedTotal +
-    (parseFloat(packagingCost) || 0) +
-    (parseFloat(laborCost) || 0);
+  const finalCost = updatedTotal + packagingCost + laborCost;
 
   const handleEdit = (
     index: number,
     field: "quantity" | "unit_cost" | "line_cost",
     value: string
   ) => {
-    const updated = [...editableComponents];
-    updated[index] = { ...updated[index], [field]: value };
+    const updated = [...components];
+    const numericValue = parseFloat(value) || 0;
+    updated[index] = { ...updated[index], [field]: numericValue };
 
     if (field === "quantity" || field === "unit_cost") {
-      const qty = parseFloat(updated[index].quantity) || 0;
-      const unit = parseFloat(updated[index].unit_cost) || 0;
-      updated[index].line_cost = (qty * unit).toFixed(2);
+      const qty = Number(updated[index].quantity) || 0;
+      const unit = Number(updated[index].unit_cost) || 0;
+      updated[index].line_cost = qty * unit;
     }
 
-    setEditableComponents(updated);
+    setComponents(updated);
   };
 
   return (
@@ -89,25 +83,20 @@ export default function IngredientTable({
               </tr>
             </thead>
             <tbody>
-              {editableComponents.map((c, i) => (
+              {components.map((c, i) => (
                 <tr key={c.name} className="border-t hover:bg-gray-50 transition">
                   <td className="px-4 py-2">{c.name}</td>
 
                   {/* Quantity */}
                   <td className="px-4 py-2 text-right">
-                    <div className="flex justify-end items-center gap-1">
-                      <input
-                        type="number"
-                        step="0.0001"
-                        value={c.quantity}
-                        onChange={(e) => handleEdit(i, "quantity", e.target.value)}
-                        onBlur={(e) =>
-                          handleEdit(i, "quantity", parseFloat(e.target.value).toFixed(4))
-                        }
-                        className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
-                      />
-                      <span className="text-gray-500 text-xs">{c.uom}</span>
-                    </div>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={c.quantity}
+                      onChange={(e) => handleEdit(i, "quantity", e.target.value)}
+                      className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
+                    />
+                    <span className="ml-1 text-gray-500 text-xs">{c.uom}</span>
                   </td>
 
                   {/* Unit Cost */}
@@ -117,25 +106,13 @@ export default function IngredientTable({
                       step="0.01"
                       value={c.unit_cost}
                       onChange={(e) => handleEdit(i, "unit_cost", e.target.value)}
-                      onBlur={(e) =>
-                        handleEdit(i, "unit_cost", parseFloat(e.target.value).toFixed(2))
-                      }
                       className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                     />
                   </td>
 
                   {/* Line Cost */}
-                  <td className="px-4 py-2 text-right">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={c.line_cost}
-                      onChange={(e) => handleEdit(i, "line_cost", e.target.value)}
-                      onBlur={(e) =>
-                        handleEdit(i, "line_cost", parseFloat(e.target.value).toFixed(2))
-                      }
-                      className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
-                    />
+                  <td className="px-4 py-2 text-right font-mono">
+                    ${c.line_cost.toFixed(2)}
                   </td>
                 </tr>
               ))}
@@ -158,8 +135,7 @@ export default function IngredientTable({
                     type="number"
                     step="0.01"
                     value={packagingCost}
-                    onChange={(e) => setPackagingCost(e.target.value)}
-                    onBlur={(e) => setPackagingCost(parseFloat(e.target.value).toFixed(2))}
+                    onChange={(e) => setPackagingCost(parseFloat(e.target.value) || 0)}
                     className="w-24 text-right border rounded px-3 py-1 text-sm font-mono"
                   />
                 </td>
@@ -173,8 +149,7 @@ export default function IngredientTable({
                     type="number"
                     step="0.01"
                     value={laborCost}
-                    onChange={(e) => setLaborCost(e.target.value)}
-                    onBlur={(e) => setLaborCost(parseFloat(e.target.value).toFixed(2))}
+                    onChange={(e) => setLaborCost(parseFloat(e.target.value) || 0)}
                     className="w-24 text-right border rounded px-3 py-1 text-sm font-mono"
                   />
                 </td>
