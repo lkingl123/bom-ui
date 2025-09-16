@@ -68,7 +68,7 @@ export default function ExportPDFButton({
     const finalCost = baseCost + packagingCost + laborCost;
 
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY:doc.lastAutoTable.finalY + 10,
       body: [
         [`Base Cost / kg: $${baseCost.toFixed(2)}`],
         [`Packaging: $${packagingCost.toFixed(2)}`],
