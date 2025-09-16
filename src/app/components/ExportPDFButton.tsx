@@ -1,6 +1,14 @@
 "use client";
 
 import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Fix TS type error for lastAutoTable
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable: { finalY: number };
+  }
+}
 
 type Component = {
   name: string;
@@ -15,47 +23,77 @@ type Product = {
   sku?: string;
   barcode?: string;
   components: Component[];
-  calculated_cost: number;
+  calculated_cost: number; // Base cost only
 };
 
-export default function ExportPDFButton({ product }: { product: Product }) {
+export default function ExportPDFButton({
+  product,
+  packagingCost,
+  laborCost,
+}: {
+  product: Product;
+  packagingCost: number;
+  laborCost: number;
+}) {
   const handleExport = () => {
     const doc = new jsPDF();
 
     // Title
     doc.setFontSize(16);
-    doc.text(product.product_name, 10, 20);
+    doc.text(product.product_name, 14, 20);
 
     // SKU + Barcode
     doc.setFontSize(11);
-    doc.text(`SKU: ${product.sku || "-"}`, 10, 30);
-    doc.text(`Barcode: ${product.barcode || "-"}`, 10, 36);
+    doc.text(`SKU: ${product.sku || "-"}`, 14, 30);
+    doc.text(`Barcode: ${product.barcode || "-"}`, 14, 36);
 
-    // Table Header
-    let y = 50;
-    doc.setFontSize(12);
-    doc.text("Ingredient", 10, y);
-    doc.text("Qty", 80, y);
-    doc.text("Unit Cost", 120, y);
-    doc.text("Line Cost", 160, y);
-
-    // Table Rows
-    y += 8;
-    product.components.forEach((c) => {
-      doc.setFontSize(10);
-      doc.text(c.name, 10, y);
-      doc.text(`${c.quantity} ${c.uom}`, 80, y, { align: "right" });
-      doc.text(`$${c.unit_cost.toFixed(2)}`, 120, y, { align: "right" });
-      doc.text(`$${c.line_cost.toFixed(2)}`, 160, y, { align: "right" });
-      y += 6;
+    // Ingredients table
+    autoTable(doc, {
+      startY: 50,
+      head: [["Ingredient", "Qty", "Unit Cost", "Line Cost"]],
+      body: product.components.map((c) => [
+        c.name,
+        `${c.quantity.toFixed(3)} ${c.uom}`,
+        `$${c.unit_cost.toFixed(2)}`,
+        `$${c.line_cost.toFixed(2)}`,
+      ]),
+      theme: "grid",
+      styles: { fontSize: 10, halign: "right" },
+      headStyles: { fillColor: [14, 84, 57], halign: "center" },
+      columnStyles: {
+        0: { halign: "left" },
+        1: { halign: "right" },
+        2: { halign: "right" },
+        3: { halign: "right" },
+      },
     });
 
-    // Totals
-    y += 8;
-    doc.setFontSize(12);
-    doc.text(`Total Cost / kg: $${product.calculated_cost.toFixed(2)}`, 10, y);
+    // Costs summary
+    const baseCost = product.calculated_cost || 0;
+    const finalCost = baseCost + packagingCost + laborCost;
 
-    // Save file
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      body: [
+        [`Base Cost / kg: $${baseCost.toFixed(2)}`],
+        [`Packaging: $${packagingCost.toFixed(2)}`],
+        [`Labor: $${laborCost.toFixed(2)}`],
+        [``], // spacing
+        [`Final Cost / kg: $${finalCost.toFixed(2)}`],
+      ],
+      theme: "plain",
+      styles: { fontSize: 12, halign: "right" },
+      didParseCell: (data) => {
+        if (
+          data.row.index === 4 &&
+          data.cell.raw?.toString().startsWith("Final Cost")
+        ) {
+          data.cell.styles.textColor = [14, 84, 57];
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+    });
+
     doc.save(`${product.product_name}.pdf`);
   };
 

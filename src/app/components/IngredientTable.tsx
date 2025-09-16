@@ -14,37 +14,62 @@ type Component = {
 export default function IngredientTable({
   components,
   totalCost,
+  packagingCost,
+  setPackagingCost,
+  laborCost,
+  setLaborCost,
 }: {
   components: Component[];
   totalCost: number;
+  packagingCost: number;
+  setPackagingCost: (v: number) => void;
+  laborCost: number;
+  setLaborCost: (v: number) => void;
 }) {
-  const [editableComponents, setEditableComponents] = useState<Component[]>(components);
-  const [packagingCost, setPackagingCost] = useState(1.5);
-  const [laborCost, setLaborCost] = useState(2.5);
+  const [editableComponents, setEditableComponents] = useState(
+    components.map((c) => ({
+      ...c,
+      quantity: c.quantity.toString(),
+      unit_cost: c.unit_cost.toString(),
+      line_cost: c.line_cost.toFixed(2),
+    }))
+  );
 
   const handleReset = () => {
-    setEditableComponents(components);
+    setEditableComponents(
+      components.map((c) => ({
+        ...c,
+        quantity: c.quantity.toString(),
+        unit_cost: c.unit_cost.toString(),
+        line_cost: c.line_cost.toFixed(2),
+      }))
+    );
     setPackagingCost(1.5);
     setLaborCost(2.5);
   };
 
-  const updatedTotal = editableComponents.reduce(
-    (sum, c) => sum + c.line_cost,
-    0
-  );
+  // Convert back to numbers for calculations
+  const updatedTotal = editableComponents.reduce((sum, c) => {
+    const qty = parseFloat(c.quantity) || 0;
+    const unit = parseFloat(c.unit_cost) || 0;
+    const line = parseFloat(c.line_cost) || qty * unit;
+    return sum + line;
+  }, 0);
+
   const finalCost = updatedTotal + packagingCost + laborCost;
 
   const handleEdit = (
     index: number,
     field: "quantity" | "unit_cost" | "line_cost",
-    value: number
+    value: string
   ) => {
     const updated = [...editableComponents];
     updated[index] = { ...updated[index], [field]: value };
 
-    if (field === "unit_cost" || field === "quantity") {
-      updated[index].line_cost =
-        updated[index].unit_cost * updated[index].quantity;
+    if (field === "quantity" || field === "unit_cost") {
+      const qty = parseFloat(updated[index].quantity) || 0;
+      const unit = parseFloat(updated[index].unit_cost) || 0;
+      updated[index].line_cost = (qty * unit).toFixed(2);
     }
 
     setEditableComponents(updated);
@@ -80,15 +105,22 @@ export default function IngredientTable({
                 <tr key={c.name} className="border-t hover:bg-gray-50 transition">
                   <td className="px-4 py-2">{c.name}</td>
 
-                  {/* Editable Quantity */}
+                  {/* Editable Quantity (4 decimals) */}
                   <td className="px-4 py-2 text-right">
                     <div className="flex justify-end items-center gap-1">
                       <input
                         type="number"
                         step="0.0001"
-                        value={c.quantity.toFixed(4)}
+                        value={c.quantity}
                         onChange={(e) =>
-                          handleEdit(i, "quantity", Number(e.target.value))
+                          handleEdit(i, "quantity", e.target.value)
+                        }
+                        onBlur={(e) =>
+                          handleEdit(
+                            i,
+                            "quantity",
+                            parseFloat(e.target.value).toFixed(4)
+                          )
                         }
                         className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
@@ -101,9 +133,16 @@ export default function IngredientTable({
                     <input
                       type="number"
                       step="0.01"
-                      value={c.unit_cost.toFixed(2)}
+                      value={c.unit_cost}
                       onChange={(e) =>
-                        handleEdit(i, "unit_cost", Number(e.target.value))
+                        handleEdit(i, "unit_cost", e.target.value)
+                      }
+                      onBlur={(e) =>
+                        handleEdit(
+                          i,
+                          "unit_cost",
+                          parseFloat(e.target.value).toFixed(2)
+                        )
                       }
                       className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                     />
@@ -114,9 +153,16 @@ export default function IngredientTable({
                     <input
                       type="number"
                       step="0.01"
-                      value={c.line_cost.toFixed(2)}
+                      value={c.line_cost}
                       onChange={(e) =>
-                        handleEdit(i, "line_cost", Number(e.target.value))
+                        handleEdit(i, "line_cost", e.target.value)
+                      }
+                      onBlur={(e) =>
+                        handleEdit(
+                          i,
+                          "line_cost",
+                          parseFloat(e.target.value).toFixed(2)
+                        )
                       }
                       className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                     />
@@ -144,7 +190,7 @@ export default function IngredientTable({
                     type="number"
                     step="0.01"
                     value={packagingCost.toFixed(2)}
-                    onChange={(e) => setPackagingCost(Number(e.target.value))}
+                    onChange={(e) => setPackagingCost(parseFloat(e.target.value) || 0)}
                     className="w-24 text-right border rounded px-3 py-1 text-sm font-mono"
                   />
                 </td>
@@ -160,7 +206,7 @@ export default function IngredientTable({
                     type="number"
                     step="0.01"
                     value={laborCost.toFixed(2)}
-                    onChange={(e) => setLaborCost(Number(e.target.value))}
+                    onChange={(e) => setLaborCost(parseFloat(e.target.value) || 0)}
                     className="w-24 text-right border rounded px-3 py-1 text-sm font-mono"
                   />
                 </td>
