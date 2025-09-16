@@ -1,7 +1,18 @@
 "use client";
 
+import React from "react";
 import { RotateCcw, Plus, Minus } from "lucide-react";
 import type { Component } from "../types";
+
+interface IngredientTableProps {
+  components: Component[];
+  setComponents: (c: Component[]) => void;
+  packagingCost: number;
+  setPackagingCost: (v: number) => void;
+  laborCost: number;
+  setLaborCost: (v: number) => void;
+  originalComponents: Component[];
+}
 
 export default function IngredientTable({
   components,
@@ -10,83 +21,65 @@ export default function IngredientTable({
   setPackagingCost,
   laborCost,
   setLaborCost,
-}: {
-  components: Component[];
-  setComponents: (c: Component[]) => void;
-  packagingCost: number;
-  setPackagingCost: (v: number) => void;
-  laborCost: number;
-  setLaborCost: (v: number) => void;
-}) {
-  const handleReset = () => {
-    setComponents(
-      components.map((c) => ({
-        ...c,
-        quantity: c.quantity,
-        unit_cost: c.unit_cost,
-        line_cost: c.line_cost,
-      }))
-    );
+  originalComponents,
+}: IngredientTableProps): React.ReactElement {
+  const handleReset = (): void => {
+    setComponents([...originalComponents]); // restore snapshot
     setPackagingCost(100.5);
     setLaborCost(200.5);
   };
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = (): void => {
     const newIngredient: Component = {
       name: "New Ingredient",
-      quantity: 0,
+      percent: 0,
       uom: "kg",
       unit_cost: 0,
       line_cost: 0,
+      quantity: 0,
     };
     setComponents([...components, newIngredient]);
   };
 
-  const handleRemoveIngredient = (index: number) => {
+  const handleRemoveIngredient = (index: number): void => {
     const updated = [...components];
     updated.splice(index, 1);
     setComponents(updated);
   };
 
-  const updatedTotal = components.reduce((sum, c) => {
-    const qty = Number(c.quantity) || 0;
-    const unit = Number(c.unit_cost) || 0;
-    return sum + qty * unit;
-  }, 0);
-
-  const totalQuantity = components.reduce(
-    (sum, c) => sum + (Number(c.quantity) || 0),
+  const baseCost = components.reduce(
+    (sum, c) => sum + (Number(c.line_cost) || 0),
     0
   );
-
-  const finalCost = updatedTotal + packagingCost + laborCost;
+  const finalCost = baseCost + packagingCost + laborCost;
 
   const handleEdit = (
     index: number,
     field: "name" | "unit_cost" | "line_cost" | "percent",
     value: string
-  ) => {
+  ): void => {
     const updated = [...components];
 
     if (field === "percent") {
       const percent = parseFloat(value) || 0;
-      const newQuantity = (percent / 100) * totalQuantity;
-      updated[index] = { ...updated[index], quantity: newQuantity };
+      updated[index] = {
+        ...updated[index],
+        percent: parseFloat(percent.toFixed(2)), // ✅ round to 2 decimals
+      };
       updated[index].line_cost =
-        newQuantity * (Number(updated[index].unit_cost) || 0);
-    } else {
-      const numericValue =
-        field === "unit_cost" || field === "line_cost"
-          ? parseFloat(value) || 0
-          : value;
-
-      updated[index] = { ...updated[index], [field]: numericValue };
-
-      if (field === "unit_cost") {
-        const qty = Number(updated[index].quantity) || 0;
-        const unit = Number(updated[index].unit_cost) || 0;
-        updated[index].line_cost = qty * unit;
-      }
+        (updated[index].percent / 100) * updated[index].unit_cost;
+    } else if (field === "unit_cost") {
+      const unitCost = parseFloat(value) || 0;
+      updated[index] = { ...updated[index], unit_cost: unitCost };
+      const percent = updated[index].percent || 0;
+      updated[index].line_cost = (percent / 100) * unitCost;
+    } else if (field === "line_cost") {
+      updated[index] = {
+        ...updated[index],
+        line_cost: parseFloat(value) || 0,
+      };
+    } else if (field === "name") {
+      updated[index] = { ...updated[index], name: value };
     }
 
     setComponents(updated);
@@ -94,7 +87,7 @@ export default function IngredientTable({
 
   return (
     <div>
-      {/* Toolbar above table */}
+      {/* Toolbar */}
       <div className="flex justify-between mb-4">
         <button
           onClick={handleAddIngredient}
@@ -112,7 +105,7 @@ export default function IngredientTable({
         </button>
       </div>
 
-      {/* Table card */}
+      {/* Table */}
       <div className="rounded-xl border border-gray-200 shadow-sm bg-white p-4">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -120,70 +113,58 @@ export default function IngredientTable({
               <tr>
                 <th className="px-4 py-3 text-left">Ingredient</th>
                 <th className="px-4 py-3 text-right">% of Formula</th>
-                <th className="px-4 py-3 text-right">Unit Cost</th>
-                <th className="px-4 py-3 text-right">Line Cost</th>
+                <th className="px-4 py-3 text-right">Cost / kg</th>
+                <th className="px-4 py-3 text-right">Cost</th>
               </tr>
             </thead>
             <tbody>
-              {components.map((c, i) => {
-                const percent =
-                  totalQuantity > 0
-                    ? ((Number(c.quantity) || 0) / totalQuantity) * 100
-                    : 0;
+              {components.map((c, i) => (
+                <tr key={i} className="border-t hover:bg-gray-50 transition">
+                  <td className="px-4 py-2 flex items-center gap-2">
+                    <button
+                      onClick={() => handleRemoveIngredient(i)}
+                      className="text-red-500 hover:text-red-700"
+                      title="Remove ingredient"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="text"
+                      value={c.name}
+                      onChange={(e) => handleEdit(i, "name", e.target.value)}
+                      className="flex-1 border rounded px-2 py-1 text-sm"
+                    />
+                  </td>
 
-                return (
-                  <tr key={i} className="border-t hover:bg-gray-50 transition">
-                    {/* Ingredient Name (editable) with remove button */}
-                    <td className="px-4 py-2 flex items-center gap-2">
-                      <button
-                        onClick={() => handleRemoveIngredient(i)}
-                        className="text-red-500 hover:text-red-700"
-                        title="Remove ingredient"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <input
-                        type="text"
-                        value={c.name}
-                        onChange={(e) => handleEdit(i, "name", e.target.value)}
-                        className="flex-1 border rounded px-2 py-1 text-sm"
-                      />
-                    </td>
+                  {/* ✅ % always shows 2 decimals */}
+                  <td className="px-4 py-2 text-right">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={c.percent.toFixed(2)}
+                      onChange={(e) => handleEdit(i, "percent", e.target.value)}
+                      className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
+                    />
+                    <span className="ml-1 text-gray-500 text-xs">%</span>
+                  </td>
 
-                    {/* % of Formula (editable) */}
-                    <td className="px-4 py-2 text-right">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={percent.toFixed(2)}
-                        onChange={(e) =>
-                          handleEdit(i, "percent", e.target.value)
-                        }
-                        className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
-                      />
-                      <span className="ml-1 text-gray-500 text-xs">%</span>
-                    </td>
+                  <td className="px-4 py-2 text-right">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={c.unit_cost}
+                      onChange={(e) =>
+                        handleEdit(i, "unit_cost", e.target.value)
+                      }
+                      className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
+                    />
+                  </td>
 
-                    {/* Unit Cost */}
-                    <td className="px-4 py-2 text-right">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={c.unit_cost}
-                        onChange={(e) =>
-                          handleEdit(i, "unit_cost", e.target.value)
-                        }
-                        className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
-                      />
-                    </td>
-
-                    {/* Line Cost */}
-                    <td className="px-4 py-2 text-right font-mono">
-                      ${c.line_cost.toFixed(2)}
-                    </td>
-                  </tr>
-                );
-              })}
+                  <td className="px-4 py-2 text-right font-mono">
+                    ${c.line_cost.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
 
               {/* Totals */}
               <tr className="bg-gray-50 font-semibold border-t">
@@ -191,7 +172,7 @@ export default function IngredientTable({
                   Base Cost / kg
                 </td>
                 <td className="px-4 py-3 text-right text-[#0e5439] font-mono">
-                  ${updatedTotal.toFixed(2)}
+                  ${baseCost.toFixed(2)}
                 </td>
               </tr>
               <tr className="italic border-t">

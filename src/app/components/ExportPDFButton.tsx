@@ -43,7 +43,7 @@ export default function ExportPDFButton({
     // Ingredients table
     autoTable(doc, {
       startY: 50,
-      head: [["Ingredient", "% of Formula", "Unit Cost", "Line Cost"]],
+      head: [["Ingredient", "% of Formula", "Unit Cost", " Cost"]],
       body: components.map((c) => {
         const percent =
           totalQuantity > 0

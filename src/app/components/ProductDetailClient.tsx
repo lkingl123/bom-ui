@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
 import ExportPDFButton from "./ExportPDFButton";
 import type { Product, Component } from "../types";
 
-export default function ProductDetailClient({ name }: { name: string }) {
+export default function ProductDetailClient({
+  name,
+}: {
+  name: string;
+}): React.ReactElement {
   const [product, setProduct] = useState<Product | null>(null);
 
-  // lifted states
   const [editableComponents, setEditableComponents] = useState<Component[]>([]);
+  const [originalComponents, setOriginalComponents] = useState<Component[]>([]);
   const [packagingCost, setPackagingCost] = useState<number>(100.5);
   const [laborCost, setLaborCost] = useState<number>(200.5);
 
@@ -21,8 +25,25 @@ export default function ProductDetailClient({ name }: { name: string }) {
       );
       if (res.ok) {
         const data = await res.json();
+
+        // ✅ derive total quantity
+        const totalQuantity = data.components.reduce(
+          (sum: number, c: Component) => sum + (c.quantity || 0),
+          0
+        );
+
+        // ✅ calculate percent (2 decimals)
+        const normalized = data.components.map((c: Component) => ({
+          ...c,
+          percent:
+            totalQuantity > 0
+              ? parseFloat(((c.quantity / totalQuantity) * 100).toFixed(2))
+              : 0,
+        }));
+
         setProduct(data);
-        setEditableComponents(data.components); // initialize editable components
+        setEditableComponents(normalized);
+        setOriginalComponents(normalized);
       }
     };
     fetchData();
@@ -44,7 +65,6 @@ export default function ProductDetailClient({ name }: { name: string }) {
           </Link>
         </div>
 
-        {/* Editable Product Name */}
         <h1 className="mb-4">
           <input
             type="text"
@@ -60,7 +80,6 @@ export default function ProductDetailClient({ name }: { name: string }) {
           SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"}
         </p>
 
-        {/* Ingredient Table now receives setters */}
         <IngredientTable
           components={editableComponents}
           setComponents={setEditableComponents}
@@ -68,6 +87,7 @@ export default function ProductDetailClient({ name }: { name: string }) {
           setPackagingCost={setPackagingCost}
           laborCost={laborCost}
           setLaborCost={setLaborCost}
+          originalComponents={originalComponents}
         />
 
         <div className="mt-6 flex justify-end">

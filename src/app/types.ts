@@ -3,6 +3,7 @@
 export type Component = {
   name: string;
   quantity: number;
+  percent: number;
   uom: string;
   unit_cost: number;
   line_cost: number;
