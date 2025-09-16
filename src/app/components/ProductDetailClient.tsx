@@ -1,28 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import ExportPDFButton from "./ExportPDFButton";
-import IngredientTable from "./IngredientTable";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import IngredientTable from "./IngredientTable";
+import ExportPDFButton from "./ExportPDFButton";
+import type { Product } from "../types";
 
-export default function ProductDetailClient({ decodedName }: { decodedName: string }) {
-  const [product, setProduct] = useState<any>(null);
-  const [packagingCost, setPackagingCost] = useState(1.5);
-  const [laborCost, setLaborCost] = useState(2.5);
+export default function ProductDetailClient({ name }: { name: string }) {
+  const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    fetch(`https://bom-api.fly.dev/products/${encodeURIComponent(decodedName)}`)
-      .then((res) => res.json())
-      .then(setProduct)
-      .catch((err) => console.error("❌ Fetch failed:", err));
-  }, [decodedName]);
+    const fetchData = async () => {
+      const res = await fetch(
+        `https://bom-api.fly.dev/products/${encodeURIComponent(name)}`
+      );
+      if (res.ok) {
+        setProduct(await res.json());
+      }
+    };
+    fetchData();
+  }, [name]);
 
-  if (!product) return <p className="p-6">Loading...</p>;
+  if (!product) {
+    return <p className="p-6">Loading...</p>;
+  }
 
   return (
     <main className="bg-gray-50 min-h-screen">
       <section className="max-w-6xl mx-auto px-6 py-10">
-        {/* Back button */}
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/products"
@@ -32,7 +37,6 @@ export default function ProductDetailClient({ decodedName }: { decodedName: stri
           </Link>
         </div>
 
-        {/* Title + meta */}
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           {product.product_name}
         </h1>
@@ -40,23 +44,9 @@ export default function ProductDetailClient({ decodedName }: { decodedName: stri
           SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"}
         </p>
 
-        {/* Ingredient Table */}
-        <IngredientTable
-          components={product.components}
-          totalCost={product.calculated_cost}
-          packagingCost={packagingCost}
-          setPackagingCost={setPackagingCost}
-          laborCost={laborCost}
-          setLaborCost={setLaborCost}
-        />
-
-        {/* Export PDF */}
-        <div className="mt-6">
-          <ExportPDFButton
-            product={product}
-            packagingCost={packagingCost}
-            laborCost={laborCost}
-          />
+        <IngredientTable components={product.components} />
+        <div className="mt-6 flex justify-end">
+          <ExportPDFButton product={product} />
         </div>
       </section>
     </main>

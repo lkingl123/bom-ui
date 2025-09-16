@@ -1,13 +1,11 @@
-// src/app/products/[name]/page.tsx
 import ProductDetailClient from "../../components/ProductDetailClient";
 
-export default async function ProductDetailPage({
+export default function ProductDetail({
   params,
 }: {
-  params: Promise<{ name: string }>;
+  params: { name: string };
 }) {
-  const { name } = await params;
-  const decoded = decodeURIComponent(name);
+  const decoded = decodeURIComponent(params.name);
 
-  return <ProductDetailClient decodedName={decoded} />;
+  return <ProductDetailClient name={decoded} />;
 }

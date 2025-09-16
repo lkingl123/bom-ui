@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BOM Cost Dashboard",
+  title: "Pure Labs Catalog",
   description: "Analyze BOM cost and ingredients with elegance.",
+  icons: {
+    icon: "/pureearth-logo.webp", 
+  },
 };
+
 
 export default function RootLayout({
   children,

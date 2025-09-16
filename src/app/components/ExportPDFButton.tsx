@@ -2,6 +2,7 @@
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import type { Product } from "../types";
 
 // Fix TS type error for lastAutoTable
 declare module "jspdf" {
@@ -10,31 +11,7 @@ declare module "jspdf" {
   }
 }
 
-type Component = {
-  name: string;
-  quantity: number;
-  uom: string;
-  unit_cost: number;
-  line_cost: number;
-};
-
-type Product = {
-  product_name: string;
-  sku?: string;
-  barcode?: string;
-  components: Component[];
-  calculated_cost: number; // Base cost only
-};
-
-export default function ExportPDFButton({
-  product,
-  packagingCost,
-  laborCost,
-}: {
-  product: Product;
-  packagingCost: number;
-  laborCost: number;
-}) {
+export default function ExportPDFButton({ product }: { product: Product }) {
   const handleExport = () => {
     const doc = new jsPDF();
 
@@ -69,16 +46,18 @@ export default function ExportPDFButton({
     });
 
     // Costs summary
-    const baseCost = product.calculated_cost || 0;
-    const finalCost = baseCost + packagingCost + laborCost;
+    const baseCost = product.calculated_cost ?? 0;
+    const packaging = product.packaging_cost ?? 0;
+    const labor = product.labor_cost ?? 0;
+    const finalCost = baseCost + packaging + labor;
 
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
       body: [
         [`Base Cost / kg: $${baseCost.toFixed(2)}`],
-        [`Packaging: $${packagingCost.toFixed(2)}`],
-        [`Labor: $${laborCost.toFixed(2)}`],
-        [``], // spacing
+        [`Packaging: $${packaging.toFixed(2)}`],
+        [`Labor: $${labor.toFixed(2)}`],
+        [""],
         [`Final Cost / kg: $${finalCost.toFixed(2)}`],
       ],
       theme: "plain",
