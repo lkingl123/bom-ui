@@ -1,7 +1,7 @@
 import ProductTable from "../components/ProductTable";
 
 export default async function ProductsPage() {
-  const res = await fetch("https://bom-api.fly.dev/products?limit=20", {
+  const res = await fetch("https://bom-api.fly.dev/products?", {
     next: { revalidate: 60 },
   });
   const products = await res.json();
