@@ -1,41 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import ProductTable from "../components/ProductTable";
+import React from "react";
+import { Product } from "../types"; // adjust path if needed
 
-export default function ProductsPageWrapper({ products }: { products: any[] }) {
-  const [query, setQuery] = useState("");
+interface ProductsPageWrapperProps {
+  products: Product[];
+}
 
-  // Safe guard in case products is undefined
-  const safeProducts = Array.isArray(products) ? products : [];
-
-  const filtered = safeProducts.filter((p) =>
-    p.name?.toLowerCase().includes(query.toLowerCase())
-  );
-
+export default function ProductsPageWrapper({ products }: ProductsPageWrapperProps) {
   return (
-    <div className="bg-white rounded-xl shadow p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-gray-800">
-          Product Catalog
-        </h2>
-        <span className="text-sm text-gray-500">
-          {filtered.length} / {safeProducts.length} products
-        </span>
-      </div>
-
-      {/* 🔍 Search Bar */}
-      <div className="mb-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search products..."
-          className="w-full md:w-1/3 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0e5439] focus:outline-none"
-        />
-      </div>
-
-      <ProductTable products={filtered} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {products.map((product, index) => (
+        <div
+          key={product.sku ?? index}
+          className="rounded-lg border bg-white shadow p-4 hover:shadow-md transition"
+        >
+          <h2 className="text-lg font-semibold">{product.product_name}</h2>
+          {product.sku && (
+            <p className="text-sm text-gray-500 mb-1">SKU: {product.sku}</p>
+          )}
+          {product.barcode && (
+            <p className="text-sm text-gray-500 mb-1">Barcode: {product.barcode}</p>
+          )}
+          <p className="font-medium">
+            Base Cost: ${product.calculated_cost.toFixed(2)}
+          </p>
+          {product.packaging_cost !== undefined && (
+            <p className="text-sm text-gray-500">
+              Packaging Cost: ${product.packaging_cost.toFixed(2)}
+            </p>
+          )}
+          {product.labor_cost !== undefined && (
+            <p className="text-sm text-gray-500">
+              Labor Cost: ${product.labor_cost.toFixed(2)}
+            </p>
+          )}
+          <div className="mt-2">
+            <h3 className="text-sm font-semibold">Components:</h3>
+            <ul className="list-disc list-inside text-sm text-gray-600">
+              {product.components.map((c, idx) => (
+                <li key={idx}>
+                  {c.name} — {c.quantity} {c.uom} @ ${c.unit_cost} (Line: $
+                  {c.line_cost})
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

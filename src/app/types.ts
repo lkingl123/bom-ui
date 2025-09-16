@@ -1,4 +1,4 @@
-// Shared types
+// src/app/types.ts
 
 export type Component = {
   name: string;
