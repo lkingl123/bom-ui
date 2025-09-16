@@ -2,11 +2,23 @@
 
 import { jsPDF } from "jspdf";
 
-export default function ExportPDFButton({
-  product,
-}: {
-  product: any;
-}) {
+type Component = {
+  name: string;
+  quantity: number;
+  uom: string;
+  unit_cost: number;
+  line_cost: number;
+};
+
+type Product = {
+  product_name: string;
+  sku?: string;
+  barcode?: string;
+  components: Component[];
+  calculated_cost: number;
+};
+
+export default function ExportPDFButton({ product }: { product: Product }) {
   const handleExport = () => {
     const doc = new jsPDF();
 
@@ -29,7 +41,7 @@ export default function ExportPDFButton({
 
     // Table Rows
     y += 8;
-    product.components.forEach((c: any) => {
+    product.components.forEach((c) => {
       doc.setFontSize(10);
       doc.text(c.name, 10, y);
       doc.text(`${c.quantity} ${c.uom}`, 80, y, { align: "right" });
@@ -50,7 +62,7 @@ export default function ExportPDFButton({
   return (
     <button
       onClick={handleExport}
-      className="px-5 py-2.5 rounded-lg bg-[#0e5439] text-white font-medium shadow-md hover:bg-[#0c4630] transition transform hover:-translate-y-0.5"
+      className="px-4 py-2 rounded-lg bg-[#0e5439] text-white font-medium shadow hover:bg-[#0c4630] transition cursor-pointer"
     >
       Export PDF
     </button>

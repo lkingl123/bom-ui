@@ -40,7 +40,7 @@ export default function ProductTable({ products }: { products: Product[] }) {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Components</span>
+              <span className="text-gray-600">Ingredients</span>
               <span className="font-medium text-gray-800">{p.components}</span>
             </div>
           </div>

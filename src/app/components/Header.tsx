@@ -15,8 +15,8 @@ export default function Header() {
           <Image
             src="/pureearth-logo.webp" // 👈 must be saved in /public
             alt="Pure Earth Labs Logo"
-            width={80}
-            height={80}
+            width={100}
+            height={100}
             priority
           />
 
