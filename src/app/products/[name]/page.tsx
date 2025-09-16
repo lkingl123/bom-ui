@@ -1,11 +1,12 @@
 import ProductDetailClient from "../../components/ProductDetailClient";
 
-export default function ProductDetail({
+export default async function ProductDetail({
   params,
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
-  const decoded = decodeURIComponent(params.name);
+  const { name } = await params; // await here
+  const decoded = decodeURIComponent(name);
 
   return <ProductDetailClient name={decoded} />;
 }
