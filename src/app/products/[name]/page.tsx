@@ -5,9 +5,12 @@ import Link from "next/link";
 export default async function ProductDetail({
   params,
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
-  const decoded = decodeURIComponent(params.name);
+  // Await the params (Next.js 15 requirement)
+  const { name } = await params;
+  const decoded = decodeURIComponent(name);
+
   const res = await fetch(
     `https://bom-api.fly.dev/products/${encodeURIComponent(decoded)}`,
     { next: { revalidate: 60 } }
@@ -26,7 +29,7 @@ export default async function ProductDetail({
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/products"
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-[#0e5439] text-white font-medium shadow hover:bg-[#0c4630] transition"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-[#0e5439] text-white font-medium shadow hover:bg-[#0c4630] hover:scale-105 active:scale-95 cursor-pointer transition"
           >
             ← Back to Catalog
           </Link>
