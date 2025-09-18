@@ -2,16 +2,16 @@
 
 import React from "react";
 import { RotateCcw, Plus, Minus } from "lucide-react";
-import type { Component } from "../types";
+import type { ComponentEditable } from "../types";
 
 interface IngredientTableProps {
-  components: Component[];
-  setComponents: (c: Component[]) => void;
+  components: ComponentEditable[];
+  setComponents: (c: ComponentEditable[]) => void;
   packagingCost: number;
   setPackagingCost: (v: number) => void;
   laborCost: number;
   setLaborCost: (v: number) => void;
-  originalComponents: Component[];
+  originalComponents: ComponentEditable[];
 }
 
 export default function IngredientTable({
@@ -30,13 +30,14 @@ export default function IngredientTable({
   };
 
   const handleAddIngredient = (): void => {
-    const newIngredient: Component = {
+    const newIngredient: ComponentEditable = {
       name: "New Ingredient",
       percent: 0,
       uom: "kg",
       unit_cost: 0,
       line_cost: 0,
       quantity: 0,
+      has_cost: true, // required by backend Component type
     };
     setComponents([...components, newIngredient]);
   };
@@ -64,7 +65,7 @@ export default function IngredientTable({
       const percent = parseFloat(value) || 0;
       updated[index] = {
         ...updated[index],
-        percent: parseFloat(percent.toFixed(2)), // ✅ round to 2 decimals
+        percent: parseFloat(percent.toFixed(2)),
       };
       updated[index].line_cost =
         (updated[index].percent / 100) * updated[index].unit_cost;

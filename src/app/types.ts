@@ -1,20 +1,76 @@
-// src/app/types.ts
+// =============================
+// API Types
+// =============================
 
+// Product shape from the LIST endpoint (/products?sort_by=...)
+export type ProductSummary = {
+  name: string;        // product name in list view
+  sku: string;
+  cost: number;        // base cost
+  components: number;  // just a count in list view
+  category: string;
+  remarks: string;
+};
+
+// Component entry from the DETAIL endpoint
 export type Component = {
   name: string;
   quantity: number;
-  percent: number;
   uom: string;
+  has_cost: boolean;
   unit_cost: number;
   line_cost: number;
 };
 
-export type Product = {
+// Product shape from the DETAIL endpoint (/products/{name})
+export type ProductDetail = {
   product_name: string;
-  sku?: string;
-  barcode?: string;
+  sku: string;
+  barcode: string;
   components: Component[];
-  calculated_cost: number;   // base cost only
-  packaging_cost?: number;   // optional packaging cost
-  labor_cost?: number;       // optional labor cost
+  component_count: number;
+  calculated_cost: number;
+  is_complete: boolean;
+  has_suspicious_quantities: boolean;
+  description: string;
+  remarks: string;
+  print_ingredients: string;
+  print_title: string;
+  category: string;
+};
+
+// =============================
+// Frontend-Only Types
+// =============================
+
+// Editable version of Component for UI (adds percent)
+export type ComponentEditable = Component & {
+  percent: number; // always required for editing/UI
+};
+
+// Enriched product type for calculations & quotes
+export type ProductCalc = ProductDetail & {
+  packaging_cost?: number;
+  labor_cost?: number;
+  misc_cost?: number;
+  inflow_cost?: number;
+
+  // Labor breakdown
+  touch_points?: number;
+  cost_per_touch?: number;
+
+  // Shipping & profit
+  shipping_cost_per_unit?: number;
+  shipping_total?: number;
+  profit_per_unit?: number;
+  msrp?: number;
+
+  // Pricing tables
+  tiered_pricing?: Record<string, number>;
+  bulk_pricing?: Record<string, number>;
+
+  // Formula / vendor details
+  formula_kg?: number;
+  cost_per_kg?: number;
+  vendor_suggestions?: string[];
 };

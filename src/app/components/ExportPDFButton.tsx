@@ -2,7 +2,7 @@
 
 import { jsPDF } from "jspdf";
 import autoTable, { type UserOptions } from "jspdf-autotable";
-import type { Product, Component } from "../types";
+import type { ProductDetail, ComponentEditable } from "../types";
 
 // Fix TS type error for lastAutoTable
 declare module "jspdf" {
@@ -17,8 +17,8 @@ export default function ExportPDFButton({
   packagingCost,
   laborCost,
 }: {
-  product: Product;
-  components: Component[];
+  product: ProductDetail;
+  components: ComponentEditable[];
   packagingCost: number;
   laborCost: number;
 }) {
@@ -43,7 +43,7 @@ export default function ExportPDFButton({
     // Ingredients table
     autoTable(doc, {
       startY: 50,
-      head: [["Ingredient", "% of Formula", "Unit Cost", " Cost"]],
+      head: [["Ingredient", "% of Formula", "Unit Cost", "Cost"]],
       body: components.map((c) => {
         const percent =
           totalQuantity > 0

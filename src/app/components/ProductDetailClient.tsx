@@ -4,27 +4,34 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
 import ExportPDFButton from "./ExportPDFButton";
-import type { Product, Component } from "../types";
+import type { Component, ComponentEditable, ProductDetail } from "../types";
 
 export default function ProductDetailClient({
   name,
 }: {
   name: string;
 }): React.ReactElement {
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductDetail | null>(null);
 
-  const [editableComponents, setEditableComponents] = useState<Component[]>([]);
-  const [originalComponents, setOriginalComponents] = useState<Component[]>([]);
+  const [editableComponents, setEditableComponents] = useState<ComponentEditable[]>([]);
+  const [originalComponents, setOriginalComponents] = useState<ComponentEditable[]>([]);
   const [packagingCost, setPackagingCost] = useState<number>(100.5);
   const [laborCost, setLaborCost] = useState<number>(200.5);
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch(
-        `https://bom-api.fly.dev/products/${encodeURIComponent(name)}`
-      );
-      if (res.ok) {
-        const data = await res.json();
+      try {
+        const res = await fetch(
+          `https://bom-api.fly.dev/products/${encodeURIComponent(name)}`
+        );
+
+        if (!res.ok) {
+          console.error("Failed to fetch product detail:", res.status);
+          return;
+        }
+
+        const data: ProductDetail = await res.json();
+        console.log("Product detail response:", data);
 
         // ✅ derive total quantity
         const totalQuantity = data.components.reduce(
@@ -32,8 +39,8 @@ export default function ProductDetailClient({
           0
         );
 
-        // ✅ calculate percent (2 decimals)
-        const normalized = data.components.map((c: Component) => ({
+        // ✅ normalize with percent
+        const normalized: ComponentEditable[] = data.components.map((c: Component) => ({
           ...c,
           percent:
             totalQuantity > 0
@@ -44,8 +51,11 @@ export default function ProductDetailClient({
         setProduct(data);
         setEditableComponents(normalized);
         setOriginalComponents(normalized);
+      } catch (err) {
+        console.error("Error fetching product detail:", err);
       }
     };
+
     fetchData();
   }, [name]);
 
@@ -65,6 +75,7 @@ export default function ProductDetailClient({
           </Link>
         </div>
 
+        {/* Editable product name */}
         <h1 className="mb-4">
           <input
             type="text"
@@ -77,9 +88,11 @@ export default function ProductDetailClient({
         </h1>
 
         <p className="text-gray-600 mb-6">
-          SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"}
+          SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"} | Category:{" "}
+          {product.category || "-"}
         </p>
 
+        {/* Ingredient Table */}
         <IngredientTable
           components={editableComponents}
           setComponents={setEditableComponents}
@@ -90,6 +103,7 @@ export default function ProductDetailClient({
           originalComponents={originalComponents}
         />
 
+        {/* Export PDF */}
         <div className="mt-6 flex justify-end">
           <ExportPDFButton
             product={product}
