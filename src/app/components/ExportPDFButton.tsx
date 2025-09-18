@@ -9,6 +9,15 @@ import type {
   ProductCalc,
 } from "../types";
 
+// Extend jsPDF type to include lastAutoTable
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable?: {
+      finalY: number;
+    };
+  }
+}
+
 interface ExportPDFButtonProps {
   product: ProductCalc;
   components: ComponentEditable[];
@@ -47,7 +56,7 @@ export default function ExportPDFButton({
 
     // Packaging Table
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 60,
       head: [["Packaging Item", "Quantity", "Unit Cost", "Line Cost"]],
       body: packagingItems.map((p) => [
         p.name,
@@ -67,11 +76,11 @@ export default function ExportPDFButton({
       (product.misc_cost || 0);
 
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
       head: [["Metric", "Value"]],
       body: [
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
-        ["Ingredient Cost Per Unit", `$${(product.cost_per_kg || 0).toFixed(2)}`], // ✅ renamed
+        ["Ingredient Cost Per Unit", `$${(product.cost_per_kg || 0).toFixed(2)}`],
         ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
         ["Misc Cost", `$${(product.misc_cost || 0).toFixed(2)}`],
         ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
@@ -83,7 +92,7 @@ export default function ExportPDFButton({
 
     // Tiered Pricing
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(
         ([qty, data]: [string, { price: number; profit: number }]) => [
@@ -95,9 +104,9 @@ export default function ExportPDFButton({
       theme: "grid",
     });
 
-    // Bulk Pricing (Excel-style)
+    // Bulk Pricing
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 90,
       head: [["Size", "MSRP", "Profit Per Unit", "Packaging Cost", "Multiplier"]],
       body: Object.entries(product.bulk_pricing || {}).map(
         ([size, data]: [
@@ -114,7 +123,6 @@ export default function ExportPDFButton({
       theme: "grid",
     });
 
-    // Save file
     doc.save(`${product.product_name || "product"}.pdf`);
   };
 
