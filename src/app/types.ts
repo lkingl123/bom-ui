@@ -74,3 +74,21 @@ export type ProductCalc = ProductDetail & {
   cost_per_kg?: number;
   vendor_suggestions?: string[];
 };
+
+// Editable packaging item for UI
+
+export type PackagingItemEditable = {
+  name: string;
+  quantity: number;     // how many units per product
+  unit_cost: number;    // cost per unit
+  line_cost: number;    // calculated (quantity * unit_cost)
+};
+
+// Editable labor item for UI
+
+export type LaborItemEditable = {
+  name: string;
+  quantity: number;        
+  cost_per_touch: number;  // $
+  line_cost: number;       
+};

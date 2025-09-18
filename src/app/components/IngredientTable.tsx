@@ -7,26 +7,23 @@ import type { ComponentEditable } from "../types";
 interface IngredientTableProps {
   components: ComponentEditable[];
   setComponents: (c: ComponentEditable[]) => void;
-  packagingCost: number;
-  setPackagingCost: (v: number) => void;
   laborCost: number;
   setLaborCost: (v: number) => void;
   originalComponents: ComponentEditable[];
+  packagingTotal: number; // ✅ now used
 }
 
 export default function IngredientTable({
   components,
   setComponents,
-  packagingCost,
-  setPackagingCost,
   laborCost,
   setLaborCost,
   originalComponents,
+  packagingTotal,
 }: IngredientTableProps): React.ReactElement {
   const handleReset = (): void => {
     setComponents([...originalComponents]); // restore snapshot
-    setPackagingCost(100.5);
-    setLaborCost(200.5);
+    setLaborCost(0);
   };
 
   const handleAddIngredient = (): void => {
@@ -37,7 +34,7 @@ export default function IngredientTable({
       unit_cost: 0,
       line_cost: 0,
       quantity: 0,
-      has_cost: true, // required by backend Component type
+      has_cost: true,
     };
     setComponents([...components, newIngredient]);
   };
@@ -52,7 +49,9 @@ export default function IngredientTable({
     (sum, c) => sum + (Number(c.line_cost) || 0),
     0
   );
-  const finalCost = baseCost + packagingCost + laborCost;
+
+  // ✅ include packaging + labor
+  const finalCost = baseCost + laborCost + packagingTotal;
 
   const handleEdit = (
     index: number,
@@ -137,7 +136,6 @@ export default function IngredientTable({
                     />
                   </td>
 
-                  {/* ✅ % always shows 2 decimals */}
                   <td className="px-4 py-2 text-right">
                     <input
                       type="number"
@@ -178,34 +176,19 @@ export default function IngredientTable({
               </tr>
               <tr className="italic border-t">
                 <td colSpan={3} className="px-4 py-3 text-right">
-                  Packaging $
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={packagingCost}
-                    onChange={(e) =>
-                      setPackagingCost(parseFloat(e.target.value) || 0)
-                    }
-                    className="w-24 text-right border rounded px-3 py-1 text-sm font-mono"
-                  />
-                </td>
-              </tr>
-              <tr className="italic border-t">
-                <td colSpan={3} className="px-4 py-3 text-right">
                   Labor $
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={laborCost}
-                    onChange={(e) =>
-                      setLaborCost(parseFloat(e.target.value) || 0)
-                    }
-                    className="w-24 text-right border rounded px-3 py-1 text-sm font-mono"
-                  />
+                <td className="px-4 py-3 text-right font-mono">
+                  ${laborCost.toFixed(2)}
+                </td>
+              </tr>
+
+              <tr className="italic border-t">
+                <td colSpan={3} className="px-4 py-3 text-right">
+                  Packaging $
+                </td>
+                <td className="px-4 py-3 text-right font-mono">
+                  ${packagingTotal.toFixed(2)}
                 </td>
               </tr>
               <tr className="bg-gray-100 font-bold border-t">

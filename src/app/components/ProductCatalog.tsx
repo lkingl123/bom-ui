@@ -2,17 +2,10 @@
 
 import { useState } from "react";
 import ProductTable from "./ProductTable";
+import type { ProductSummary } from "../types";
 
-type Product = {
-  name: string;
-  sku: string;
-  cost: number;
-  components: number;
-  category: string;
-  remarks?: string;
-};
 
-export default function ProductCatalog({ products }: { products: Product[] }) {
+export default function ProductCatalog({ products }: { products: ProductSummary[] }) {
   const [query, setQuery] = useState("");
 
   // Filter products by name, sku, or category

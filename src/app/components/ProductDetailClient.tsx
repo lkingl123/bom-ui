@@ -3,20 +3,39 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
+import PackagingTable from "./PackagingTable";
 import ExportPDFButton from "./ExportPDFButton";
-import type { Component, ComponentEditable, ProductDetail } from "../types";
+import type {
+  Component,
+  ComponentEditable,
+  PackagingItemEditable,
+  ProductDetail,
+  ProductCalc,
+} from "../types";
+import { buildProductCalc } from "../utils/calculations";
 
 export default function ProductDetailClient({
   name,
 }: {
   name: string;
 }): React.ReactElement {
-  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [product, setProduct] = useState<ProductCalc | null>(null);
+  const [editableComponents, setEditableComponents] = useState<
+    ComponentEditable[]
+  >([]);
+  const [originalComponents, setOriginalComponents] = useState<
+    ComponentEditable[]
+  >([]);
+  const [packagingItems, setPackagingItems] = useState<PackagingItemEditable[]>(
+    []
+  );
 
-  const [editableComponents, setEditableComponents] = useState<ComponentEditable[]>([]);
-  const [originalComponents, setOriginalComponents] = useState<ComponentEditable[]>([]);
-  const [packagingCost, setPackagingCost] = useState<number>(100.5);
-  const [laborCost, setLaborCost] = useState<number>(200.5);
+  // Editable inputs
+  const [orderQuantity, setOrderQuantity] = useState<number>(5000);
+  const [miscCost, setMiscCost] = useState<number>(0);
+  const [inflowCost, setInflowCost] = useState<number>(0);
+  const [touchPoints, setTouchPoints] = useState<number>(6);
+  const [costPerTouch, setCostPerTouch] = useState<number>(0.09);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,31 +43,37 @@ export default function ProductDetailClient({
         const res = await fetch(
           `https://bom-api.fly.dev/products/${encodeURIComponent(name)}`
         );
-
         if (!res.ok) {
           console.error("Failed to fetch product detail:", res.status);
           return;
         }
 
         const data: ProductDetail = await res.json();
-        console.log("Product detail response:", data);
 
-        // ✅ derive total quantity
         const totalQuantity = data.components.reduce(
           (sum: number, c: Component) => sum + (c.quantity || 0),
           0
         );
 
-        // ✅ normalize with percent
-        const normalized: ComponentEditable[] = data.components.map((c: Component) => ({
-          ...c,
-          percent:
-            totalQuantity > 0
-              ? parseFloat(((c.quantity / totalQuantity) * 100).toFixed(2))
-              : 0,
-        }));
+        const normalized: ComponentEditable[] = data.components.map(
+          (c: Component) => ({
+            ...c,
+            percent:
+              totalQuantity > 0
+                ? parseFloat(((c.quantity / totalQuantity) * 100).toFixed(2))
+                : 0,
+          })
+        );
 
-        setProduct(data);
+        const enriched = buildProductCalc(data, normalized, packagingItems, {
+          miscCost,
+          inflowCost,
+          touchPoints,
+          costPerTouch,
+          orderQuantity,
+        });
+
+        setProduct(enriched);
         setEditableComponents(normalized);
         setOriginalComponents(normalized);
       } catch (err) {
@@ -57,15 +82,28 @@ export default function ProductDetailClient({
     };
 
     fetchData();
-  }, [name]);
+  }, [
+    name,
+    miscCost,
+    inflowCost,
+    touchPoints,
+    costPerTouch,
+    orderQuantity,
+    packagingItems,
+  ]);
 
-  if (!product) {
-    return <p className="p-6">Loading...</p>;
-  }
+  if (!product) return <p className="p-6">Loading...</p>;
+
+  // ✅ Calculate packaging total here
+  const packagingTotal = packagingItems.reduce(
+    (sum, item) => sum + (item.line_cost || 0),
+    0
+  );
 
   return (
     <main className="bg-gray-50 min-h-screen">
       <section className="max-w-6xl mx-auto px-6 py-10">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/products"
@@ -75,11 +113,11 @@ export default function ProductDetailClient({
           </Link>
         </div>
 
-        {/* Editable product name */}
+        {/* Product Name */}
         <h1 className="mb-4">
           <input
             type="text"
-            value={product.product_name}
+            value={product.product_name || ""}
             onChange={(e) =>
               setProduct({ ...product, product_name: e.target.value })
             }
@@ -88,28 +126,161 @@ export default function ProductDetailClient({
         </h1>
 
         <p className="text-gray-600 mb-6">
-          SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"} | Category:{" "}
-          {product.category || "-"}
+          SKU: {product.sku || "-"} | Barcode: {product.barcode || "-"} |
+          Category: {product.category || "-"}
         </p>
 
         {/* Ingredient Table */}
         <IngredientTable
           components={editableComponents}
           setComponents={setEditableComponents}
-          packagingCost={packagingCost}
-          setPackagingCost={setPackagingCost}
-          laborCost={laborCost}
-          setLaborCost={setLaborCost}
+          laborCost={product.labor_cost ?? 0}
+          setLaborCost={(v) =>
+            setProduct((prev) => (prev ? { ...prev, labor_cost: v } : prev))
+          }
           originalComponents={originalComponents}
+          packagingTotal={packagingTotal}   // ✅ now reflected in the totals
         />
+
+        {/* Packaging Table */}
+        <PackagingTable
+          packagingItems={packagingItems}
+          setPackagingItems={setPackagingItems}
+        />
+
+        {/* Cost Summary */}
+        <div className="mt-8 bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Cost Summary
+          </h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500">Order Quantity</p>
+              <input
+                type="number"
+                min={1}
+                value={orderQuantity}
+                onChange={(e) => setOrderQuantity(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <p className="text-gray-500">Touch Points</p>
+              <input
+                type="number"
+                min={0}
+                value={touchPoints}
+                onChange={(e) => setTouchPoints(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <p className="text-gray-500">Cost Per Touch ($)</p>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={costPerTouch}
+                onChange={(e) => setCostPerTouch(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <p className="text-gray-500">Misc Cost ($ total)</p>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={miscCost}
+                onChange={(e) => setMiscCost(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <p className="text-gray-500">Inflow Cost ($ total)</p>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={inflowCost}
+                onChange={(e) => setInflowCost(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <p className="text-gray-500">Formula Weight (kg)</p>
+              <p className="font-mono text-gray-900">
+                {product.formula_kg?.toFixed(3) || "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Cost per kg</p>
+              <p className="font-mono text-[#0e5439]">
+                ${product.cost_per_kg?.toFixed(2) || "0.00"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tiered Pricing */}
+        <div className="mt-8 bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Tiered Pricing
+          </h3>
+          <table className="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+            <thead className="bg-gray-100 text-gray-700 font-medium">
+              <tr>
+                <th className="px-4 py-2 text-left">Quantity</th>
+                <th className="px-4 py-2 text-right">Price / Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {product.tiered_pricing &&
+                Object.entries(product.tiered_pricing).map(([qty, price]) => (
+                  <tr key={qty} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-2">{qty}</td>
+                    <td className="px-4 py-2 text-right font-mono">
+                      ${price.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Bulk Packaging */}
+        <div className="mt-8 bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Bulk Packaging
+          </h3>
+          <table className="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+            <thead className="bg-gray-100 text-gray-700 font-medium">
+              <tr>
+                <th className="px-4 py-2 text-left">Size</th>
+                <th className="px-4 py-2 text-right">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {product.bulk_pricing &&
+                Object.entries(product.bulk_pricing).map(([size, price]) => (
+                  <tr key={size} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-2">{size}</td>
+                    <td className="px-4 py-2 text-right font-mono">
+                      ${price.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Export PDF */}
         <div className="mt-6 flex justify-end">
           <ExportPDFButton
             product={product}
             components={editableComponents}
-            packagingCost={packagingCost}
-            laborCost={laborCost}
+            packagingItems={packagingItems}
+            laborCost={product.labor_cost ?? 0}
           />
         </div>
       </section>

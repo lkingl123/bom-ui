@@ -1,19 +1,11 @@
 import ProductCatalog from "../components/ProductCatalog";
-
-type ApiProduct = {
-  name: string;
-  sku: string;
-  cost: number;
-  components: number;
-  category: string;
-  remarks?: string;
-};
+import type { ProductSummary } from "../types";
 
 export default async function ProductsPage() {
   const res = await fetch("https://bom-api.fly.dev/products?", {
     next: { revalidate: 60 },
   });
-  const products: ApiProduct[] = await res.json();
+  const products: ProductSummary[] = await res.json();
 
   return (
     <main className="bg-gray-50 min-h-screen">
@@ -28,7 +20,7 @@ export default async function ProductsPage() {
             </span>
           </div>
 
-          {/* ✅ Use client-side search component */}
+          {/* ✅ Pass actual data, not the type */}
           <ProductCatalog products={products} />
         </div>
       </section>
