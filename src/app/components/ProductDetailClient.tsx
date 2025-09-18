@@ -130,20 +130,6 @@ export default function ProductDetailClient({
           Category: {product.category || "-"}
         </p>
 
-        {/* Ingredient Table */}
-        <IngredientTable
-          components={editableComponents}
-          setComponents={setEditableComponents}
-          laborCost={product.labor_cost ?? 0}
-          setLaborCost={(v) =>
-            setProduct((prev) => (prev ? { ...prev, labor_cost: v } : prev))
-          }
-          originalComponents={originalComponents}
-          packagingTotal={packagingTotal}
-          inflowCost={inflowCost}
-          miscCost={miscCost}
-        />
-
         {/* Packaging Table */}
         <PackagingTable
           packagingItems={packagingItems}
@@ -224,6 +210,20 @@ export default function ProductDetailClient({
             </div> */}
           </div>
         </div>
+
+        {/* Ingredient Table */}
+        <IngredientTable
+          components={editableComponents}
+          setComponents={setEditableComponents}
+          laborCost={product.labor_cost ?? 0}
+          setLaborCost={(v) =>
+            setProduct((prev) => (prev ? { ...prev, labor_cost: v } : prev))
+          }
+          originalComponents={originalComponents}
+          packagingTotal={packagingTotal}
+          inflowCost={inflowCost}
+          miscCost={miscCost}
+        />
 
         {/* Tiered Pricing */}
         <div className="mt-8 bg-white rounded-xl shadow p-6">

@@ -93,7 +93,7 @@ export default function IngredientTable({
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between mb-4 mt-6">
         <button
           onClick={handleAddIngredient}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#0e5439] text-white hover:bg-[#0c4630] transition text-sm font-medium shadow-sm cursor-pointer"
