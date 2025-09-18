@@ -10,7 +10,9 @@ interface IngredientTableProps {
   laborCost: number;
   setLaborCost: (v: number) => void;
   originalComponents: ComponentEditable[];
-  packagingTotal: number; // ✅ now used
+  packagingTotal: number;
+  inflowCost: number;   // ✅ new
+  miscCost: number;     // ✅ new
 }
 
 export default function IngredientTable({
@@ -20,9 +22,11 @@ export default function IngredientTable({
   setLaborCost,
   originalComponents,
   packagingTotal,
+  inflowCost,
+  miscCost,
 }: IngredientTableProps): React.ReactElement {
   const handleReset = (): void => {
-    setComponents([...originalComponents]); // restore snapshot
+    setComponents([...originalComponents]); 
     setLaborCost(0);
   };
 
@@ -50,8 +54,9 @@ export default function IngredientTable({
     0
   );
 
-  // ✅ include packaging + labor
-  const finalCost = baseCost + laborCost + packagingTotal;
+  // ✅ final cost matches Excel
+  const finalCost =
+    baseCost + laborCost + packagingTotal + inflowCost + miscCost;
 
   const handleEdit = (
     index: number,
@@ -135,7 +140,6 @@ export default function IngredientTable({
                       className="flex-1 border rounded px-2 py-1 text-sm"
                     />
                   </td>
-
                   <td className="px-4 py-2 text-right">
                     <input
                       type="number"
@@ -146,7 +150,6 @@ export default function IngredientTable({
                     />
                     <span className="ml-1 text-gray-500 text-xs">%</span>
                   </td>
-
                   <td className="px-4 py-2 text-right">
                     <input
                       type="number"
@@ -158,7 +161,6 @@ export default function IngredientTable({
                       className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                     />
                   </td>
-
                   <td className="px-4 py-2 text-right font-mono">
                     ${c.line_cost.toFixed(2)}
                   </td>
@@ -182,13 +184,28 @@ export default function IngredientTable({
                   ${laborCost.toFixed(2)}
                 </td>
               </tr>
-
               <tr className="italic border-t">
                 <td colSpan={3} className="px-4 py-3 text-right">
                   Packaging $
                 </td>
                 <td className="px-4 py-3 text-right font-mono">
                   ${packagingTotal.toFixed(2)}
+                </td>
+              </tr>
+              <tr className="italic border-t">
+                <td colSpan={3} className="px-4 py-3 text-right">
+                  Inflow $
+                </td>
+                <td className="px-4 py-3 text-right font-mono">
+                  ${inflowCost.toFixed(2)}
+                </td>
+              </tr>
+              <tr className="italic border-t">
+                <td colSpan={3} className="px-4 py-3 text-right">
+                  Misc $
+                </td>
+                <td className="px-4 py-3 text-right font-mono">
+                  ${miscCost.toFixed(2)}
                 </td>
               </tr>
               <tr className="bg-gray-100 font-bold border-t">

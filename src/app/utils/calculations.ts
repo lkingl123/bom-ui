@@ -1,3 +1,5 @@
+// src/app/utils/calculations.ts
+
 import type {
   ComponentEditable,
   ProductDetail,
@@ -44,10 +46,8 @@ export function buildProductCalc(
     orderQuantity > 0 ? packagingCostTotal / orderQuantity : 0;
 
   // ===== Misc / Inflow =====
-  const miscCostPerUnit =
-    orderQuantity > 0 ? miscCost / orderQuantity : 0;
-  const inflowCostPerUnit =
-    orderQuantity > 0 ? inflowCost / orderQuantity : 0;
+  const miscCostPerUnit = orderQuantity > 0 ? miscCost / orderQuantity : 0;
+  const inflowCostPerUnit = orderQuantity > 0 ? inflowCost / orderQuantity : 0;
 
   // ===== Labor =====
   const laborCostPerUnit = touchPoints * costPerTouch;
@@ -63,41 +63,44 @@ export function buildProductCalc(
 
   // ===== Formula Stats =====
   const formulaKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);
-  const costPerKg =
-    formulaKg > 0 ? ingredientCostTotal / formulaKg : 0;
+  const costPerKg = formulaKg > 0 ? ingredientCostTotal / formulaKg : 0;
 
-  // ===== Tiered Pricing =====
-  const profitPerUnit = laborCostPerUnit;
-  const tierMultipliers: Record<number, number> = {
-    2500: 0.25,
-    5000: 0.9,
-    10000: 0.8,
-    20000: 0.7,
-    50000: 0.6,
-    100000: 0.7,
+  // ===== Tiered Pricing (Excel-style profit per unit) =====
+  const profitPerUnitByTier: Record<number, number> = {
+    2500: 0.27,
+    5000: 0.243,
+    10000: 0.216,
+    20000: 0.189,
+    50000: 0.162,
+    100000: 0.189,
   };
-  const tiers = [2500, 5000, 10000, 20000, 50000, 100000];
-  const tieredPricing: Record<string, number> = {};
+
+  const tiers = Object.keys(profitPerUnitByTier).map(Number);
+  const tieredPricing: Record<
+    string,
+    { price: number; profit: number }
+  > = {};
+
   tiers.forEach((qty) => {
-    const multiplier = tierMultipliers[qty] ?? 1;
-    const tierPrice = baseCostPerUnit + profitPerUnit * multiplier;
-    tieredPricing[`${qty}`] = parseFloat(tierPrice.toFixed(3));
+    const profitPerUnit = profitPerUnitByTier[qty];
+    const tierPrice = baseCostPerUnit + profitPerUnit;
+    tieredPricing[`${qty}`] = {
+      price: parseFloat(tierPrice.toFixed(3)),
+      profit: profitPerUnit,
+    };
   });
 
-  // ===== Bulk Pricing =====
-  const bulkMultipliers: Record<string, number> = {
-    "2oz Sample": 10,
-    "16oz": 5,
-    "1 Gal": 3.5,
-    "5 Gal": 3.25,
-    "55 Gal": 2.75,
+  // ===== Bulk Pricing (Excel table) =====
+  const bulkPricing: Record<
+    string,
+    { msrp: number; profit: number; packaging: number; multiplier: number }
+  > = {
+    "2oz - Sample": { msrp: 8.21, profit: 7.39, packaging: 0.28, multiplier: 10 },
+    "16 oz": { msrp: 13.28, profit: 10.62, packaging: 0.40, multiplier: 5 },
+    "1 Gal": { msrp: 92.25, profit: 73.8, packaging: 1.38, multiplier: 3.5 },
+    "5 Gal": { msrp: 297.98, profit: 206.29, packaging: 8.25, multiplier: 3.25 },
+    "55 Gal": { msrp: 2843.2, profit: 1809.31, packaging: 95.0, multiplier: 2.75 },
   };
-  const bulkPricing: Record<string, number> = {};
-  Object.entries(bulkMultipliers).forEach(([size, mult]) => {
-    bulkPricing[size] = parseFloat(
-      (baseCostPerUnit * mult).toFixed(2)
-    );
-  });
 
   return {
     ...detail,
@@ -112,7 +115,7 @@ export function buildProductCalc(
     cost_per_kg: costPerKg,
     shipping_cost_per_unit: 0,
     shipping_total: 0,
-    profit_per_unit: profitPerUnit,
+    profit_per_unit: 0, // now handled per tier
     msrp: 0,
     tiered_pricing: tieredPricing,
     bulk_pricing: bulkPricing,

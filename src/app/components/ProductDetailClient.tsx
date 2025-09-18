@@ -139,7 +139,9 @@ export default function ProductDetailClient({
             setProduct((prev) => (prev ? { ...prev, labor_cost: v } : prev))
           }
           originalComponents={originalComponents}
-          packagingTotal={packagingTotal}   // ✅ now reflected in the totals
+          packagingTotal={packagingTotal}
+          inflowCost={inflowCost}
+          miscCost={miscCost}
         />
 
         {/* Packaging Table */}
@@ -151,7 +153,7 @@ export default function ProductDetailClient({
         {/* Cost Summary */}
         <div className="mt-8 bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Cost Summary
+            Labor Calculator
           </h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -161,38 +163,6 @@ export default function ProductDetailClient({
                 min={1}
                 value={orderQuantity}
                 onChange={(e) => setOrderQuantity(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
-              />
-            </div>
-            <div>
-              <p className="text-gray-500">Touch Points</p>
-              <input
-                type="number"
-                min={0}
-                value={touchPoints}
-                onChange={(e) => setTouchPoints(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
-              />
-            </div>
-            <div>
-              <p className="text-gray-500">Cost Per Touch ($)</p>
-              <input
-                type="number"
-                step="0.01"
-                min={0}
-                value={costPerTouch}
-                onChange={(e) => setCostPerTouch(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
-              />
-            </div>
-            <div>
-              <p className="text-gray-500">Misc Cost ($ total)</p>
-              <input
-                type="number"
-                step="0.01"
-                min={0}
-                value={miscCost}
-                onChange={(e) => setMiscCost(Number(e.target.value) || 0)}
                 className="w-32 border rounded px-2 py-1 text-sm font-mono"
               />
             </div>
@@ -208,6 +178,39 @@ export default function ProductDetailClient({
               />
             </div>
             <div>
+              <p className="text-gray-500">Cost Per Touch ($)</p>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={costPerTouch}
+                onChange={(e) => setCostPerTouch(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+
+            <div>
+              <p className="text-gray-500">Misc Cost ($ total)</p>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={miscCost}
+                onChange={(e) => setMiscCost(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <p className="text-gray-500">Touch Points</p>
+              <input
+                type="number"
+                min={0}
+                value={touchPoints}
+                onChange={(e) => setTouchPoints(Number(e.target.value) || 0)}
+                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+              />
+            </div>
+            {/* <div>
               <p className="text-gray-500">Formula Weight (kg)</p>
               <p className="font-mono text-gray-900">
                 {product.formula_kg?.toFixed(3) || "-"}
@@ -218,7 +221,7 @@ export default function ProductDetailClient({
               <p className="font-mono text-[#0e5439]">
                 ${product.cost_per_kg?.toFixed(2) || "0.00"}
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -232,18 +235,27 @@ export default function ProductDetailClient({
               <tr>
                 <th className="px-4 py-2 text-left">Quantity</th>
                 <th className="px-4 py-2 text-right">Price / Unit</th>
+                <th className="px-4 py-2 text-right">Profit / Unit</th>
               </tr>
             </thead>
             <tbody>
               {product.tiered_pricing &&
-                Object.entries(product.tiered_pricing).map(([qty, price]) => (
-                  <tr key={qty} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-2">{qty}</td>
-                    <td className="px-4 py-2 text-right font-mono">
-                      ${price.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                Object.entries(product.tiered_pricing).map(
+                  ([qty, data]: [
+                    string,
+                    { price: number; profit: number }
+                  ]) => (
+                    <tr key={qty} className="border-t hover:bg-gray-50">
+                      <td className="px-4 py-2">{qty}</td>
+                      <td className="px-4 py-2 text-right font-mono">
+                        ${data.price.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono text-gray-600">
+                        ${data.profit.toFixed(3)}
+                      </td>
+                    </tr>
+                  )
+                )}
             </tbody>
           </table>
         </div>
@@ -251,25 +263,46 @@ export default function ProductDetailClient({
         {/* Bulk Packaging */}
         <div className="mt-8 bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Bulk Packaging
+            Cost for PEL Bulk Pricing
           </h3>
           <table className="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
             <thead className="bg-gray-100 text-gray-700 font-medium">
               <tr>
                 <th className="px-4 py-2 text-left">Size</th>
-                <th className="px-4 py-2 text-right">Price</th>
+                <th className="px-4 py-2 text-right">MSRP</th>
+                <th className="px-4 py-2 text-right">Profit Per Unit</th>
+                <th className="px-4 py-2 text-right">Packaging Cost</th>
+                <th className="px-4 py-2 text-right">Multiplier</th>
               </tr>
             </thead>
             <tbody>
-              {product.bulk_pricing &&
-                Object.entries(product.bulk_pricing).map(([size, price]) => (
+              {Object.entries(product.bulk_pricing).map(
+                ([size, data]: [
+                  string,
+                  {
+                    msrp: number;
+                    profit: number;
+                    packaging: number;
+                    multiplier: number;
+                  }
+                ]) => (
                   <tr key={size} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2">{size}</td>
                     <td className="px-4 py-2 text-right font-mono">
-                      ${price.toFixed(2)}
+                      ${data.msrp.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono">
+                      ${data.profit.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono">
+                      ${data.packaging.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono">
+                      {data.multiplier}×
                     </td>
                   </tr>
-                ))}
+                )
+              )}
             </tbody>
           </table>
         </div>
@@ -280,7 +313,6 @@ export default function ProductDetailClient({
             product={product}
             components={editableComponents}
             packagingItems={packagingItems}
-            laborCost={product.labor_cost ?? 0}
           />
         </div>
       </section>

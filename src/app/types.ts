@@ -4,10 +4,10 @@
 
 // Product shape from the LIST endpoint (/products?sort_by=...)
 export type ProductSummary = {
-  name: string;        // product name in list view
+  name: string; // product name in list view
   sku: string;
-  cost: number;        // base cost
-  components: number;  // just a count in list view
+  cost: number; // base cost
+  components: number; // just a count in list view
   category: string;
   remarks: string;
 };
@@ -54,6 +54,7 @@ export type ProductCalc = ProductDetail & {
   labor_cost?: number;
   misc_cost?: number;
   inflow_cost?: number;
+  components: ComponentEditable[];
 
   // Labor breakdown
   touch_points?: number;
@@ -66,8 +67,8 @@ export type ProductCalc = ProductDetail & {
   msrp?: number;
 
   // Pricing tables
-  tiered_pricing?: Record<string, number>;
-  bulk_pricing?: Record<string, number>;
+  tiered_pricing: Record<string, TieredPricingEntry>;
+  bulk_pricing: Record<string, BulkPricingEntry>;
 
   // Formula / vendor details
   formula_kg?: number;
@@ -76,19 +77,33 @@ export type ProductCalc = ProductDetail & {
 };
 
 // Editable packaging item for UI
-
 export type PackagingItemEditable = {
   name: string;
-  quantity: number;     // how many units per product
-  unit_cost: number;    // cost per unit
-  line_cost: number;    // calculated (quantity * unit_cost)
+  quantity: number; // how many units per product
+  unit_cost: number; // cost per unit
+  line_cost: number; // calculated (quantity * unit_cost)
 };
 
 // Editable labor item for UI
-
 export type LaborItemEditable = {
   name: string;
-  quantity: number;        
-  cost_per_touch: number;  // $
-  line_cost: number;       
+  quantity: number;
+  cost_per_touch: number; // $
+  line_cost: number;
+};
+
+// =============================
+// Pricing Entries
+// =============================
+
+export type TieredPricingEntry = {
+  price: number;
+  profit: number;
+};
+
+export type BulkPricingEntry = {
+  msrp: number;
+  profit: number;
+  packaging: number;
+  multiplier: number;
 };

@@ -13,14 +13,12 @@ interface ExportPDFButtonProps {
   product: ProductCalc;
   components: ComponentEditable[];
   packagingItems: PackagingItemEditable[];
-  laborCost: number;
 }
 
 export default function ExportPDFButton({
   product,
   components,
   packagingItems,
-  laborCost,
 }: ExportPDFButtonProps): React.ReactElement {
   const handleExport = (): void => {
     const doc = new jsPDF();
@@ -61,16 +59,24 @@ export default function ExportPDFButton({
     });
 
     // Cost Summary
+    const finalCombined =
+      (product.cost_per_kg || 0) +
+      (product.labor_cost || 0) +
+      (product.packaging_cost || 0) +
+      (product.inflow_cost || 0) +
+      (product.misc_cost || 0);
+
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
       head: [["Metric", "Value"]],
       body: [
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
-        ["Cost per kg", `$${product.cost_per_kg?.toFixed(2) || "0.00"}`],
-        ["Labor Cost", `$${laborCost.toFixed(2)}`],
-        ["Misc Cost", `$${product.misc_cost?.toFixed(2) || "0.00"}`],
-        ["Inflow Cost", `$${product.inflow_cost?.toFixed(2) || "0.00"}`],
-        ["Total Packaging Cost", `$${product.packaging_cost?.toFixed(2) || "0.00"}`],
+        ["Cost per kg", `$${(product.cost_per_kg || 0).toFixed(2)}`],
+        ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
+        ["Misc Cost", `$${(product.misc_cost || 0).toFixed(2)}`],
+        ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
+        ["Total Packaging Cost", `$${(product.packaging_cost || 0).toFixed(2)}`],
+        ["Final Combined Cost", `$${finalCombined.toFixed(2)}`], // ✅ added
       ],
       theme: "grid",
     });
@@ -81,7 +87,7 @@ export default function ExportPDFButton({
       head: [["Quantity", "Price / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(([qty, price]) => [
         qty,
-        `$${price.toFixed(2)}`,
+        `$${Number(price).toFixed(2)}`,
       ]),
       theme: "grid",
     });
@@ -92,7 +98,7 @@ export default function ExportPDFButton({
       head: [["Size", "Price"]],
       body: Object.entries(product.bulk_pricing || {}).map(([size, price]) => [
         size,
-        `$${price.toFixed(2)}`,
+        `$${Number(price).toFixed(2)}`,
       ]),
       theme: "grid",
     });
