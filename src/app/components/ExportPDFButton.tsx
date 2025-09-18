@@ -71,12 +71,12 @@ export default function ExportPDFButton({
       head: [["Metric", "Value"]],
       body: [
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
-        ["Cost per kg", `$${(product.cost_per_kg || 0).toFixed(2)}`],
+        ["Ingredient Cost Per Unit", `$${(product.cost_per_kg || 0).toFixed(2)}`], // ✅ renamed
         ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
         ["Misc Cost", `$${(product.misc_cost || 0).toFixed(2)}`],
         ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
         ["Total Packaging Cost", `$${(product.packaging_cost || 0).toFixed(2)}`],
-        ["Final Combined Cost", `$${finalCombined.toFixed(2)}`], // ✅ added
+        ["Final Combined Cost", `$${finalCombined.toFixed(2)}`],
       ],
       theme: "grid",
     });
@@ -84,25 +84,37 @@ export default function ExportPDFButton({
     // Tiered Pricing
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
-      head: [["Quantity", "Price / Unit"]],
-      body: Object.entries(product.tiered_pricing || {}).map(([qty, price]) => [
-        qty,
-        `$${Number(price).toFixed(2)}`,
-      ]),
+      head: [["Quantity", "Price / Unit", "Profit / Unit"]],
+      body: Object.entries(product.tiered_pricing || {}).map(
+        ([qty, data]: [string, { price: number; profit: number }]) => [
+          qty,
+          `$${data.price.toFixed(2)}`,
+          `$${data.profit.toFixed(3)}`,
+        ]
+      ),
       theme: "grid",
     });
 
-    // Bulk Pricing
+    // Bulk Pricing (Excel-style)
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 10,
-      head: [["Size", "Price"]],
-      body: Object.entries(product.bulk_pricing || {}).map(([size, price]) => [
-        size,
-        `$${Number(price).toFixed(2)}`,
-      ]),
+      head: [["Size", "MSRP", "Profit Per Unit", "Packaging Cost", "Multiplier"]],
+      body: Object.entries(product.bulk_pricing || {}).map(
+        ([size, data]: [
+          string,
+          { msrp: number; profit: number; packaging: number; multiplier: number }
+        ]) => [
+          size,
+          `$${data.msrp.toFixed(2)}`,
+          `$${data.profit.toFixed(2)}`,
+          `$${data.packaging.toFixed(2)}`,
+          `${data.multiplier}×`,
+        ]
+      ),
       theme: "grid",
     });
 
+    // Save file
     doc.save(`${product.product_name || "product"}.pdf`);
   };
 
