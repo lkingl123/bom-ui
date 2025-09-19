@@ -129,7 +129,7 @@ export default function ExportPDFButton({
   return (
     <button
       onClick={handleExport}
-      className="px-4 py-2 bg-[#0e5439] text-white rounded hover:bg-[#0c4630] transition"
+      className="px-4 py-2 bg-[#0e5439] text-white rounded hover:bg-[#0c4630] transition cursor-pointer"
     >
       Export PDF
     </button>
