@@ -200,14 +200,6 @@ export default function IngredientTable({
                   ${inflowCost.toFixed(2)}
                 </td>
               </tr>
-              <tr className="italic border-t">
-                <td colSpan={3} className="px-4 py-3 text-right">
-                  Misc $
-                </td>
-                <td className="px-4 py-3 text-right font-mono">
-                  ${miscCost.toFixed(2)}
-                </td>
-              </tr>
               <tr className="bg-gray-100 font-bold border-t">
                 <td colSpan={3} className="px-4 py-3 text-right">
                   Final Cost / kg

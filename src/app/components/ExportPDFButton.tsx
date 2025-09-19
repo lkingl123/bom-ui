@@ -108,17 +108,16 @@ export default function ExportPDFButton({
     // Bulk Pricing
     autoTable(doc, {
       startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 90,
-      head: [["Size", "MSRP", "Profit Per Unit", "Packaging Cost", "Multiplier"]],
+      head: [["Size", "MSRP", "Profit Per Unit", "Packaging Cost"]],
       body: Object.entries(product.bulk_pricing || {}).map(
         ([size, data]: [
           string,
-          { msrp: number; profit: number; packaging: number; multiplier: number }
+          { msrp: number; profit: number; packaging: number;}
         ]) => [
           size,
           `$${data.msrp.toFixed(2)}`,
           `$${data.profit.toFixed(2)}`,
           `$${data.packaging.toFixed(2)}`,
-          `${data.multiplier}×`,
         ]
       ),
       theme: "grid",

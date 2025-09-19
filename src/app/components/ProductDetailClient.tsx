@@ -130,18 +130,14 @@ export default function ProductDetailClient({
           Category: {product.category || "-"}
         </p>
 
-        {/* Packaging Table */}
-        <PackagingTable
-          packagingItems={packagingItems}
-          setPackagingItems={setPackagingItems}
-        />
-
-        {/* Cost Summary */}
+        {/* Condensed Inputs */}
         <div className="mt-8 bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Labor Calculator
+            Production Inputs
           </h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {/* Order Quantity */}
             <div>
               <p className="text-gray-500">Order Quantity</p>
               <input
@@ -149,9 +145,11 @@ export default function ProductDetailClient({
                 min={1}
                 value={orderQuantity}
                 onChange={(e) => setOrderQuantity(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+                className="w-full border rounded px-3 py-2 text-sm font-mono"
               />
             </div>
+
+            {/* Inflow Cost */}
             <div>
               <p className="text-gray-500">Inflow Cost ($ total)</p>
               <input
@@ -160,21 +158,11 @@ export default function ProductDetailClient({
                 min={0}
                 value={inflowCost}
                 onChange={(e) => setInflowCost(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
-              />
-            </div>
-            <div>
-              <p className="text-gray-500">Cost Per Touch ($)</p>
-              <input
-                type="number"
-                step="0.01"
-                min={0}
-                value={costPerTouch}
-                onChange={(e) => setCostPerTouch(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+                className="w-full border rounded px-3 py-2 text-sm font-mono"
               />
             </div>
 
+            {/* Misc Cost */}
             <div>
               <p className="text-gray-500">Misc Cost ($ total)</p>
               <input
@@ -183,9 +171,24 @@ export default function ProductDetailClient({
                 min={0}
                 value={miscCost}
                 onChange={(e) => setMiscCost(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+                className="w-full border rounded px-3 py-2 text-sm font-mono"
               />
             </div>
+
+            {/* Cost Per Touch */}
+            <div>
+              <p className="text-gray-500">Cost Per Touch ($)</p>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={costPerTouch}
+                onChange={(e) => setCostPerTouch(Number(e.target.value) || 0)}
+                className="w-full border rounded px-3 py-2 text-sm font-mono"
+              />
+            </div>
+
+            {/* Touch Points */}
             <div>
               <p className="text-gray-500">Touch Points</p>
               <input
@@ -193,23 +196,17 @@ export default function ProductDetailClient({
                 min={0}
                 value={touchPoints}
                 onChange={(e) => setTouchPoints(Number(e.target.value) || 0)}
-                className="w-32 border rounded px-2 py-1 text-sm font-mono"
+                className="w-full border rounded px-3 py-2 text-sm font-mono"
               />
             </div>
-            {/* <div>
-              <p className="text-gray-500">Formula Weight (kg)</p>
-              <p className="font-mono text-gray-900">
-                {product.formula_kg?.toFixed(3) || "-"}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-500">Cost per kg</p>
-              <p className="font-mono text-[#0e5439]">
-                ${product.cost_per_kg?.toFixed(2) || "0.00"}
-              </p>
-            </div> */}
           </div>
         </div>
+
+        {/* Packaging Table */}
+        <PackagingTable
+          packagingItems={packagingItems}
+          setPackagingItems={setPackagingItems}
+        />
 
         {/* Ingredient Table */}
         <IngredientTable
@@ -272,7 +269,6 @@ export default function ProductDetailClient({
                 <th className="px-4 py-2 text-right">MSRP</th>
                 <th className="px-4 py-2 text-right">Profit Per Unit</th>
                 <th className="px-4 py-2 text-right">Packaging Cost</th>
-                <th className="px-4 py-2 text-right">Multiplier</th>
               </tr>
             </thead>
             <tbody>
@@ -283,7 +279,6 @@ export default function ProductDetailClient({
                     msrp: number;
                     profit: number;
                     packaging: number;
-                    multiplier: number;
                   }
                 ]) => (
                   <tr key={size} className="border-t hover:bg-gray-50">
@@ -296,9 +291,6 @@ export default function ProductDetailClient({
                     </td>
                     <td className="px-4 py-2 text-right font-mono">
                       ${data.packaging.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono">
-                      {data.multiplier}×
                     </td>
                   </tr>
                 )

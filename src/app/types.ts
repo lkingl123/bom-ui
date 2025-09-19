@@ -105,5 +105,4 @@ export type BulkPricingEntry = {
   msrp: number;
   profit: number;
   packaging: number;
-  multiplier: number;
 };
