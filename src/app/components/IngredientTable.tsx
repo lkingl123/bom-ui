@@ -12,7 +12,6 @@ interface IngredientTableProps {
   originalComponents: ComponentEditable[];
   packagingTotal: number;
   inflowCost: number;   // ✅ new
-  miscCost: number;     // ✅ new
 }
 
 export default function IngredientTable({
@@ -23,7 +22,6 @@ export default function IngredientTable({
   originalComponents,
   packagingTotal,
   inflowCost,
-  miscCost,
 }: IngredientTableProps): React.ReactElement {
   const handleReset = (): void => {
     setComponents([...originalComponents]); 
@@ -56,7 +54,7 @@ export default function IngredientTable({
 
   // ✅ final cost matches Excel
   const finalCost =
-    baseCost + laborCost + packagingTotal + inflowCost + miscCost;
+    baseCost + laborCost + packagingTotal + inflowCost;
 
   const handleEdit = (
     index: number,

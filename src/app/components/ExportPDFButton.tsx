@@ -1,4 +1,3 @@
-// ExportPDFButton.tsx
 "use client";
 
 import React from "react";
@@ -68,13 +67,12 @@ export default function ExportPDFButton({
       theme: "grid",
     });
 
-    // Cost Summary
+    // Cost Summary (misc removed)
     const finalCombined =
       (product.cost_per_kg || 0) +
       (product.labor_cost || 0) +
       (product.packaging_cost || 0) +
-      (product.inflow_cost || 0) +
-      (product.misc_cost || 0);
+      (product.inflow_cost || 0);
 
     autoTable(doc, {
       startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
@@ -83,7 +81,6 @@ export default function ExportPDFButton({
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
         ["Ingredient Cost Per Unit", `$${(product.cost_per_kg || 0).toFixed(2)}`],
         ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
-        ["Misc Cost", `$${(product.misc_cost || 0).toFixed(2)}`],
         ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
         ["Total Packaging Cost", `$${(product.packaging_cost || 0).toFixed(2)}`],
         ["Final Combined Cost", `$${finalCombined.toFixed(2)}`],
@@ -112,7 +109,7 @@ export default function ExportPDFButton({
       body: Object.entries(product.bulk_pricing || {}).map(
         ([size, data]: [
           string,
-          { msrp: number; profit: number; packaging: number;}
+          { msrp: number; profit: number; packaging: number }
         ]) => [
           size,
           `$${data.msrp.toFixed(2)}`,
