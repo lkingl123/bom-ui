@@ -247,7 +247,7 @@ export default function ProductDetailClient({
               </tr>
               <tr>
                 <td className="px-4 py-2">Final Total Cost (Excel)</td>
-                <td className="px-4 py-2 text-[#0e5439]">${product.total_cost_excel?.toFixed(2) || "-"}</td>
+                <td className="px-4 py-2 text-[#0e5439] font-bold">${product.total_cost_excel?.toFixed(2) || "-"}</td>
               </tr>
               <tr>
                 <td className="px-4 py-2">Tiered Pricing</td>
