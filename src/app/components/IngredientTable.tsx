@@ -168,7 +168,7 @@ export default function IngredientTable({
               {/* Totals */}
               <tr className="bg-gray-50 font-semibold border-t">
                 <td colSpan={3} className="px-4 py-3 text-right">
-                  Ingredient Cost Per Unit
+                  Total Cost Per KG
                 </td>
                 <td className="px-4 py-3 text-right text-[#0e5439] font-mono">
                   ${baseCost.toFixed(2)}
@@ -200,7 +200,7 @@ export default function IngredientTable({
               </tr>
               <tr className="bg-gray-100 font-bold border-t">
                 <td colSpan={3} className="px-4 py-3 text-right">
-                  Final Cost / kg
+                  Cost / kg
                 </td>
                 <td className="px-4 py-3 text-right text-[#0e5439] font-mono">
                   ${finalCost.toFixed(2)}

@@ -1,3 +1,4 @@
+// src/app/components/ProductDetailClient.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -29,6 +30,8 @@ export default function ProductDetailClient({
   const [inflowCost, setInflowCost] = useState<number>(0);
   const [touchPoints, setTouchPoints] = useState<number>(6);
   const [costPerTouch, setCostPerTouch] = useState<number>(0.09);
+  const [totalOzPerUnit, setTotalOzPerUnit] = useState<number>(4);
+  const [gramsPerOz, setGramsPerOz] = useState<number>(30);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +64,8 @@ export default function ProductDetailClient({
           touchPoints,
           costPerTouch,
           orderQuantity,
+          totalOzPerUnit,
+          gramsPerOz,
         });
 
         setProduct(enriched);
@@ -72,7 +77,16 @@ export default function ProductDetailClient({
     };
 
     fetchData();
-  }, [name, inflowCost, touchPoints, costPerTouch, orderQuantity, packagingItems]);
+  }, [
+    name,
+    inflowCost,
+    touchPoints,
+    costPerTouch,
+    orderQuantity,
+    packagingItems,
+    totalOzPerUnit,
+    gramsPerOz,
+  ]);
 
   if (!product) return <p className="p-6">Loading...</p>;
 
@@ -94,7 +108,7 @@ export default function ProductDetailClient({
         </div>
 
         {/* Master Table */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div>
           <h2 className="text-xl font-semibold mb-4">Product Cost Dashboard</h2>
           <table className="min-w-full text-sm border border-gray-200 rounded-lg">
             <tbody>
@@ -133,6 +147,28 @@ export default function ProductDetailClient({
                     type="number"
                     value={orderQuantity}
                     onChange={(e) => setOrderQuantity(Number(e.target.value) || 0)}
+                    className="w-32 border rounded px-2 py-1 font-mono"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Total Oz Per Unit</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="number"
+                    value={totalOzPerUnit}
+                    onChange={(e) => setTotalOzPerUnit(Number(e.target.value) || 0)}
+                    className="w-32 border rounded px-2 py-1 font-mono"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Grams per Oz</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="number"
+                    value={gramsPerOz}
+                    onChange={(e) => setGramsPerOz(Number(e.target.value) || 0)}
                     className="w-32 border rounded px-2 py-1 font-mono"
                   />
                 </td>
@@ -200,6 +236,18 @@ export default function ProductDetailClient({
               {/* Pricing */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">Pricing</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Unit Weight (kg)</td>
+                <td className="px-4 py-2">{product.unit_weight_kg?.toFixed(3) || "-"}</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Ingredient Cost per Unit (Excel)</td>
+                <td className="px-4 py-2">${product.cost_per_unit_excel?.toFixed(3) || "-"}</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Final Total Cost (Excel)</td>
+                <td className="px-4 py-2 text-[#0e5439]">${product.total_cost_excel?.toFixed(2) || "-"}</td>
               </tr>
               <tr>
                 <td className="px-4 py-2">Tiered Pricing</td>

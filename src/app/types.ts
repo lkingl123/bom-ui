@@ -74,6 +74,11 @@ export type ProductCalc = ProductDetail & {
   formula_kg?: number;
   cost_per_kg?: number;
   vendor_suggestions?: string[];
+
+   // ✅ New Excel-style fields
+  unit_weight_kg: number;
+  cost_per_unit_excel: number;
+  total_cost_excel: number;
 };
 
 // Editable packaging item for UI
