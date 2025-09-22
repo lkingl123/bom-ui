@@ -33,39 +33,50 @@ export default function ExportClientPDFButton({
     doc.text(`SKU: ${product.sku || "-"}`, 14, 28);
     doc.text(`Category: ${product.category || "-"}`, 14, 34);
 
-    // ✅ Add INCI and Remarks
+    // ✅ Add INCI and Remarks (wrapped for safety)
     doc.text(`INCI: ${product.inci || "-"}`, 14, 40);
-    doc.text(`Remarks: ${product.remarks || "-"}`, 14, 46);
+    const remarks = doc.splitTextToSize(
+      `Remarks: ${product.remarks || "-"}`,
+      180
+    );
+    doc.text(remarks, 14, 46);
 
-    // Bulk Pricing
+    // Bulk Pricing (now includes packaging)
     autoTable(doc, {
       startY: 55,
-      head: [["Size", "MSRP", "Profit"]],
-      body: Object.entries(product.bulk_pricing || {}).map(
-        ([size, data]: [
-          string,
-          { msrp: number; profit: number; packaging: number }
-        ]) => [
-          size,
-          `$${data.msrp.toFixed(2)}`,
-          `$${data.profit.toFixed(2)}`,
-        ]
-      ),
+      head: [["Size", "MSRP", "Profit", "Packaging"]],
+      body:
+        Object.entries(product.bulk_pricing || {}).map(
+          ([size, data]: [
+            string,
+            { msrp: number; profit: number; packaging: number }
+          ]) => [
+            size,
+            `$${data.msrp.toFixed(2)}`,
+            `$${data.profit.toFixed(2)}`,
+            `$${data.packaging.toFixed(2)}`,
+          ]
+        ) || [["-", "-", "-", "-"]],
       theme: "grid",
+      styles: { halign: "right" },
+      headStyles: { halign: "center" },
     });
 
     // Tiered Pricing
     autoTable(doc, {
       startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
-      body: Object.entries(product.tiered_pricing || {}).map(
-        ([qty, data]: [string, { price: number; profit: number }]) => [
-          qty,
-          `$${data.price.toFixed(2)}`,
-          `$${data.profit.toFixed(2)}`,
-        ]
-      ),
+      body:
+        Object.entries(product.tiered_pricing || {}).map(
+          ([qty, data]: [string, { price: number; profit: number }]) => [
+            qty,
+            `$${data.price.toFixed(2)}`,
+            `$${data.profit.toFixed(2)}`,
+          ]
+        ) || [["-", "-", "-"]],
       theme: "grid",
+      styles: { halign: "right" },
+      headStyles: { halign: "center" },
     });
 
     doc.save(`${product.product_name || "product"}_client.pdf`);
