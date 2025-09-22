@@ -7,13 +7,14 @@ import type {
   PackagingItemEditable,
 } from "../types";
 
-type CalcOptions = {
+export type CalcOptions = {
   inflowCost?: number;
   touchPoints?: number;
   costPerTouch?: number;
   orderQuantity: number;
-  totalOzPerUnit: number; // new
-  gramsPerOz: number; // new
+  totalOzPerUnit: number;
+  gramsPerOz: number;
+  baseProfitMargin?: number;
 };
 
 export function buildProductCalc(
@@ -29,6 +30,7 @@ export function buildProductCalc(
     orderQuantity,
     totalOzPerUnit,
     gramsPerOz,
+    baseProfitMargin = 0.25,
   } = opts;
 
   // ===== Ingredient Costs =====
@@ -47,13 +49,13 @@ export function buildProductCalc(
   const laborCostPerUnit = touchPoints * costPerTouch;
   const laborCostTotal = laborCostPerUnit * orderQuantity;
 
-  // ===== Formula Stats =====
+  // ===== Formula Stats (recipe weight) =====
   const formulaKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);
   const costPerKg = formulaKg > 0 ? ingredientCostTotal / formulaKg : 0;
 
   // ===== Excel-Style Per-Unit Conversion =====
   const unitWeightKg = (totalOzPerUnit * gramsPerOz) / 1000;
-  const costPerUnitExcel = unitWeightKg * costPerKg;
+  const costPerUnitExcel = costPerKg * unitWeightKg;
   const totalCostExcel = costPerUnitExcel * orderQuantity;
 
   // ===== Final Base Cost per Unit =====
@@ -64,17 +66,18 @@ export function buildProductCalc(
     laborCostPerUnit;
 
   // ===== Tiered Pricing =====
-  const profitPerUnitByTier: Record<number, number> = {
-    2500: 0.27,
-    5000: 0.243,
-    10000: 0.216,
-    20000: 0.189,
-    50000: 0.162,
-    100000: 0.189,
+  const marginMultipliers: Record<number, number> = {
+    2500: 1.0,
+    5000: 0.9,
+    10000: 0.8,
+    20000: 0.7,
+    50000: 0.6,
+    100000: 0.5,
   };
 
   const tieredPricing: Record<string, { price: number; profit: number }> = {};
-  Object.entries(profitPerUnitByTier).forEach(([qty, profit]) => {
+  Object.entries(marginMultipliers).forEach(([qty, multiplier]) => {
+    const profit = baseCostPerUnit * baseProfitMargin * multiplier;
     const price = baseCostPerUnit + profit;
     tieredPricing[qty] = { price: parseFloat(price.toFixed(3)), profit };
   });
@@ -111,13 +114,13 @@ export function buildProductCalc(
     touch_points: touchPoints,
     cost_per_touch: costPerTouch,
     labor_cost: laborCostTotal,
-    formula_kg: formulaKg,
-    cost_per_kg: costPerKg,
+    formula_kg: formulaKg,          // batch weight
+    cost_per_kg: costPerKg,         // ingredient cost per kg
     tiered_pricing: tieredPricing,
     bulk_pricing: bulkPricing,
 
-    // ✅ new fields
-    unit_weight_kg: unitWeightKg,
+    // Excel-style
+    unit_weight_kg: unitWeightKg,   // product size (kg)
     cost_per_unit_excel: costPerUnitExcel,
     total_cost_excel: totalCostExcel,
   };

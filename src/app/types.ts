@@ -20,7 +20,18 @@ export type Component = {
   has_cost: boolean;
   unit_cost: number;
   line_cost: number;
+
+  // ✅ optional fields from /ingredients/{ingredient_name}
+  sku?: string;
+  barcode?: string;
+  vendor?: string;
+  description?: string;
+  category?: string;
+  storage_type?: string;
+  inci?: string;
+  remarks?: string;
 };
+
 
 // Product shape from the DETAIL endpoint (/products/{name})
 export type ProductDetail = {

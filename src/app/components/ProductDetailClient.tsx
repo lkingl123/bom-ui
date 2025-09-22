@@ -1,4 +1,3 @@
-// src/app/components/ProductDetailClient.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -32,6 +31,7 @@ export default function ProductDetailClient({
   const [costPerTouch, setCostPerTouch] = useState<number>(0.09);
   const [totalOzPerUnit, setTotalOzPerUnit] = useState<number>(4);
   const [gramsPerOz, setGramsPerOz] = useState<number>(30);
+  const [baseProfitMargin, setBaseProfitMargin] = useState<number>(0.25);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,6 +66,7 @@ export default function ProductDetailClient({
           orderQuantity,
           totalOzPerUnit,
           gramsPerOz,
+          baseProfitMargin,
         });
 
         setProduct(enriched);
@@ -86,12 +87,19 @@ export default function ProductDetailClient({
     packagingItems,
     totalOzPerUnit,
     gramsPerOz,
+    baseProfitMargin,
   ]);
 
   if (!product) return <p className="p-6">Loading...</p>;
 
   const packagingTotal = packagingItems.reduce(
     (sum, item) => sum + (item.line_cost || 0),
+    0
+  );
+
+  // 🔍 debug ingredient cost total
+  const ingredientCostTotal = product.components.reduce(
+    (sum, c) => sum + (Number(c.line_cost) || 0),
     0
   );
 
@@ -208,6 +216,18 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
+              <tr>
+                <td className="px-4 py-2">Base Profit Margin (%)</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={baseProfitMargin}
+                    onChange={(e) => setBaseProfitMargin(Number(e.target.value) || 0)}
+                    className="w-32 border rounded px-2 py-1 font-mono"
+                  />
+                </td>
+              </tr>
 
               {/* Packaging + Ingredients */}
               <tr className="bg-gray-100 font-medium">
@@ -237,6 +257,22 @@ export default function ProductDetailClient({
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">Pricing</td>
               </tr>
+
+              {/* 🔍 Debug Rows */}
+              <tr>
+                <td className="px-4 py-2">Total Ingredient Cost</td>
+                <td className="px-4 py-2">${ingredientCostTotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Formula Weight (kg)</td>
+                <td className="px-4 py-2">{product.formula_kg?.toFixed(3) || "-"}</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Cost per Kg</td>
+                <td className="px-4 py-2">${product.cost_per_kg?.toFixed(3) || "-"}</td>
+              </tr>
+
+              {/* Normal Rows */}
               <tr>
                 <td className="px-4 py-2">Unit Weight (kg)</td>
                 <td className="px-4 py-2">{product.unit_weight_kg?.toFixed(3) || "-"}</td>
@@ -247,8 +283,12 @@ export default function ProductDetailClient({
               </tr>
               <tr>
                 <td className="px-4 py-2">Final Total Cost (Excel)</td>
-                <td className="px-4 py-2 text-[#0e5439] font-bold">${product.total_cost_excel?.toFixed(2) || "-"}</td>
+                <td className="px-4 py-2 text-[#0e5439] font-bold">
+                  ${product.total_cost_excel?.toFixed(2) || "-"}
+                </td>
               </tr>
+
+              {/* Tiered Pricing */}
               <tr>
                 <td className="px-4 py-2">Tiered Pricing</td>
                 <td className="px-4 py-2">
@@ -277,6 +317,8 @@ export default function ProductDetailClient({
                   </table>
                 </td>
               </tr>
+
+              {/* Bulk Pricing */}
               <tr>
                 <td className="px-4 py-2">Bulk Pricing</td>
                 <td className="px-4 py-2">
