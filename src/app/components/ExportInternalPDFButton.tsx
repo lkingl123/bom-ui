@@ -1,3 +1,4 @@
+// src/app/components/ExportInternalPDFButton.tsx
 "use client";
 
 import React from "react";
@@ -40,9 +41,13 @@ export default function ExportInternalPDFButton({
     doc.text(`Barcode: ${product.barcode || "-"}`, 14, 34);
     doc.text(`Category: ${product.category || "-"}`, 14, 40);
 
+    // ✅ Add INCI + Remarks for internal context
+    doc.text(`INCI: ${product.inci || "-"}`, 14, 46);
+    doc.text(`Remarks: ${product.remarks || "-"}`, 14, 52);
+
     // Ingredients
     autoTable(doc, {
-      startY: 50,
+      startY: 60,
       head: [["Ingredient", "% of Formula", "Cost / kg", "Line Cost"]],
       body: components.map((c) => [
         c.name,
@@ -55,7 +60,7 @@ export default function ExportInternalPDFButton({
 
     // Packaging
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 60,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
       head: [["Packaging Item", "Quantity", "Unit Cost", "Line Cost"]],
       body: packagingItems.map((p) => [
         p.name,
@@ -68,7 +73,7 @@ export default function ExportInternalPDFButton({
 
     // Cost summary
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
       head: [["Metric", "Value"]],
       body: [
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
@@ -82,7 +87,7 @@ export default function ExportInternalPDFButton({
 
     // Tiered Pricing
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 90,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(
         ([qty, data]: [string, { price: number; profit: number }]) => [
@@ -96,10 +101,13 @@ export default function ExportInternalPDFButton({
 
     // Bulk Pricing
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 90,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 100,
       head: [["Size", "MSRP", "Profit", "Packaging"]],
       body: Object.entries(product.bulk_pricing || {}).map(
-        ([size, data]: [string, { msrp: number; profit: number; packaging: number }]) => [
+        ([size, data]: [
+          string,
+          { msrp: number; profit: number; packaging: number }
+        ]) => [
           size,
           `$${data.msrp.toFixed(2)}`,
           `$${data.profit.toFixed(2)}`,

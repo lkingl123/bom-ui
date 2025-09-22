@@ -1,3 +1,4 @@
+// src/app/components/ExportClientPDFButton.tsx
 "use client";
 
 import React from "react";
@@ -32,12 +33,19 @@ export default function ExportClientPDFButton({
     doc.text(`SKU: ${product.sku || "-"}`, 14, 28);
     doc.text(`Category: ${product.category || "-"}`, 14, 34);
 
-    // Bulk Pricing (client only cares about this + tiered pricing)
+    // ✅ Add INCI and Remarks
+    doc.text(`INCI: ${product.inci || "-"}`, 14, 40);
+    doc.text(`Remarks: ${product.remarks || "-"}`, 14, 46);
+
+    // Bulk Pricing
     autoTable(doc, {
-      startY: 45,
+      startY: 55,
       head: [["Size", "MSRP", "Profit"]],
       body: Object.entries(product.bulk_pricing || {}).map(
-        ([size, data]: [string, { msrp: number; profit: number; packaging: number }]) => [
+        ([size, data]: [
+          string,
+          { msrp: number; profit: number; packaging: number }
+        ]) => [
           size,
           `$${data.msrp.toFixed(2)}`,
           `$${data.profit.toFixed(2)}`,
@@ -48,7 +56,7 @@ export default function ExportClientPDFButton({
 
     // Tiered Pricing
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(
         ([qty, data]: [string, { price: number; profit: number }]) => [
