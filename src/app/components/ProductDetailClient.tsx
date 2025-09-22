@@ -18,6 +18,16 @@ import type {
 } from "../types";
 import { buildProductCalc } from "../utils/calculations";
 
+// ✅ Simple debounce hook
+function useDebounce<T>(value: T, delay = 400): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
+
 export default function ProductDetailClient({
   name,
 }: {
@@ -34,7 +44,7 @@ export default function ProductDetailClient({
     []
   );
 
-  // Editable inputs (raw string for free typing)
+  // Editable inputs (raw strings)
   const [orderQuantityInput, setOrderQuantityInput] = useState<string>("5000");
   const [inflowCostInput, setInflowCostInput] = useState<string>("0");
   const [touchPointsInput, setTouchPointsInput] = useState<string>("6");
@@ -49,7 +59,7 @@ export default function ProductDetailClient({
     Record<string, number>
   >({});
 
-  // ✅ tier margin overrides
+  // ✅ tier margin overrides + inputs
   const [tierMarginOverrides, setTierMarginOverrides] = useState<
     Record<string, number>
   >({});
@@ -57,6 +67,17 @@ export default function ProductDetailClient({
     Record<string, string>
   >({});
 
+  // ✅ Debounced values
+  const debouncedOrderQuantity = useDebounce(orderQuantityInput, 400);
+  const debouncedInflowCost = useDebounce(inflowCostInput, 400);
+  const debouncedTouchPoints = useDebounce(touchPointsInput, 400);
+  const debouncedCostPerTouch = useDebounce(costPerTouchInput, 400);
+  const debouncedTotalOzPerUnit = useDebounce(totalOzPerUnitInput, 400);
+  const debouncedGramsPerOz = useDebounce(gramsPerOzInput, 400);
+  const debouncedBaseProfitMargin = useDebounce(baseProfitMarginInput, 400);
+  const debouncedTierMarginInputs = useDebounce(tierMarginInputs, 400);
+
+  // ✅ Fetch and compute
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -85,16 +106,23 @@ export default function ProductDetailClient({
           })
         );
 
+        // ✅ apply debounced tier margin overrides
+        const updatedTierOverrides: Record<string, number> = {};
+        Object.entries(debouncedTierMarginInputs).forEach(([qty, val]) => {
+          const num = Number(val);
+          if (!isNaN(num)) updatedTierOverrides[qty] = num / 100;
+        });
+
         const enriched = buildProductCalc(data, normalized, packagingItems, {
-          inflowCost: Number(inflowCostInput) || 0,
-          touchPoints: Number(touchPointsInput) || 0,
-          costPerTouch: Number(costPerTouchInput) || 0,
-          orderQuantity: Number(orderQuantityInput) || 0,
-          totalOzPerUnit: Number(totalOzPerUnitInput) || 0,
-          gramsPerOz: Number(gramsPerOzInput) || 0,
-          baseProfitMargin: (Number(baseProfitMarginInput) || 0) / 100,
+          inflowCost: Number(debouncedInflowCost) || 0,
+          touchPoints: Number(debouncedTouchPoints) || 0,
+          costPerTouch: Number(debouncedCostPerTouch) || 0,
+          orderQuantity: Number(debouncedOrderQuantity) || 0,
+          totalOzPerUnit: Number(debouncedTotalOzPerUnit) || 0,
+          gramsPerOz: Number(debouncedGramsPerOz) || 0,
+          baseProfitMargin: (Number(debouncedBaseProfitMargin) || 0) / 100,
           bulkOverrides: bulkPackagingOverrides,
-          tierMarginOverrides,
+          tierMarginOverrides: updatedTierOverrides,
         });
 
         setProduct(enriched);
@@ -108,16 +136,16 @@ export default function ProductDetailClient({
     fetchData();
   }, [
     name,
-    inflowCostInput,
-    touchPointsInput,
-    costPerTouchInput,
-    orderQuantityInput,
+    debouncedInflowCost,
+    debouncedTouchPoints,
+    debouncedCostPerTouch,
+    debouncedOrderQuantity,
     packagingItems,
-    totalOzPerUnitInput,
-    gramsPerOzInput,
-    baseProfitMarginInput,
+    debouncedTotalOzPerUnit,
+    debouncedGramsPerOz,
+    debouncedBaseProfitMargin,
+    debouncedTierMarginInputs,
     bulkPackagingOverrides,
-    tierMarginOverrides,
   ]);
 
   if (!product) return <LoadingSpinner />;
@@ -139,7 +167,6 @@ export default function ProductDetailClient({
           </Link>
         </div>
 
-        {/* Master Table */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Product Cost Dashboard</h2>
           <table className="min-w-full text-sm border border-gray-200 rounded-lg">
@@ -163,7 +190,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-              {/* ✅ Editable INCI (future-proof) */}
               <tr>
                 <td className="px-4 py-2">INCI</td>
                 <td className="px-4 py-2">
@@ -176,7 +202,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-              {/* ✅ Editable Remarks */}
               <tr>
                 <td className="px-4 py-2">Remarks</td>
                 <td className="px-4 py-2">
@@ -203,15 +228,39 @@ export default function ProductDetailClient({
                   Inputs
                 </td>
               </tr>
-              {([
-                ["Order Quantity", orderQuantityInput, setOrderQuantityInput] as const,
-                ["Total Oz Per Unit", totalOzPerUnitInput, setTotalOzPerUnitInput] as const,
+              {[
+                [
+                  "Order Quantity",
+                  orderQuantityInput,
+                  setOrderQuantityInput,
+                ] as const,
+                [
+                  "Total Oz Per Unit",
+                  totalOzPerUnitInput,
+                  setTotalOzPerUnitInput,
+                ] as const,
                 ["Grams per Oz", gramsPerOzInput, setGramsPerOzInput] as const,
-                ["Inflow Cost ($)", inflowCostInput, setInflowCostInput] as const,
-                ["Cost per Touch", costPerTouchInput, setCostPerTouchInput] as const,
-                ["Touch Points", touchPointsInput, setTouchPointsInput] as const,
-                ["Base Profit Margin (%)", baseProfitMarginInput, setBaseProfitMarginInput] as const,
-              ]).map(([label, value, setter]) => (
+                [
+                  "Inflow Cost ($)",
+                  inflowCostInput,
+                  setInflowCostInput,
+                ] as const,
+                [
+                  "Cost per Touch",
+                  costPerTouchInput,
+                  setCostPerTouchInput,
+                ] as const,
+                [
+                  "Touch Points",
+                  touchPointsInput,
+                  setTouchPointsInput,
+                ] as const,
+                [
+                  "Base Profit Margin (%)",
+                  baseProfitMarginInput,
+                  setBaseProfitMarginInput,
+                ] as const,
+              ].map(([label, value, setter]) => (
                 <tr key={label}>
                   <td className="px-4 py-2">{label}</td>
                   <td className="px-4 py-2">
@@ -248,7 +297,7 @@ export default function ProductDetailClient({
                     }
                     originalComponents={originalComponents}
                     packagingTotal={packagingTotal}
-                    inflowCost={Number(inflowCostInput) || 0}
+                    inflowCost={Number(debouncedInflowCost) || 0}
                   />
                 </td>
               </tr>
@@ -330,13 +379,6 @@ export default function ProductDetailClient({
                                     [qty]: e.target.value,
                                   }))
                                 }
-                                onBlur={(e) => {
-                                  const num = Number(e.target.value);
-                                  setTierMarginOverrides((prev) => ({
-                                    ...prev,
-                                    [qty]: isNaN(num) ? data.margin : num / 100,
-                                  }));
-                                }}
                                 className="w-16 border rounded px-1 py-0.5 text-right font-mono"
                               />
                               %
