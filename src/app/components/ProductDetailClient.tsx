@@ -7,6 +7,7 @@ import IngredientTable from "./IngredientTable";
 import PackagingTable from "./PackagingTable"; 
 import ExportClientPDFButton from "./ExportClientPDFButton";
 import ExportInternalPDFButton from "./ExportInternalPDFButton";
+import CalculatorWidget from "./CalculatorWidget";
 import type {
   Component,
   ComponentEditable,
@@ -303,6 +304,12 @@ export default function ProductDetailClient({
                 </td>
               </tr>
               <tr>
+                <td className="px-4 py-2">Total cost by Ingredients</td>
+                <td className="px-4 py-2 text-[#0e5439] font-semibold">
+                  ${product.total_cost_excel?.toFixed(2) || "-"}
+                </td>
+              </tr>
+              <tr>
                 <td className="px-4 py-2">Base Cost per Unit</td>
                 <td className="px-4 py-2 font-mono">
                   {product.base_cost_per_unit
@@ -311,12 +318,6 @@ export default function ProductDetailClient({
                   <div className="text-xs text-gray-500">
                     After Labor, Packaging, Inflow
                   </div>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2 font-semibold">Final Total Cost</td>
-                <td className="px-4 py-2 text-[#0e5439] font-bold">
-                  ${product.total_cost_excel?.toFixed(2) || "-"}
                 </td>
               </tr>
 
@@ -425,6 +426,9 @@ export default function ProductDetailClient({
               </tr>
             </tbody>
           </table>
+          <div className="lg:col-span-1 mt-6">
+          <CalculatorWidget />
+        </div>
         </div>
       </section>
     </main>
