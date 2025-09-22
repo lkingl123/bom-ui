@@ -5,6 +5,15 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { ProductCalc } from "../types";
 
+// Extend jsPDF to support lastAutoTable
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable?: {
+      finalY: number;
+    };
+  }
+}
+
 interface ExportClientPDFButtonProps {
   product: ProductCalc;
 }
@@ -39,7 +48,7 @@ export default function ExportClientPDFButton({
 
     // Tiered Pricing
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable?.finalY + 10 || 70,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(
         ([qty, data]: [string, { price: number; profit: number }]) => [

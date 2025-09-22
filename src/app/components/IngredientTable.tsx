@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { RotateCcw, Plus, Minus, ChevronDown, ChevronUp } from "lucide-react";
+import { Minus, ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentEditable } from "../types";
 
 interface IngredientTableProps {
@@ -87,8 +87,6 @@ export default function IngredientTable({
     (sum, c) => sum + (Number(c.line_cost) || 0),
     0
   );
-
-  const finalCost = baseCost + laborCost + packagingTotal + inflowCost;
 
   const handleEdit = (
     index: number,

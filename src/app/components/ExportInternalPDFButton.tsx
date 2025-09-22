@@ -9,6 +9,15 @@ import type {
   ProductCalc,
 } from "../types";
 
+// Extend jsPDF to support lastAutoTable
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable?: {
+      finalY: number;
+    };
+  }
+}
+
 interface ExportInternalPDFButtonProps {
   product: ProductCalc;
   components: ComponentEditable[];
@@ -46,7 +55,7 @@ export default function ExportInternalPDFButton({
 
     // Packaging
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable?.finalY + 10 || 60,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 60,
       head: [["Packaging Item", "Quantity", "Unit Cost", "Line Cost"]],
       body: packagingItems.map((p) => [
         p.name,
@@ -59,7 +68,7 @@ export default function ExportInternalPDFButton({
 
     // Cost summary
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable?.finalY + 10 || 70,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
       head: [["Metric", "Value"]],
       body: [
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
@@ -73,7 +82,7 @@ export default function ExportInternalPDFButton({
 
     // Tiered Pricing
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable?.finalY + 10 || 80,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(
         ([qty, data]: [string, { price: number; profit: number }]) => [
@@ -87,7 +96,7 @@ export default function ExportInternalPDFButton({
 
     // Bulk Pricing
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable?.finalY + 10 || 90,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 90,
       head: [["Size", "MSRP", "Profit", "Packaging"]],
       body: Object.entries(product.bulk_pricing || {}).map(
         ([size, data]: [string, { msrp: number; profit: number; packaging: number }]) => [
@@ -106,7 +115,7 @@ export default function ExportInternalPDFButton({
   return (
     <button
       onClick={handleExport}
-      className="px-4 py-2 bg-[#0e5439] text-white rounded hover:bg-[#0e5439] transition cursor-pointer"
+      className="px-4 py-2 bg-[#0e5439] text-white rounded hover:bg-[#0c4630] transition cursor-pointer"
     >
       Export Internal PDF
     </button>
