@@ -113,21 +113,29 @@ export default function ProductDetailClient({
           if (!isNaN(num)) updatedTierOverrides[qty] = num / 100;
         });
 
-        const enriched = buildProductCalc(data, normalized, packagingItems, {
-          inflowCost: Number(debouncedInflowCost) || 0,
-          touchPoints: Number(debouncedTouchPoints) || 0,
-          costPerTouch: Number(debouncedCostPerTouch) || 0,
-          orderQuantity: Number(debouncedOrderQuantity) || 0,
-          totalOzPerUnit: Number(debouncedTotalOzPerUnit) || 0,
-          gramsPerOz: Number(debouncedGramsPerOz) || 0,
-          baseProfitMargin: (Number(debouncedBaseProfitMargin) || 0) / 100,
-          bulkOverrides: bulkPackagingOverrides,
-          tierMarginOverrides: updatedTierOverrides,
-        });
+        const enriched = buildProductCalc(
+          data,
+          editableComponents,
+          packagingItems,
+          {
+            inflowCost: Number(debouncedInflowCost) || 0,
+            touchPoints: Number(debouncedTouchPoints) || 0,
+            costPerTouch: Number(debouncedCostPerTouch) || 0,
+            orderQuantity: Number(debouncedOrderQuantity) || 0,
+            totalOzPerUnit: Number(debouncedTotalOzPerUnit) || 0,
+            gramsPerOz: Number(debouncedGramsPerOz) || 0,
+            baseProfitMargin: (Number(debouncedBaseProfitMargin) || 0) / 100,
+            bulkOverrides: bulkPackagingOverrides,
+            tierMarginOverrides: updatedTierOverrides,
+          }
+        );
 
         setProduct(enriched);
-        setEditableComponents(normalized);
+        // only set once when fetching — not on every calc
         setOriginalComponents(normalized);
+        if (editableComponents.length === 0) {
+          setEditableComponents(normalized); // ✅ only initialize if empty
+        }
       } catch (err) {
         console.error("Error fetching product detail:", err);
       }
@@ -136,11 +144,12 @@ export default function ProductDetailClient({
     fetchData();
   }, [
     name,
+    editableComponents,
+    packagingItems,
     debouncedInflowCost,
     debouncedTouchPoints,
     debouncedCostPerTouch,
     debouncedOrderQuantity,
-    packagingItems,
     debouncedTotalOzPerUnit,
     debouncedGramsPerOz,
     debouncedBaseProfitMargin,
