@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Minus, ChevronDown, ChevronUp } from "lucide-react";
-import type { ComponentEditable } from "../types";
-import { RotateCcw } from "lucide-react";
+import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
+import type { Component, ComponentEditable } from "../types"; // ✅ include Component + ComponentEditable
+import IngredientSearch from "./IngredientSearch";
 
 interface IngredientTableProps {
   components: ComponentEditable[];
@@ -26,6 +26,7 @@ export default function IngredientTable({
 }: IngredientTableProps): React.ReactElement {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [loadingRows, setLoadingRows] = useState<Record<number, boolean>>({});
+  const [showSearch, setShowSearch] = useState(false);
 
   const toggleExpand = async (index: number, ingredientName: string): Promise<void> => {
     if (expandedRows[index]) {
@@ -63,19 +64,22 @@ export default function IngredientTable({
     setLaborCost(0);
   };
 
+  // 🔹 Use IngredientSearch modal
   const handleAddIngredient = (): void => {
+    setShowSearch(true);
+  };
+
+  const handleIngredientSelect = (ingredient: Component): void => {
     const newIngredient: ComponentEditable = {
-      name: "New Ingredient",
-      percent: 0,
-      uom: "kg",
-      unit_cost: 0,
-      line_cost: 0,
-      quantity: 0,
+      ...ingredient, // spread base Component fields
+      percent: 0,    // UI-only field
+      quantity: 0,   // reset for UI
       has_cost: true,
-      inci: "",
-      remarks: "",
+      unit_cost: ingredient.unit_cost ?? 0,
+      line_cost: 0,  // will be recalculated
     };
     setComponents([...components, newIngredient]);
+    setShowSearch(false);
   };
 
   const handleRemoveIngredient = (index: number): void => {
@@ -121,17 +125,24 @@ export default function IngredientTable({
     setComponents(updated);
   };
 
-  // ✅ Sort by % (descending) but still editable
   const sortedComponents = [...components].sort((a, b) => b.percent - a.percent);
 
   return (
     <div>
+      {showSearch && (
+        <IngredientSearch
+          onSelect={handleIngredientSelect}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
+
       {/* Toolbar */}
       <div className="flex justify-between mb-4 mt-6">
         <button
           onClick={handleAddIngredient}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#0e5439] text-white hover:bg-[#0c4630] transition text-sm font-medium shadow-sm cursor-pointer"
         >
+          <Plus className="w-4 h-4" />
           Add Ingredient
         </button>
         <button
