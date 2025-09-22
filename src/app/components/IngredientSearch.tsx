@@ -15,7 +15,9 @@ export default function IngredientSearch({
 }: IngredientSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [allIngredients, setAllIngredients] = useState<Component[]>([]);
-  const [filteredIngredients, setFilteredIngredients] = useState<Component[]>([]);
+  const [filteredIngredients, setFilteredIngredients] = useState<Component[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,23 +28,16 @@ export default function IngredientSearch({
         if (res.ok) {
           const data = await res.json();
 
-          // 🔹 Normalize API response so it matches Component type
-          const normalized: Component[] = data.map((ing: any) => ({
-            name: ing.name,
-            quantity: 0,
-            uom: ing.uom || "kg",
-            has_cost: true,
-            unit_cost: ing.unit_cost ?? ing.cost ?? 0,
-            line_cost: 0,
-            sku: ing.sku,
-            barcode: ing.barcode,
-            vendor: ing.vendor,
-            description: ing.description,
-            category: ing.category,
-            storage_type: ing.storage_type,
-            inci: ing.inci,
-            remarks: ing.remarks,
-          }));
+          const normalized: Component[] = data.map(
+            (ing: Component & { cost?: number }) => ({
+              ...ing,
+              quantity: 0,
+              uom: ing.uom || "kg",
+              has_cost: true,
+              unit_cost: ing.unit_cost ?? ing.cost ?? 0,
+              line_cost: 0,
+            })
+          );
 
           setAllIngredients(normalized);
           setFilteredIngredients(normalized.slice(0, 20));
