@@ -113,10 +113,11 @@ export type LaborItemEditable = {
 export type TieredPricingEntry = {
   price: number;
   profit: number;
+  margin: number; // ✅ new
 };
 
 export type BulkPricingEntry = {
   msrp: number;
   profit: number;
-  packaging: number; 
+  packaging: number;
 };

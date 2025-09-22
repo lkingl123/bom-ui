@@ -17,8 +17,9 @@ export type CalcOptions = {
   gramsPerOz: number;
   baseProfitMargin?: number;
 
-  // ✅ only keep bulk overrides now
+  // ✅ overrides
   bulkOverrides?: Record<string, number>;
+  tierMarginOverrides?: Record<string, number>; // <-- add this
 };
 
 export function buildProductCalc(
@@ -35,6 +36,7 @@ export function buildProductCalc(
     totalOzPerUnit,
     gramsPerOz,
     baseProfitMargin = 0.25,
+    tierMarginOverrides = {}, // ✅ default empty
   } = opts;
 
   // ===== Ingredient Costs =====
@@ -43,7 +45,7 @@ export function buildProductCalc(
     0
   );
 
-  // ===== Packaging Costs (auto-sum from table only) =====
+  // ===== Packaging Costs =====
   const packagingCostTotal = packagingItems.reduce(
     (sum, p) => sum + (p.quantity * p.unit_cost || 0),
     0
@@ -53,7 +55,7 @@ export function buildProductCalc(
   const laborCostPerUnit = touchPoints * costPerTouch;
   const laborCostTotal = laborCostPerUnit * orderQuantity;
 
-  // ===== Formula Stats (recipe weight) =====
+  // ===== Formula Stats =====
   const formulaKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);
   const costPerKg = formulaKg > 0 ? ingredientCostTotal / formulaKg : 0;
 
@@ -79,38 +81,40 @@ export function buildProductCalc(
     100000: 0.5,
   };
 
-  const tieredPricing: Record<string, { price: number; profit: number }> = {};
-  Object.entries(marginMultipliers).forEach(([qty, multiplier]) => {
-    const profit = baseCostPerUnit * baseProfitMargin * multiplier;
+  const tieredPricing: Record<
+    string,
+    { price: number; profit: number; margin: number }
+  > = {};
+
+  Object.entries(marginMultipliers).forEach(([qty, defaultMargin]) => {
+    const margin = tierMarginOverrides[qty] ?? defaultMargin; // ✅ use override if present
+    const profit = baseCostPerUnit * baseProfitMargin * margin;
     const price = baseCostPerUnit + profit;
-    tieredPricing[qty] = { price: parseFloat(price.toFixed(3)), profit };
+    tieredPricing[qty] = {
+      price: parseFloat(price.toFixed(3)),
+      profit: parseFloat(profit.toFixed(3)),
+      margin,
+    };
   });
 
-  // ===== Bulk Pricing (dynamic) =====
+  // ===== Bulk Pricing (unchanged, still uses baseProfitMargin) =====
   const bulkOptions = [
-    {
-      label: "2oz - Sample",
-      sizeKg: 2 / 35.274,
-      multiplier: 10,
-      packaging: 0.28,
-    },
-    { label: "16 oz", sizeKg: 16 / 35.274, multiplier: 5, packaging: 0.4 },
-    { label: "1 Gal", sizeKg: 3.785, multiplier: 3.5, packaging: 1.38 },
-    { label: "5 Gal", sizeKg: 18.5, multiplier: 3.25, packaging: 8.25 },
-    { label: "55 Gal", sizeKg: 208.18, multiplier: 2.75, packaging: 95.0 },
+    { label: "2oz - Sample", sizeKg: 2 / 35.274, packaging: 0.28 },
+    { label: "16 oz", sizeKg: 16 / 35.274, packaging: 0.4 },
+    { label: "1 Gal", sizeKg: 3.785, packaging: 1.38 },
+    { label: "5 Gal", sizeKg: 18.5, packaging: 8.25 },
+    { label: "55 Gal", sizeKg: 208.18, packaging: 95.0 },
   ];
 
   const bulkPricing: Record<string, BulkPricingEntry> = {};
   bulkOptions.forEach(({ label, sizeKg, packaging }) => {
     const effectivePackaging = opts.bulkOverrides?.[label] ?? packaging;
     const baseCost = costPerKg * sizeKg + effectivePackaging;
-
-    // Use profit margin instead of multipliers
     const profit = baseCost * baseProfitMargin;
     const price = baseCost + profit;
 
     bulkPricing[label] = {
-      msrp: parseFloat(price.toFixed(2)), // now reflects base cost + margin
+      msrp: parseFloat(price.toFixed(2)),
       profit: parseFloat(profit.toFixed(2)),
       packaging: effectivePackaging,
     };
@@ -124,13 +128,13 @@ export function buildProductCalc(
     touch_points: touchPoints,
     cost_per_touch: costPerTouch,
     labor_cost: laborCostTotal,
-    formula_kg: formulaKg, // batch weight
-    cost_per_kg: costPerKg, // ingredient cost per kg
+    formula_kg: formulaKg,
+    cost_per_kg: costPerKg,
     tiered_pricing: tieredPricing,
     bulk_pricing: bulkPricing,
 
     // Excel-style
-    unit_weight_kg: unitWeightKg, // product size (kg)
+    unit_weight_kg: unitWeightKg,
     cost_per_unit_excel: costPerUnitExcel,
     total_cost_excel: totalCostExcel,
     base_cost_per_unit: baseCostPerUnit,

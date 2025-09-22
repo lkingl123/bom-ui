@@ -43,10 +43,18 @@ export default function ProductDetailClient({
   const [gramsPerOz, setGramsPerOz] = useState<number>(30);
   const [baseProfitMargin, setBaseProfitMargin] = useState<number>(0.25);
 
-  // ✅ bulk packaging overrides only
+  // ✅ bulk packaging overrides
   const [bulkPackagingOverrides, setBulkPackagingOverrides] = useState<
     Record<string, number>
   >({});
+
+  // ✅ tier margin overrides
+  const [tierMarginOverrides, setTierMarginOverrides] = useState<
+    Record<string, number>
+  >({});
+  const [tierMarginInputs, setTierMarginInputs] = useState<
+    Record<string, string>
+  >({}); 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,6 +93,7 @@ export default function ProductDetailClient({
           gramsPerOz,
           baseProfitMargin,
           bulkOverrides: bulkPackagingOverrides,
+          tierMarginOverrides, // ✅ send down
         });
 
         setProduct(enriched);
@@ -106,12 +115,12 @@ export default function ProductDetailClient({
     totalOzPerUnit,
     gramsPerOz,
     baseProfitMargin,
-    bulkPackagingOverrides, // ✅ re-run when overrides change
+    bulkPackagingOverrides,
+    tierMarginOverrides, // ✅ re-run when updated
   ]);
 
   if (!product) return <LoadingSpinner />;
 
-  // ✅ packaging total comes only from items
   const packagingTotal = packagingItems.reduce(
     (sum, item) => sum + (item.line_cost || 0),
     0
@@ -153,7 +162,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-
               {/* ✅ Editable INCI (future-proof) */}
               <tr>
                 <td className="px-4 py-2">INCI</td>
@@ -167,7 +175,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-
               {/* ✅ Editable Remarks */}
               <tr>
                 <td className="px-4 py-2">Remarks</td>
@@ -181,7 +188,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-
               <tr>
                 <td className="px-4 py-2">SKU / Barcode / Category</td>
                 <td className="px-4 py-2 text-gray-700">
@@ -189,7 +195,6 @@ export default function ProductDetailClient({
                   {product.category || "-"}
                 </td>
               </tr>
-
               {/* Inputs */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
@@ -286,7 +291,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-
               {/* Packaging + Ingredients */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
@@ -314,7 +318,6 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
-
               {/* Pricing */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
@@ -350,7 +353,6 @@ export default function ProductDetailClient({
                   </div>
                 </td>
               </tr>
-
               {/* Tiered Pricing */}
               <tr>
                 <td className="px-4 py-2">Tiered Pricing</td>
@@ -361,31 +363,58 @@ export default function ProductDetailClient({
                         <th className="px-2 py-1 text-left">Qty</th>
                         <th className="px-2 py-1 text-right">Price/Unit</th>
                         <th className="px-2 py-1 text-right">Profit/Unit</th>
+                        <th className="px-2 py-1 text-right">Margin %</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {product.tiered_pricing &&
-                        Object.entries(product.tiered_pricing).map(
-                          ([qty, data]: [
-                            string,
-                            { price: number; profit: number }
-                          ]) => (
-                            <tr key={qty} className="border-t">
-                              <td className="px-2 py-1">{qty}</td>
-                              <td className="px-2 py-1 text-right">
-                                ${data.price.toFixed(2)}
-                              </td>
-                              <td className="px-2 py-1 text-right text-gray-600">
-                                ${data.profit.toFixed(3)}
-                              </td>
-                            </tr>
-                          )
-                        )}
+                      {Object.entries(product.tiered_pricing).map(
+                        ([qty, data]: [
+                          string,
+                          { price: number; profit: number; margin: number }
+                        ]) => (
+                          <tr key={qty} className="border-t">
+                            <td className="px-2 py-1">{qty}</td>
+                            <td className="px-2 py-1 text-right">
+                              ${data.price.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right text-gray-600">
+                              ${data.profit.toFixed(3)}
+                            </td>
+                            <td className="px-2 py-1 text-right text-gray-600">
+                              <input
+                                type="number"
+                                step="1"
+                                value={
+                                  tierMarginInputs[qty] ??
+                                  (
+                                    (tierMarginOverrides[qty] ?? data.margin) *
+                                    100
+                                  ).toString()
+                                }
+                                onChange={(e) =>
+                                  setTierMarginInputs((prev) => ({
+                                    ...prev,
+                                    [qty]: e.target.value, // ✅ keep raw input as string
+                                  }))
+                                }
+                                onBlur={(e) => {
+                                  const num = Number(e.target.value);
+                                  setTierMarginOverrides((prev) => ({
+                                    ...prev,
+                                    [qty]: isNaN(num) ? data.margin : num / 100, // ✅ convert to decimal only on blur
+                                  }));
+                                }}
+                                className="w-16 border rounded px-1 py-0.5 text-right font-mono"
+                              />
+                              %
+                            </td>
+                          </tr>
+                        )
+                      )}
                     </tbody>
                   </table>
                 </td>
               </tr>
-
               {/* Bulk Pricing */}
               <tr>
                 <td className="px-4 py-2">Bulk Pricing</td>
@@ -436,7 +465,6 @@ export default function ProductDetailClient({
                   </table>
                 </td>
               </tr>
-
               {/* Actions */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
