@@ -34,14 +34,15 @@ export default function ProductDetailClient({
     []
   );
 
-  // Editable inputs
-  const [orderQuantity, setOrderQuantity] = useState<number>(5000);
-  const [inflowCost, setInflowCost] = useState<number>(0);
-  const [touchPoints, setTouchPoints] = useState<number>(6);
-  const [costPerTouch, setCostPerTouch] = useState<number>(0.09);
-  const [totalOzPerUnit, setTotalOzPerUnit] = useState<number>(4);
-  const [gramsPerOz, setGramsPerOz] = useState<number>(30);
-  const [baseProfitMargin, setBaseProfitMargin] = useState<number>(0.25);
+  // Editable inputs (raw string for free typing)
+  const [orderQuantityInput, setOrderQuantityInput] = useState<string>("5000");
+  const [inflowCostInput, setInflowCostInput] = useState<string>("0");
+  const [touchPointsInput, setTouchPointsInput] = useState<string>("6");
+  const [costPerTouchInput, setCostPerTouchInput] = useState<string>("0.09");
+  const [totalOzPerUnitInput, setTotalOzPerUnitInput] = useState<string>("4");
+  const [gramsPerOzInput, setGramsPerOzInput] = useState<string>("30");
+  const [baseProfitMarginInput, setBaseProfitMarginInput] =
+    useState<string>("25");
 
   // ✅ bulk packaging overrides
   const [bulkPackagingOverrides, setBulkPackagingOverrides] = useState<
@@ -54,7 +55,7 @@ export default function ProductDetailClient({
   >({});
   const [tierMarginInputs, setTierMarginInputs] = useState<
     Record<string, string>
-  >({}); 
+  >({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,15 +86,15 @@ export default function ProductDetailClient({
         );
 
         const enriched = buildProductCalc(data, normalized, packagingItems, {
-          inflowCost,
-          touchPoints,
-          costPerTouch,
-          orderQuantity,
-          totalOzPerUnit,
-          gramsPerOz,
-          baseProfitMargin,
+          inflowCost: Number(inflowCostInput) || 0,
+          touchPoints: Number(touchPointsInput) || 0,
+          costPerTouch: Number(costPerTouchInput) || 0,
+          orderQuantity: Number(orderQuantityInput) || 0,
+          totalOzPerUnit: Number(totalOzPerUnitInput) || 0,
+          gramsPerOz: Number(gramsPerOzInput) || 0,
+          baseProfitMargin: (Number(baseProfitMarginInput) || 0) / 100,
           bulkOverrides: bulkPackagingOverrides,
-          tierMarginOverrides, // ✅ send down
+          tierMarginOverrides,
         });
 
         setProduct(enriched);
@@ -107,16 +108,16 @@ export default function ProductDetailClient({
     fetchData();
   }, [
     name,
-    inflowCost,
-    touchPoints,
-    costPerTouch,
-    orderQuantity,
+    inflowCostInput,
+    touchPointsInput,
+    costPerTouchInput,
+    orderQuantityInput,
     packagingItems,
-    totalOzPerUnit,
-    gramsPerOz,
-    baseProfitMargin,
+    totalOzPerUnitInput,
+    gramsPerOzInput,
+    baseProfitMarginInput,
     bulkPackagingOverrides,
-    tierMarginOverrides, // ✅ re-run when updated
+    tierMarginOverrides,
   ]);
 
   if (!product) return <LoadingSpinner />;
@@ -195,102 +196,35 @@ export default function ProductDetailClient({
                   {product.category || "-"}
                 </td>
               </tr>
+
               {/* Inputs */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
                   Inputs
                 </td>
               </tr>
-              <tr>
-                <td className="px-4 py-2">Order Quantity</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    value={orderQuantity}
-                    onChange={(e) =>
-                      setOrderQuantity(Number(e.target.value) || 0)
-                    }
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Total Oz Per Unit</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    value={totalOzPerUnit}
-                    onChange={(e) =>
-                      setTotalOzPerUnit(Number(e.target.value) || 0)
-                    }
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Grams per Oz</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    value={gramsPerOz}
-                    onChange={(e) => setGramsPerOz(Number(e.target.value) || 0)}
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Inflow Cost ($)</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={inflowCost}
-                    onChange={(e) => setInflowCost(Number(e.target.value) || 0)}
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Cost per Touch</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={costPerTouch}
-                    onChange={(e) =>
-                      setCostPerTouch(Number(e.target.value) || 0)
-                    }
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Touch Points</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    value={touchPoints}
-                    onChange={(e) =>
-                      setTouchPoints(Number(e.target.value) || 0)
-                    }
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Base Profit Margin (%)</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={baseProfitMargin}
-                    onChange={(e) =>
-                      setBaseProfitMargin(Number(e.target.value) || 0)
-                    }
-                    className="w-32 border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
+              {([
+                ["Order Quantity", orderQuantityInput, setOrderQuantityInput] as const,
+                ["Total Oz Per Unit", totalOzPerUnitInput, setTotalOzPerUnitInput] as const,
+                ["Grams per Oz", gramsPerOzInput, setGramsPerOzInput] as const,
+                ["Inflow Cost ($)", inflowCostInput, setInflowCostInput] as const,
+                ["Cost per Touch", costPerTouchInput, setCostPerTouchInput] as const,
+                ["Touch Points", touchPointsInput, setTouchPointsInput] as const,
+                ["Base Profit Margin (%)", baseProfitMarginInput, setBaseProfitMarginInput] as const,
+              ]).map(([label, value, setter]) => (
+                <tr key={label}>
+                  <td className="px-4 py-2">{label}</td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) => setter(e.target.value)}
+                      className="w-32 border rounded px-2 py-1 font-mono"
+                    />
+                  </td>
+                </tr>
+              ))}
+
               {/* Packaging + Ingredients */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
@@ -314,7 +248,7 @@ export default function ProductDetailClient({
                     }
                     originalComponents={originalComponents}
                     packagingTotal={packagingTotal}
-                    inflowCost={inflowCost}
+                    inflowCost={Number(inflowCostInput) || 0}
                   />
                 </td>
               </tr>
@@ -382,8 +316,7 @@ export default function ProductDetailClient({
                             </td>
                             <td className="px-2 py-1 text-right text-gray-600">
                               <input
-                                type="number"
-                                step="1"
+                                type="text"
                                 value={
                                   tierMarginInputs[qty] ??
                                   (
@@ -394,14 +327,14 @@ export default function ProductDetailClient({
                                 onChange={(e) =>
                                   setTierMarginInputs((prev) => ({
                                     ...prev,
-                                    [qty]: e.target.value, // ✅ keep raw input as string
+                                    [qty]: e.target.value,
                                   }))
                                 }
                                 onBlur={(e) => {
                                   const num = Number(e.target.value);
                                   setTierMarginOverrides((prev) => ({
                                     ...prev,
-                                    [qty]: isNaN(num) ? data.margin : num / 100, // ✅ convert to decimal only on blur
+                                    [qty]: isNaN(num) ? data.margin : num / 100,
                                   }));
                                 }}
                                 className="w-16 border rounded px-1 py-0.5 text-right font-mono"
@@ -415,6 +348,7 @@ export default function ProductDetailClient({
                   </table>
                 </td>
               </tr>
+
               {/* Bulk Pricing */}
               <tr>
                 <td className="px-4 py-2">Bulk Pricing</td>

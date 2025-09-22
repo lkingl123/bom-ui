@@ -1,8 +1,9 @@
+// src/app/components/IngredientTable.tsx
 "use client";
 
 import React, { useState } from "react";
 import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
-import type { Component, ComponentEditable } from "../types"; // ✅ include Component + ComponentEditable
+import type { Component, ComponentEditable } from "../types";
 import IngredientSearch from "./IngredientSearch";
 
 interface IngredientTableProps {
@@ -28,7 +29,10 @@ export default function IngredientTable({
   const [loadingRows, setLoadingRows] = useState<Record<number, boolean>>({});
   const [showSearch, setShowSearch] = useState(false);
 
-  const toggleExpand = async (index: number, ingredientName: string): Promise<void> => {
+  const toggleExpand = async (
+    index: number,
+    ingredientName: string
+  ): Promise<void> => {
     if (expandedRows[index]) {
       setExpandedRows((prev) => ({ ...prev, [index]: false }));
       return;
@@ -40,7 +44,9 @@ export default function IngredientTable({
       try {
         setLoadingRows((prev) => ({ ...prev, [index]: true }));
         const res = await fetch(
-          `https://bom-api.fly.dev/ingredients/${encodeURIComponent(ingredientName)}`
+          `https://bom-api.fly.dev/ingredients/${encodeURIComponent(
+            ingredientName
+          )}`
         );
         if (res.ok) {
           const data = await res.json();
@@ -52,7 +58,10 @@ export default function IngredientTable({
           setComponents(updated);
         }
       } catch (err) {
-        console.error(`Failed to fetch ingredient details for ${ingredientName}`, err);
+        console.error(
+          `Failed to fetch ingredient details for ${ingredientName}`,
+          err
+        );
       } finally {
         setLoadingRows((prev) => ({ ...prev, [index]: false }));
       }
@@ -64,19 +73,18 @@ export default function IngredientTable({
     setLaborCost(0);
   };
 
-  // 🔹 Use IngredientSearch modal
   const handleAddIngredient = (): void => {
     setShowSearch(true);
   };
 
   const handleIngredientSelect = (ingredient: Component): void => {
     const newIngredient: ComponentEditable = {
-      ...ingredient, // spread base Component fields
-      percent: 0,    // UI-only field
-      quantity: 0,   // reset for UI
+      ...ingredient,
+      percent: 0,
+      quantity: 0,
       has_cost: true,
       unit_cost: ingredient.unit_cost ?? 0,
-      line_cost: 0,  // will be recalculated
+      line_cost: 0,
     };
     setComponents([...components, newIngredient]);
     setShowSearch(false);
@@ -93,39 +101,30 @@ export default function IngredientTable({
     0
   );
 
+  // ✅ Editable behavior
   const handleEdit = (
     index: number,
     field: "name" | "unit_cost" | "line_cost" | "percent",
     value: string
   ): void => {
     const updated = [...components];
+    const num = parseFloat(value) || 0;
 
     if (field === "percent") {
-      const percent = parseFloat(value) || 0;
-      updated[index] = {
-        ...updated[index],
-        percent: parseFloat(percent.toFixed(2)),
-      };
-      updated[index].line_cost =
-        (updated[index].percent / 100) * updated[index].unit_cost;
+      updated[index].percent = num;
+      updated[index].line_cost = (num / 100) * (updated[index].unit_cost || 0);
     } else if (field === "unit_cost") {
-      const unitCost = parseFloat(value) || 0;
-      updated[index] = { ...updated[index], unit_cost: unitCost };
-      const percent = updated[index].percent || 0;
-      updated[index].line_cost = (percent / 100) * unitCost;
+      updated[index].unit_cost = num;
+      updated[index].line_cost =
+        ((updated[index].percent || 0) / 100) * num;
     } else if (field === "line_cost") {
-      updated[index] = {
-        ...updated[index],
-        line_cost: parseFloat(value) || 0,
-      };
+      updated[index].line_cost = num; // manual override
     } else if (field === "name") {
-      updated[index] = { ...updated[index], name: value };
+      updated[index].name = value;
     }
 
     setComponents(updated);
   };
-
-  const sortedComponents = [...components].sort((a, b) => b.percent - a.percent);
 
   return (
     <div>
@@ -168,7 +167,7 @@ export default function IngredientTable({
               </tr>
             </thead>
             <tbody>
-              {sortedComponents.map((c, i) => (
+              {components.map((c, i) => (
                 <React.Fragment key={i}>
                   <tr className="border-t hover:bg-gray-50 transition">
                     <td className="px-4 py-2 flex items-center gap-2">
@@ -190,8 +189,10 @@ export default function IngredientTable({
                       <input
                         type="number"
                         step="0.01"
-                        value={c.percent.toFixed(2)}
-                        onChange={(e) => handleEdit(i, "percent", e.target.value)}
+                        value={c.percent}
+                        onChange={(e) =>
+                          handleEdit(i, "percent", e.target.value)
+                        }
                         className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                       <span className="ml-1 text-gray-500 text-xs">%</span>
@@ -207,8 +208,16 @@ export default function IngredientTable({
                         className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                     </td>
-                    <td className="px-4 py-2 text-right font-mono">
-                      ${c.line_cost.toFixed(2)}
+                    <td className="px-4 py-2 text-right">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={c.line_cost}
+                        onChange={(e) =>
+                          handleEdit(i, "line_cost", e.target.value)
+                        }
+                        className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
+                      />
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
@@ -236,19 +245,25 @@ export default function IngredientTable({
                             <div>
                               <span className="font-semibold">INCI: </span>
                               {c.inci || (
-                                <span className="italic text-gray-400">N/A</span>
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
                               )}
                             </div>
                             <div>
                               <span className="font-semibold">Remarks: </span>
                               {c.remarks || (
-                                <span className="italic text-gray-400">N/A</span>
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
                               )}
                             </div>
                             <div>
                               <span className="font-semibold">Vendor: </span>
                               {c.vendor || (
-                                <span className="italic text-gray-400">N/A</span>
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
                               )}
                             </div>
                           </div>
