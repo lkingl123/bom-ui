@@ -101,28 +101,47 @@ export default function IngredientTable({
     0
   );
 
-  // ✅ Editable behavior
+  // ✅ Ensure rounding to 2 decimals consistently
+  const round2 = (num: number): number => {
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+  };
+
   const handleEdit = (
     index: number,
     field: "name" | "unit_cost" | "line_cost" | "percent",
     value: string
   ): void => {
     const updated = [...components];
-    const num = parseFloat(value) || 0;
+    let num = parseFloat(value);
+
+    if (isNaN(num)) num = 0;
 
     if (field === "percent") {
-      updated[index].percent = num;
-      updated[index].line_cost = (num / 100) * (updated[index].unit_cost || 0);
+      updated[index].percent = round2(num);
+      updated[index].line_cost = round2(
+        (num / 100) * (updated[index].unit_cost || 0)
+      );
     } else if (field === "unit_cost") {
-      updated[index].unit_cost = num;
-      updated[index].line_cost =
-        ((updated[index].percent || 0) / 100) * num;
+      updated[index].unit_cost = round2(num);
+      updated[index].line_cost = round2(
+        ((updated[index].percent || 0) / 100) * num
+      );
     } else if (field === "line_cost") {
-      updated[index].line_cost = num; // manual override
+      updated[index].line_cost = round2(num); // manual override
     } else if (field === "name") {
       updated[index].name = value;
     }
 
+    setComponents(updated);
+  };
+
+  // Format input after blur to enforce 2 decimals
+  const handleBlur = (
+    index: number,
+    field: "percent" | "unit_cost" | "line_cost"
+  ): void => {
+    const updated = [...components];
+    updated[index][field] = round2(updated[index][field] || 0);
     setComponents(updated);
   };
 
@@ -189,10 +208,11 @@ export default function IngredientTable({
                       <input
                         type="number"
                         step="0.01"
-                        value={c.percent}
+                        value={c.percent.toFixed(2)}
                         onChange={(e) =>
                           handleEdit(i, "percent", e.target.value)
                         }
+                        onBlur={() => handleBlur(i, "percent")}
                         className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                       <span className="ml-1 text-gray-500 text-xs">%</span>
@@ -201,10 +221,11 @@ export default function IngredientTable({
                       <input
                         type="number"
                         step="0.01"
-                        value={c.unit_cost}
+                        value={c.unit_cost.toFixed(2)}
                         onChange={(e) =>
                           handleEdit(i, "unit_cost", e.target.value)
                         }
+                        onBlur={() => handleBlur(i, "unit_cost")}
                         className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                     </td>
@@ -212,10 +233,11 @@ export default function IngredientTable({
                       <input
                         type="number"
                         step="0.01"
-                        value={c.line_cost}
+                        value={c.line_cost.toFixed(2)}
                         onChange={(e) =>
                           handleEdit(i, "line_cost", e.target.value)
                         }
+                        onBlur={() => handleBlur(i, "line_cost")}
                         className="w-24 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                     </td>
