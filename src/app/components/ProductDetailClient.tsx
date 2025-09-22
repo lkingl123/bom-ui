@@ -8,6 +8,7 @@ import PackagingTable from "./PackagingTable";
 import ExportClientPDFButton from "./ExportClientPDFButton";
 import ExportInternalPDFButton from "./ExportInternalPDFButton";
 import CalculatorWidget from "./CalculatorWidget";
+import LoadingSpinner from "./LoadingSpinner";
 import type {
   Component,
   ComponentEditable,
@@ -108,7 +109,7 @@ export default function ProductDetailClient({
     bulkPackagingOverrides, // ✅ re-run when overrides change
   ]);
 
-  if (!product) return <p className="p-6">Loading...</p>;
+  if (!product) return <LoadingSpinner />;
 
   // ✅ packaging total comes only from items
   const packagingTotal = packagingItems.reduce(
