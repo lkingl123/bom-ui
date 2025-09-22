@@ -1,10 +1,12 @@
+// src/app/components/ProductDetailClient.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
-import PackagingTable from "./PackagingTable";
-import ExportPDFButton from "./ExportPDFButton";
+import PackagingTable from "./PackagingTable"; 
+import ExportClientPDFButton from "./ExportClientPDFButton";
+import ExportInternalPDFButton from "./ExportInternalPDFButton";
 import type {
   Component,
   ComponentEditable,
@@ -20,9 +22,15 @@ export default function ProductDetailClient({
   name: string;
 }): React.ReactElement {
   const [product, setProduct] = useState<ProductCalc | null>(null);
-  const [editableComponents, setEditableComponents] = useState<ComponentEditable[]>([]);
-  const [originalComponents, setOriginalComponents] = useState<ComponentEditable[]>([]);
-  const [packagingItems, setPackagingItems] = useState<PackagingItemEditable[]>([]);
+  const [editableComponents, setEditableComponents] = useState<
+    ComponentEditable[]
+  >([]);
+  const [originalComponents, setOriginalComponents] = useState<
+    ComponentEditable[]
+  >([]);
+  const [packagingItems, setPackagingItems] = useState<PackagingItemEditable[]>(
+    []
+  );
 
   // Editable inputs
   const [orderQuantity, setOrderQuantity] = useState<number>(5000);
@@ -32,6 +40,11 @@ export default function ProductDetailClient({
   const [totalOzPerUnit, setTotalOzPerUnit] = useState<number>(4);
   const [gramsPerOz, setGramsPerOz] = useState<number>(30);
   const [baseProfitMargin, setBaseProfitMargin] = useState<number>(0.25);
+
+  // ✅ bulk packaging overrides only
+  const [bulkPackagingOverrides, setBulkPackagingOverrides] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,13 +64,15 @@ export default function ProductDetailClient({
           0
         );
 
-        const normalized: ComponentEditable[] = data.components.map((c: Component) => ({
-          ...c,
-          percent:
-            totalQuantity > 0
-              ? parseFloat(((c.quantity / totalQuantity) * 100).toFixed(2))
-              : 0,
-        }));
+        const normalized: ComponentEditable[] = data.components.map(
+          (c: Component) => ({
+            ...c,
+            percent:
+              totalQuantity > 0
+                ? parseFloat(((c.quantity / totalQuantity) * 100).toFixed(2))
+                : 0,
+          })
+        );
 
         const enriched = buildProductCalc(data, normalized, packagingItems, {
           inflowCost,
@@ -67,6 +82,7 @@ export default function ProductDetailClient({
           totalOzPerUnit,
           gramsPerOz,
           baseProfitMargin,
+          bulkOverrides: bulkPackagingOverrides,
         });
 
         setProduct(enriched);
@@ -88,18 +104,14 @@ export default function ProductDetailClient({
     totalOzPerUnit,
     gramsPerOz,
     baseProfitMargin,
+    bulkPackagingOverrides, // ✅ re-run when overrides change
   ]);
 
   if (!product) return <p className="p-6">Loading...</p>;
 
+  // ✅ packaging total comes only from items
   const packagingTotal = packagingItems.reduce(
     (sum, item) => sum + (item.line_cost || 0),
-    0
-  );
-
-  // 🔍 debug ingredient cost total
-  const ingredientCostTotal = product.components.reduce(
-    (sum, c) => sum + (Number(c.line_cost) || 0),
     0
   );
 
@@ -122,7 +134,9 @@ export default function ProductDetailClient({
             <tbody>
               {/* Product Info */}
               <tr className="bg-gray-100 font-medium">
-                <td colSpan={2} className="px-4 py-2">Product Info</td>
+                <td colSpan={2} className="px-4 py-2">
+                  Product Info
+                </td>
               </tr>
               <tr>
                 <td className="px-4 py-2">Name of Product</td>
@@ -140,13 +154,16 @@ export default function ProductDetailClient({
               <tr>
                 <td className="px-4 py-2">SKU / Barcode / Category</td>
                 <td className="px-4 py-2 text-gray-700">
-                  {product.sku || "-"} / {product.barcode || "-"} / {product.category || "-"}
+                  {product.sku || "-"} / {product.barcode || "-"} /{" "}
+                  {product.category || "-"}
                 </td>
               </tr>
 
               {/* Inputs */}
               <tr className="bg-gray-100 font-medium">
-                <td colSpan={2} className="px-4 py-2">Inputs</td>
+                <td colSpan={2} className="px-4 py-2">
+                  Inputs
+                </td>
               </tr>
               <tr>
                 <td className="px-4 py-2">Order Quantity</td>
@@ -154,7 +171,9 @@ export default function ProductDetailClient({
                   <input
                     type="number"
                     value={orderQuantity}
-                    onChange={(e) => setOrderQuantity(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setOrderQuantity(Number(e.target.value) || 0)
+                    }
                     className="w-32 border rounded px-2 py-1 font-mono"
                   />
                 </td>
@@ -165,7 +184,9 @@ export default function ProductDetailClient({
                   <input
                     type="number"
                     value={totalOzPerUnit}
-                    onChange={(e) => setTotalOzPerUnit(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setTotalOzPerUnit(Number(e.target.value) || 0)
+                    }
                     className="w-32 border rounded px-2 py-1 font-mono"
                   />
                 </td>
@@ -200,7 +221,9 @@ export default function ProductDetailClient({
                     type="number"
                     step="0.01"
                     value={costPerTouch}
-                    onChange={(e) => setCostPerTouch(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setCostPerTouch(Number(e.target.value) || 0)
+                    }
                     className="w-32 border rounded px-2 py-1 font-mono"
                   />
                 </td>
@@ -211,7 +234,9 @@ export default function ProductDetailClient({
                   <input
                     type="number"
                     value={touchPoints}
-                    onChange={(e) => setTouchPoints(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setTouchPoints(Number(e.target.value) || 0)
+                    }
                     className="w-32 border rounded px-2 py-1 font-mono"
                   />
                 </td>
@@ -223,7 +248,9 @@ export default function ProductDetailClient({
                     type="number"
                     step="0.01"
                     value={baseProfitMargin}
-                    onChange={(e) => setBaseProfitMargin(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setBaseProfitMargin(Number(e.target.value) || 0)
+                    }
                     className="w-32 border rounded px-2 py-1 font-mono"
                   />
                 </td>
@@ -231,7 +258,9 @@ export default function ProductDetailClient({
 
               {/* Packaging + Ingredients */}
               <tr className="bg-gray-100 font-medium">
-                <td colSpan={2} className="px-4 py-2">Packaging & Ingredients</td>
+                <td colSpan={2} className="px-4 py-2">
+                  Packaging & Ingredients
+                </td>
               </tr>
               <tr>
                 <td colSpan={2} className="px-4 py-2">
@@ -244,7 +273,9 @@ export default function ProductDetailClient({
                     setComponents={setEditableComponents}
                     laborCost={product.labor_cost ?? 0}
                     setLaborCost={(v) =>
-                      setProduct((prev) => (prev ? { ...prev, labor_cost: v } : prev))
+                      setProduct((prev) =>
+                        prev ? { ...prev, labor_cost: v } : prev
+                      )
                     }
                     originalComponents={originalComponents}
                     packagingTotal={packagingTotal}
@@ -255,34 +286,35 @@ export default function ProductDetailClient({
 
               {/* Pricing */}
               <tr className="bg-gray-100 font-medium">
-                <td colSpan={2} className="px-4 py-2">Pricing</td>
+                <td colSpan={2} className="px-4 py-2">
+                  Pricing
+                </td>
               </tr>
-
-              {/* 🔍 Debug Rows */}
-              <tr>
-                <td className="px-4 py-2">Total Ingredient Cost</td>
-                <td className="px-4 py-2">${ingredientCostTotal.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Formula Weight (kg)</td>
-                <td className="px-4 py-2">{product.formula_kg?.toFixed(3) || "-"}</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">Cost per Kg</td>
-                <td className="px-4 py-2">${product.cost_per_kg?.toFixed(3) || "-"}</td>
-              </tr>
-
-              {/* Normal Rows */}
               <tr>
                 <td className="px-4 py-2">Unit Weight (kg)</td>
-                <td className="px-4 py-2">{product.unit_weight_kg?.toFixed(3) || "-"}</td>
+                <td className="px-4 py-2">
+                  {product.unit_weight_kg?.toFixed(3) || "-"}
+                </td>
               </tr>
               <tr>
-                <td className="px-4 py-2">Ingredient Cost per Unit (Excel)</td>
-                <td className="px-4 py-2">${product.cost_per_unit_excel?.toFixed(3) || "-"}</td>
+                <td className="px-4 py-2">Ingredient Cost per Unit</td>
+                <td className="px-4 py-2">
+                  ${product.cost_per_unit_excel?.toFixed(3) || "-"}
+                </td>
               </tr>
               <tr>
-                <td className="px-4 py-2">Final Total Cost (Excel)</td>
+                <td className="px-4 py-2">Base Cost per Unit</td>
+                <td className="px-4 py-2 font-mono">
+                  {product.base_cost_per_unit
+                    ? `$${product.base_cost_per_unit.toFixed(3)}`
+                    : "$-"}
+                  <div className="text-xs text-gray-500">
+                    After Labor, Packaging, Inflow
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2 font-semibold">Final Total Cost</td>
                 <td className="px-4 py-2 text-[#0e5439] font-bold">
                   ${product.total_cost_excel?.toFixed(2) || "-"}
                 </td>
@@ -303,10 +335,15 @@ export default function ProductDetailClient({
                     <tbody>
                       {product.tiered_pricing &&
                         Object.entries(product.tiered_pricing).map(
-                          ([qty, data]: [string, { price: number; profit: number }]) => (
+                          ([qty, data]: [
+                            string,
+                            { price: number; profit: number }
+                          ]) => (
                             <tr key={qty} className="border-t">
                               <td className="px-2 py-1">{qty}</td>
-                              <td className="px-2 py-1 text-right">${data.price.toFixed(2)}</td>
+                              <td className="px-2 py-1 text-right">
+                                ${data.price.toFixed(2)}
+                              </td>
                               <td className="px-2 py-1 text-right text-gray-600">
                                 ${data.profit.toFixed(3)}
                               </td>
@@ -339,9 +376,28 @@ export default function ProductDetailClient({
                         ]) => (
                           <tr key={size} className="border-t">
                             <td className="px-2 py-1">{size}</td>
-                            <td className="px-2 py-1 text-right">${data.msrp.toFixed(2)}</td>
-                            <td className="px-2 py-1 text-right">${data.profit.toFixed(2)}</td>
-                            <td className="px-2 py-1 text-right">${data.packaging.toFixed(2)}</td>
+                            <td className="px-2 py-1 text-right">
+                              ${data.msrp.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right">
+                              ${data.profit.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={
+                                  bulkPackagingOverrides[size] ?? data.packaging
+                                }
+                                onChange={(e) =>
+                                  setBulkPackagingOverrides((prev) => ({
+                                    ...prev,
+                                    [size]: Number(e.target.value) || 0,
+                                  }))
+                                }
+                                className="w-20 border rounded px-1 py-0.5 text-right font-mono"
+                              />
+                            </td>
                           </tr>
                         )
                       )}
@@ -352,12 +408,15 @@ export default function ProductDetailClient({
 
               {/* Actions */}
               <tr className="bg-gray-100 font-medium">
-                <td colSpan={2} className="px-4 py-2">Actions</td>
+                <td colSpan={2} className="px-4 py-2">
+                  Actions
+                </td>
               </tr>
               <tr>
                 <td className="px-4 py-2">Export</td>
-                <td className="px-4 py-2 text-right">
-                  <ExportPDFButton
+                <td className="px-4 py-2 text-right flex gap-2 justify-end">
+                  <ExportClientPDFButton product={product} />
+                  <ExportInternalPDFButton
                     product={product}
                     components={editableComponents}
                     packagingItems={packagingItems}

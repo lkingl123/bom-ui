@@ -32,7 +32,6 @@ export type Component = {
   remarks?: string;
 };
 
-
 // Product shape from the DETAIL endpoint (/products/{name})
 export type ProductDetail = {
   product_name: string;
@@ -71,12 +70,6 @@ export type ProductCalc = ProductDetail & {
   touch_points?: number;
   cost_per_touch?: number;
 
-  // Shipping & profit
-  shipping_cost_per_unit?: number;
-  shipping_total?: number;
-  profit_per_unit?: number;
-  msrp?: number;
-
   // Pricing tables
   tiered_pricing: Record<string, TieredPricingEntry>;
   bulk_pricing: Record<string, BulkPricingEntry>;
@@ -84,12 +77,14 @@ export type ProductCalc = ProductDetail & {
   // Formula / vendor details
   formula_kg?: number;
   cost_per_kg?: number;
-  vendor_suggestions?: string[];
+  vendor_suggestions?: string[]; // keep if you’ll use it later
 
-   // ✅ New Excel-style fields
+  // ✅ New Excel-style fields
   unit_weight_kg: number;
   cost_per_unit_excel: number;
   total_cost_excel: number;
+
+  base_cost_per_unit: number;
 };
 
 // Editable packaging item for UI
@@ -120,5 +115,5 @@ export type TieredPricingEntry = {
 export type BulkPricingEntry = {
   msrp: number;
   profit: number;
-  packaging: number;
+  packaging: number; 
 };

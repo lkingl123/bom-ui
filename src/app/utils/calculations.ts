@@ -5,6 +5,7 @@ import type {
   ProductDetail,
   ProductCalc,
   PackagingItemEditable,
+  BulkPricingEntry,
 } from "../types";
 
 export type CalcOptions = {
@@ -15,6 +16,9 @@ export type CalcOptions = {
   totalOzPerUnit: number;
   gramsPerOz: number;
   baseProfitMargin?: number;
+
+  // ✅ only keep bulk overrides now
+  bulkOverrides?: Record<string, number>;
 };
 
 export function buildProductCalc(
@@ -39,7 +43,7 @@ export function buildProductCalc(
     0
   );
 
-  // ===== Packaging Costs =====
+  // ===== Packaging Costs (auto-sum from table only) =====
   const packagingCostTotal = packagingItems.reduce(
     (sum, p) => sum + (p.quantity * p.unit_cost || 0),
     0
@@ -82,29 +86,35 @@ export function buildProductCalc(
     tieredPricing[qty] = { price: parseFloat(price.toFixed(3)), profit };
   });
 
-  // ===== Bulk Pricing =====
-  const bulkPricing = {
-    "2oz - Sample": {
-      msrp: 8.21,
-      profit: 7.39,
-      packaging: 0.28,
+  // ===== Bulk Pricing (dynamic) =====
+  const bulkOptions = [
+    {
+      label: "2oz - Sample",
+      sizeKg: 2 / 35.274,
       multiplier: 10,
+      packaging: 0.28,
     },
-    "16 oz": { msrp: 13.28, profit: 10.62, packaging: 0.4, multiplier: 5 },
-    "1 Gal": { msrp: 92.25, profit: 73.8, packaging: 1.38, multiplier: 3.5 },
-    "5 Gal": {
-      msrp: 297.98,
-      profit: 206.29,
-      packaging: 8.25,
-      multiplier: 3.25,
-    },
-    "55 Gal": {
-      msrp: 2843.2,
-      profit: 1809.31,
-      packaging: 95.0,
-      multiplier: 2.75,
-    },
-  };
+    { label: "16 oz", sizeKg: 16 / 35.274, multiplier: 5, packaging: 0.4 },
+    { label: "1 Gal", sizeKg: 3.785, multiplier: 3.5, packaging: 1.38 },
+    { label: "5 Gal", sizeKg: 18.5, multiplier: 3.25, packaging: 8.25 },
+    { label: "55 Gal", sizeKg: 208.18, multiplier: 2.75, packaging: 95.0 },
+  ];
+
+  const bulkPricing: Record<string, BulkPricingEntry> = {};
+  bulkOptions.forEach(({ label, sizeKg, packaging }) => {
+    const effectivePackaging = opts.bulkOverrides?.[label] ?? packaging;
+    const baseCost = costPerKg * sizeKg + effectivePackaging;
+
+    // Use profit margin instead of multipliers
+    const profit = baseCost * baseProfitMargin;
+    const price = baseCost + profit;
+
+    bulkPricing[label] = {
+      msrp: parseFloat(price.toFixed(2)), // now reflects base cost + margin
+      profit: parseFloat(profit.toFixed(2)),
+      packaging: effectivePackaging,
+    };
+  });
 
   return {
     ...detail,
@@ -114,14 +124,15 @@ export function buildProductCalc(
     touch_points: touchPoints,
     cost_per_touch: costPerTouch,
     labor_cost: laborCostTotal,
-    formula_kg: formulaKg,          // batch weight
-    cost_per_kg: costPerKg,         // ingredient cost per kg
+    formula_kg: formulaKg, // batch weight
+    cost_per_kg: costPerKg, // ingredient cost per kg
     tiered_pricing: tieredPricing,
     bulk_pricing: bulkPricing,
 
     // Excel-style
-    unit_weight_kg: unitWeightKg,   // product size (kg)
+    unit_weight_kg: unitWeightKg, // product size (kg)
     cost_per_unit_excel: costPerUnitExcel,
     total_cost_excel: totalCostExcel,
+    base_cost_per_unit: baseCostPerUnit,
   };
 }
