@@ -47,6 +47,9 @@ export type ProductDetail = {
   print_ingredients: string;
   print_title: string;
   category: string;
+
+  // ✅ prepare for future
+  inci?: string;
 };
 
 // =============================

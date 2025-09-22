@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
-import PackagingTable from "./PackagingTable"; 
+import PackagingTable from "./PackagingTable";
 import ExportClientPDFButton from "./ExportClientPDFButton";
 import ExportInternalPDFButton from "./ExportInternalPDFButton";
 import CalculatorWidget from "./CalculatorWidget";
@@ -153,6 +153,35 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
+
+              {/* ✅ Editable INCI (future-proof) */}
+              <tr>
+                <td className="px-4 py-2">INCI</td>
+                <td className="px-4 py-2">
+                  <textarea
+                    value={product.inci || ""}
+                    onChange={(e) =>
+                      setProduct({ ...product, inci: e.target.value })
+                    }
+                    className="w-full border rounded px-2 py-1 font-mono text-sm h-8"
+                  />
+                </td>
+              </tr>
+
+              {/* ✅ Editable Remarks */}
+              <tr>
+                <td className="px-4 py-2">Remarks</td>
+                <td className="px-4 py-2">
+                  <textarea
+                    value={product.remarks || ""}
+                    onChange={(e) =>
+                      setProduct({ ...product, remarks: e.target.value })
+                    }
+                    className="w-full border rounded px-2 py-1 font-mono text-sm h-8"
+                  />
+                </td>
+              </tr>
+
               <tr>
                 <td className="px-4 py-2">SKU / Barcode / Category</td>
                 <td className="px-4 py-2 text-gray-700">
@@ -428,8 +457,8 @@ export default function ProductDetailClient({
             </tbody>
           </table>
           <div className="lg:col-span-1 mt-6">
-          <CalculatorWidget />
-        </div>
+            <CalculatorWidget />
+          </div>
         </div>
       </section>
     </main>
