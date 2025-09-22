@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Minus, ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentEditable } from "../types";
+import { RotateCcw } from "lucide-react";
 
 interface IngredientTableProps {
   components: ComponentEditable[];
@@ -137,6 +138,7 @@ export default function IngredientTable({
           onClick={handleReset}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm font-medium shadow-sm cursor-pointer"
         >
+          <RotateCcw className="w-4 h-4" />
           Reset
         </button>
       </div>
