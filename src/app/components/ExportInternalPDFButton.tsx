@@ -11,12 +11,10 @@ import type {
   InciEntry,
 } from "../types";
 
-// Extend jsPDF type to support lastAutoTable
+// Extend jsPDF type
 declare module "jspdf" {
   interface jsPDF {
-    lastAutoTable?: {
-      finalY: number;
-    };
+    lastAutoTable?: { finalY: number };
   }
 }
 
@@ -34,6 +32,7 @@ export default function ExportInternalPDFButton({
   const handleExport = (): void => {
     const doc = new jsPDF();
 
+    // ===== Header =====
     doc.setFontSize(16);
     doc.text(product.product_name || "Product", 14, 20);
 
@@ -42,30 +41,37 @@ export default function ExportInternalPDFButton({
     doc.text(`Barcode: ${product.barcode || "-"}`, 14, 34);
     doc.text(`Category: ${product.category || "-"}`, 14, 40);
 
-    // ✅ Wrap INCI
-    const inciText = Array.isArray(product.inci)
-      ? product.inci
-          .map((i: InciEntry) =>
-            i.percentage ? `${i.name} (${i.percentage})` : i.name
-          )
-          .join(", ")
-      : "-";
-    const inciWrapped = doc.splitTextToSize(`INCI: ${inciText}`, 180);
+    // ===== INCI =====
+    const inciList = Array.isArray(product.inci)
+      ? product.inci.map((i: InciEntry) =>
+          i.percentage ? `${i.name} (${i.percentage})` : i.name
+        )
+      : ["-"];
+    const inciWrapped: string[] = doc.splitTextToSize(
+      ["INCI:"].concat(inciList.map((item) => `- ${item}`)).join("\n"),
+      180
+    );
     doc.text(inciWrapped, 14, 46);
 
-    // ✅ Wrap Remarks below INCI
+    doc.text(inciWrapped, 14, 46);
+
+    doc.text(inciWrapped, 14, 46);
+
+    // ===== Remarks =====
     const remarksWrapped = doc.splitTextToSize(
       `Remarks: ${product.remarks || "-"}`,
       180
     );
-    doc.text(remarksWrapped, 14, 52 + inciWrapped.length * 5);
+    const remarksY = 46 + inciWrapped.length * 6 + 6;
+    doc.text(remarksWrapped, 14, remarksY);
 
-    // Compute total formula weight
+    // Dynamic Y after INCI + Remarks
+    let currentY = remarksY + remarksWrapped.length * 6 + 10;
+
+    // ===== Ingredients =====
     const totalKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);
-
-    // Ingredients
     autoTable(doc, {
-      startY: 60 + inciWrapped.length * 5,
+      startY: currentY,
       head: [["Ingredient", "% of Formula", "Cost / kg", "Line Cost"]],
       body: components.map((c) => {
         const percent = totalKg > 0 ? c.quantity * 100 : 0;
@@ -77,12 +83,12 @@ export default function ExportInternalPDFButton({
         ];
       }),
       theme: "grid",
-      headStyles: { fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { fillColor: [14, 84, 57] },
     });
 
-    // Packaging
+    // ===== Packaging =====
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 20,
       head: [["Packaging Item", "Quantity", "Unit Cost", "Line Cost"]],
       body: packagingItems.map((p) => [
         p.name,
@@ -91,27 +97,30 @@ export default function ExportInternalPDFButton({
         `$${p.line_cost.toFixed(2)}`,
       ]),
       theme: "grid",
-      headStyles: { fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { fillColor: [14, 84, 57] },
     });
 
-    // Cost summary
+    // ===== Cost Summary =====
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 40,
       head: [["Metric", "Value"]],
       body: [
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
         ["Total Cost Per KG", `$${(product.cost_per_kg || 0).toFixed(2)}`],
         ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
         ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
-        ["Total Packaging Cost", `$${(product.packaging_cost || 0).toFixed(2)}`],
+        [
+          "Total Packaging Cost",
+          `$${(product.packaging_cost || 0).toFixed(2)}`,
+        ],
       ],
       theme: "grid",
-      headStyles: { fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { fillColor: [14, 84, 57] },
     });
 
-    // Tiered Pricing
+    // ===== Tiered Pricing =====
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 90,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 60,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body: Object.entries(product.tiered_pricing || {}).map(
         ([qty, data]: [string, { price: number; profit: number }]) => [
@@ -121,12 +130,12 @@ export default function ExportInternalPDFButton({
         ]
       ),
       theme: "grid",
-      headStyles: { fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { fillColor: [14, 84, 57] },
     });
 
-    // Bulk Pricing
+    // ===== Bulk Pricing =====
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 100,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 80,
       head: [["Size", "MSRP", "Profit", "Packaging"]],
       body: Object.entries(product.bulk_pricing || {}).map(
         ([size, data]: [
@@ -140,7 +149,7 @@ export default function ExportInternalPDFButton({
         ]
       ),
       theme: "grid",
-      headStyles: { fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { fillColor: [14, 84, 57] },
     });
 
     doc.save(`${product.product_name || "product"}_internal.pdf`);

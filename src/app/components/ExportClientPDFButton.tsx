@@ -6,12 +6,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { ProductCalc, InciEntry } from "../types";
 
-// Extend jsPDF type to support lastAutoTable
+// Extend jsPDF type
 declare module "jspdf" {
   interface jsPDF {
-    lastAutoTable?: {
-      finalY: number;
-    };
+    lastAutoTable?: { finalY: number };
   }
 }
 
@@ -25,7 +23,7 @@ export default function ExportClientPDFButton({
   const handleExport = (): void => {
     const doc = new jsPDF();
 
-    // Title & basic info
+    // ===== Header =====
     doc.setFontSize(16);
     doc.text(product.product_name || "Product", 14, 20);
 
@@ -33,60 +31,65 @@ export default function ExportClientPDFButton({
     doc.text(`SKU: ${product.sku || "-"}`, 14, 28);
     doc.text(`Category: ${product.category || "-"}`, 14, 34);
 
-    // ✅ Wrap INCI
-    const inciText = Array.isArray(product.inci)
-      ? product.inci
-          .map((i: InciEntry) =>
-            i.percentage ? `${i.name} (${i.percentage})` : i.name
-          )
-          .join(", ")
-      : "-";
-    const inciWrapped = doc.splitTextToSize(`INCI: ${inciText}`, 180);
+    // ===== INCI =====
+    const inciList = Array.isArray(product.inci)
+      ? product.inci.map((i: InciEntry) =>
+          i.percentage ? `${i.name} (${i.percentage})` : i.name
+        )
+      : ["-"];
+    const inciWrapped: string[] = doc.splitTextToSize(
+      ["INCI:"].concat(inciList.map((item) => `- ${item}`)).join("\n"),
+      180
+    );
     doc.text(inciWrapped, 14, 40);
 
-    // ✅ Wrap Remarks
+    doc.text(inciWrapped, 14, 40);
+
+    // ===== Remarks =====
     const remarksWrapped = doc.splitTextToSize(
       `Remarks: ${product.remarks || "-"}`,
       180
     );
-    doc.text(remarksWrapped, 14, 46 + inciWrapped.length * 5);
+    const remarksY = 40 + inciWrapped.length * 6 + 6;
+    doc.text(remarksWrapped, 14, remarksY);
 
-    // Bulk Pricing
+    // Dynamic Y after INCI + Remarks
+    let currentY = remarksY + remarksWrapped.length * 6 + 10;
+
+    // ===== Bulk Pricing =====
     autoTable(doc, {
-      startY: 55 + inciWrapped.length * 5,
+      startY: currentY,
       head: [["Size", "MSRP", "Profit", "Packaging"]],
-      body:
-        Object.entries(product.bulk_pricing || {}).map(
-          ([size, data]: [
-            string,
-            { msrp: number; profit: number; packaging: number }
-          ]) => [
-            size,
-            `$${data.msrp.toFixed(2)}`,
-            `$${data.profit.toFixed(2)}`,
-            `$${data.packaging.toFixed(2)}`,
-          ]
-        ) || [["-", "-", "-", "-"]],
+      body: Object.entries(product.bulk_pricing || {}).map(
+        ([size, data]: [
+          string,
+          { msrp: number; profit: number; packaging: number }
+        ]) => [
+          size,
+          `$${data.msrp.toFixed(2)}`,
+          `$${data.profit.toFixed(2)}`,
+          `$${data.packaging.toFixed(2)}`,
+        ]
+      ) || [["-", "-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
-      headStyles: { halign: "center", fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { halign: "center", fillColor: [14, 84, 57] },
     });
 
-    // Tiered Pricing
+    // ===== Tiered Pricing =====
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 80,
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 20,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
-      body:
-        Object.entries(product.tiered_pricing || {}).map(
-          ([qty, data]: [string, { price: number; profit: number }]) => [
-            qty,
-            `$${data.price.toFixed(2)}`,
-            `$${data.profit.toFixed(2)}`,
-          ]
-        ) || [["-", "-", "-"]],
+      body: Object.entries(product.tiered_pricing || {}).map(
+        ([qty, data]: [string, { price: number; profit: number }]) => [
+          qty,
+          `$${data.price.toFixed(2)}`,
+          `$${data.profit.toFixed(2)}`,
+        ]
+      ) || [["-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
-      headStyles: { halign: "center", fillColor: [14, 84, 57] }, // ✅ green header
+      headStyles: { halign: "center", fillColor: [14, 84, 57] },
     });
 
     doc.save(`${product.product_name || "product"}_client.pdf`);
