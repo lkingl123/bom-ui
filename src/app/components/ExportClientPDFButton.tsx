@@ -4,9 +4,9 @@
 import React from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { ProductCalc } from "../types";
+import type { ProductCalc, InciEntry } from "../types";
 
-// Extend jsPDF to support lastAutoTable
+// Extend jsPDF type to support lastAutoTable
 declare module "jspdf" {
   interface jsPDF {
     lastAutoTable?: {
@@ -33,26 +33,27 @@ export default function ExportClientPDFButton({
     doc.text(`SKU: ${product.sku || "-"}`, 14, 28);
     doc.text(`Category: ${product.category || "-"}`, 14, 34);
 
-    // ✅ Handle INCI as array
+    // ✅ Wrap INCI
     const inciText = Array.isArray(product.inci)
       ? product.inci
-          .map((i) =>
+          .map((i: InciEntry) =>
             i.percentage ? `${i.name} (${i.percentage})` : i.name
           )
           .join(", ")
       : "-";
+    const inciWrapped = doc.splitTextToSize(`INCI: ${inciText}`, 180);
+    doc.text(inciWrapped, 14, 40);
 
-    doc.text(`INCI: ${inciText}`, 14, 40);
-
-    const remarks = doc.splitTextToSize(
+    // ✅ Wrap Remarks
+    const remarksWrapped = doc.splitTextToSize(
       `Remarks: ${product.remarks || "-"}`,
       180
     );
-    doc.text(remarks, 14, 46);
+    doc.text(remarksWrapped, 14, 46 + inciWrapped.length * 5);
 
-    // Bulk Pricing (now includes packaging)
+    // Bulk Pricing
     autoTable(doc, {
-      startY: 55,
+      startY: 55 + inciWrapped.length * 5,
       head: [["Size", "MSRP", "Profit", "Packaging"]],
       body:
         Object.entries(product.bulk_pricing || {}).map(
@@ -68,7 +69,7 @@ export default function ExportClientPDFButton({
         ) || [["-", "-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
-      headStyles: { halign: "center", fillColor: "#0e5439", textColor: "#fff" },
+      headStyles: { halign: "center", fillColor: [14, 84, 57] }, // ✅ green header
     });
 
     // Tiered Pricing
@@ -85,7 +86,7 @@ export default function ExportClientPDFButton({
         ) || [["-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
-      headStyles: { halign: "center", fillColor: "#0e5439", textColor: "#fff" },
+      headStyles: { halign: "center", fillColor: [14, 84, 57] }, // ✅ green header
     });
 
     doc.save(`${product.product_name || "product"}_client.pdf`);
