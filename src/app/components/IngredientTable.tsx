@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
-import type { Component, ComponentEditable } from "../types";
+import type { Component, ComponentEditable, InciEntry } from "../types";
 import IngredientSearch from "./IngredientSearch";
 
 interface IngredientTableProps {
@@ -212,9 +212,7 @@ export default function IngredientTable({
                         type="number"
                         step="0.01"
                         value={(c.quantity * 100).toFixed(2)}
-                        onChange={(e) =>
-                          handlePercentEdit(i, e.target.value)
-                        }
+                        onChange={(e) => handlePercentEdit(i, e.target.value)}
                         className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                       <span className="ml-1 text-gray-500 text-xs">%</span>
@@ -268,12 +266,25 @@ export default function IngredientTable({
                           <div className="text-sm text-gray-700 space-y-2">
                             <div>
                               <span className="font-semibold">INCI: </span>
-                              {c.inci || (
-                                <span className="italic text-gray-400">
-                                  N/A
-                                </span>
-                              )}
+                              {(() => {
+                                const inciList = c.inci ?? [];
+                                return inciList.length > 0 ? (
+                                  inciList.map((i: InciEntry, idx: number) => (
+                                    <span key={idx}>
+                                      {i.percentage
+                                        ? `${i.name} (${i.percentage})`
+                                        : i.name}
+                                      {idx < inciList.length - 1 ? ", " : ""}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="italic text-gray-400">
+                                    N/A
+                                  </span>
+                                );
+                              })()}
                             </div>
+
                             <div>
                               <span className="font-semibold">Remarks: </span>
                               {c.remarks || (

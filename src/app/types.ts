@@ -12,6 +12,12 @@ export type ProductSummary = {
   remarks: string;
 };
 
+// ✅ INCI entry type used everywhere
+export type InciEntry = {
+  name: string;
+  percentage?: string;
+};
+
 // Component entry from the DETAIL endpoint
 export type Component = {
   name: string;
@@ -28,7 +34,7 @@ export type Component = {
   description?: string;
   category?: string;
   storage_type?: string;
-  inci?: string;
+  inci?: InciEntry[];   // normalized to array
   remarks?: string;
 };
 
@@ -48,8 +54,8 @@ export type ProductDetail = {
   print_title: string;
   category: string;
 
-  // ✅ prepare for future
-  inci?: string;
+  // ✅ product-level INCI (array of objects from backend)
+  inci?: InciEntry[];
 };
 
 // =============================

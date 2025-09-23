@@ -15,6 +15,7 @@ import type {
   PackagingItemEditable,
   ProductDetail,
   ProductCalc,
+  InciEntry,
 } from "../types";
 import { buildProductCalc } from "../utils/calculations";
 
@@ -203,11 +204,26 @@ export default function ProductDetailClient({
                 <td className="px-4 py-2">INCI</td>
                 <td className="px-4 py-2">
                   <textarea
-                    value={product.inci || ""}
-                    onChange={(e) =>
-                      setProduct({ ...product, inci: e.target.value })
+                    value={
+                      Array.isArray(product.inci)
+                        ? product.inci
+                            .map((i: InciEntry) =>
+                              i.percentage
+                                ? `${i.name} (${i.percentage})`
+                                : i.name
+                            )
+                            .join(", ")
+                        : ""
                     }
-                    className="w-full border rounded px-2 py-1 font-mono text-sm h-8"
+                    onChange={(e) =>
+                      setProduct({
+                        ...product,
+                        inci: e.target.value
+                          .split(",")
+                          .map((s) => ({ name: s.trim() })),
+                      })
+                    }
+                    className="w-full border rounded px-2 py-1 font-mono text-sm h-16"
                   />
                 </td>
               </tr>
@@ -310,6 +326,7 @@ export default function ProductDetailClient({
                   />
                 </td>
               </tr>
+
               {/* Pricing */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
@@ -345,6 +362,7 @@ export default function ProductDetailClient({
                   </div>
                 </td>
               </tr>
+
               {/* Tiered Pricing */}
               <tr>
                 <td className="px-4 py-2">Tiered Pricing</td>
@@ -450,6 +468,7 @@ export default function ProductDetailClient({
                   </table>
                 </td>
               </tr>
+
               {/* Actions */}
               <tr className="bg-gray-100 font-medium">
                 <td colSpan={2} className="px-4 py-2">
