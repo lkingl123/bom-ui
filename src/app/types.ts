@@ -15,7 +15,7 @@ export type ProductSummary = {
 // Component entry from the DETAIL endpoint
 export type Component = {
   name: string;
-  quantity: number;
+  quantity: number;   // stored as fraction of 1 (e.g., 0.007 = 0.7%)
   uom: string;
   has_cost: boolean;
   unit_cost: number;
@@ -56,10 +56,9 @@ export type ProductDetail = {
 // Frontend-Only Types
 // =============================
 
-// Editable version of Component for UI (adds percent)
-export type ComponentEditable = Component & {
-  percent: number; // always required for editing/UI
-};
+// Editable version of Component for UI
+// ⚡ No percent field here — we compute it from `quantity` in the UI
+export type ComponentEditable = Component;
 
 // Enriched product type for calculations & quotes
 export type ProductCalc = ProductDetail & {
@@ -80,9 +79,9 @@ export type ProductCalc = ProductDetail & {
   // Formula / vendor details
   formula_kg?: number;
   cost_per_kg?: number;
-  vendor_suggestions?: string[]; // keep if you’ll use it later
+  vendor_suggestions?: string[];
 
-  // ✅ New Excel-style fields
+  // ✅ Excel-style fields
   unit_weight_kg: number;
   cost_per_unit_excel: number;
   total_cost_excel: number;

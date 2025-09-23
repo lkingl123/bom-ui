@@ -45,16 +45,22 @@ export default function ExportInternalPDFButton({
     doc.text(`INCI: ${product.inci || "-"}`, 14, 46);
     doc.text(`Remarks: ${product.remarks || "-"}`, 14, 52);
 
+    // Compute total formula weight
+    const totalKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);
+
     // Ingredients
     autoTable(doc, {
       startY: 60,
       head: [["Ingredient", "% of Formula", "Cost / kg", "Line Cost"]],
-      body: components.map((c) => [
-        c.name,
-        `${c.percent.toFixed(2)}%`,
-        `$${c.unit_cost.toFixed(2)}`,
-        `$${c.line_cost.toFixed(2)}`,
-      ]),
+      body: components.map((c) => {
+        const percent = totalKg > 0 ? c.quantity * 100 : 0; // since quantity is in kg of 1kg batch
+        return [
+          c.name,
+          `${percent.toFixed(2)}%`,
+          `$${c.unit_cost.toFixed(2)}`,
+          `$${c.line_cost.toFixed(2)}`,
+        ];
+      }),
       theme: "grid",
     });
 
@@ -80,7 +86,10 @@ export default function ExportInternalPDFButton({
         ["Total Cost Per KG", `$${(product.cost_per_kg || 0).toFixed(2)}`],
         ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
         ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
-        ["Total Packaging Cost", `$${(product.packaging_cost || 0).toFixed(2)}`],
+        [
+          "Total Packaging Cost",
+          `$${(product.packaging_cost || 0).toFixed(2)}`,
+        ],
       ],
       theme: "grid",
     });

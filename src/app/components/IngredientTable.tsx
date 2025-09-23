@@ -80,7 +80,6 @@ export default function IngredientTable({
   const handleIngredientSelect = (ingredient: Component): void => {
     const newIngredient: ComponentEditable = {
       ...ingredient,
-      percent: 0,
       quantity: 0,
       has_cost: true,
       unit_cost: ingredient.unit_cost ?? 0,
@@ -101,33 +100,25 @@ export default function IngredientTable({
     0
   );
 
-  // ✅ Ensure rounding to 2 decimals consistently
-  const round2 = (num: number): number => {
-    return Math.round((num + Number.EPSILON) * 100) / 100;
-  };
+  // ✅ Round to 2 decimals consistently
+  const round2 = (num: number): number =>
+    Math.round((num + Number.EPSILON) * 100) / 100;
 
   const handleEdit = (
     index: number,
-    field: "name" | "unit_cost" | "line_cost" | "percent",
+    field: "name" | "unit_cost" | "line_cost",
     value: string
   ): void => {
     const updated = [...components];
     let num = parseFloat(value);
-
     if (isNaN(num)) num = 0;
 
-    if (field === "percent") {
-      updated[index].percent = round2(num);
-      updated[index].line_cost = round2(
-        (num / 100) * (updated[index].unit_cost || 0)
-      );
-    } else if (field === "unit_cost") {
+    if (field === "unit_cost") {
       updated[index].unit_cost = round2(num);
-      updated[index].line_cost = round2(
-        ((updated[index].percent || 0) / 100) * num
-      );
+      updated[index].line_cost =
+        (updated[index].quantity || 0) * updated[index].unit_cost;
     } else if (field === "line_cost") {
-      updated[index].line_cost = round2(num); // manual override
+      updated[index].line_cost = round2(num);
     } else if (field === "name") {
       updated[index].name = value;
     }
@@ -135,10 +126,22 @@ export default function IngredientTable({
     setComponents(updated);
   };
 
-  // Format input after blur to enforce 2 decimals
+  const handlePercentEdit = (index: number, value: string): void => {
+    const updated = [...components];
+    let num = parseFloat(value);
+    if (isNaN(num)) num = 0;
+
+    // % of Formula → quantity = percent / 100
+    updated[index].quantity = num / 100;
+    updated[index].line_cost =
+      updated[index].quantity * (updated[index].unit_cost || 0);
+
+    setComponents(updated);
+  };
+
   const handleBlur = (
     index: number,
-    field: "percent" | "unit_cost" | "line_cost"
+    field: "unit_cost" | "line_cost"
   ): void => {
     const updated = [...components];
     updated[index][field] = round2(updated[index][field] || 0);
@@ -208,11 +211,10 @@ export default function IngredientTable({
                       <input
                         type="number"
                         step="0.01"
-                        value={c.percent.toFixed(2)}
+                        value={(c.quantity * 100).toFixed(2)}
                         onChange={(e) =>
-                          handleEdit(i, "percent", e.target.value)
+                          handlePercentEdit(i, e.target.value)
                         }
-                        onBlur={() => handleBlur(i, "percent")}
                         className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
                       />
                       <span className="ml-1 text-gray-500 text-xs">%</span>
