@@ -33,8 +33,17 @@ export default function ExportClientPDFButton({
     doc.text(`SKU: ${product.sku || "-"}`, 14, 28);
     doc.text(`Category: ${product.category || "-"}`, 14, 34);
 
-    // ✅ Add INCI and Remarks (wrapped for safety)
-    doc.text(`INCI: ${product.inci || "-"}`, 14, 40);
+    // ✅ Handle INCI as array
+    const inciText = Array.isArray(product.inci)
+      ? product.inci
+          .map((i) =>
+            i.percentage ? `${i.name} (${i.percentage})` : i.name
+          )
+          .join(", ")
+      : "-";
+
+    doc.text(`INCI: ${inciText}`, 14, 40);
+
     const remarks = doc.splitTextToSize(
       `Remarks: ${product.remarks || "-"}`,
       180
@@ -59,7 +68,7 @@ export default function ExportClientPDFButton({
         ) || [["-", "-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
-      headStyles: { halign: "center" },
+      headStyles: { halign: "center", fillColor: "#0e5439", textColor: "#fff" },
     });
 
     // Tiered Pricing
@@ -76,7 +85,7 @@ export default function ExportClientPDFButton({
         ) || [["-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
-      headStyles: { halign: "center" },
+      headStyles: { halign: "center", fillColor: "#0e5439", textColor: "#fff" },
     });
 
     doc.save(`${product.product_name || "product"}_client.pdf`);

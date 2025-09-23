@@ -41,8 +41,16 @@ export default function ExportInternalPDFButton({
     doc.text(`Barcode: ${product.barcode || "-"}`, 14, 34);
     doc.text(`Category: ${product.category || "-"}`, 14, 40);
 
-    // ✅ Add INCI + Remarks for internal context
-    doc.text(`INCI: ${product.inci || "-"}`, 14, 46);
+    // ✅ Handle INCI as array
+    const inciText = Array.isArray(product.inci)
+      ? product.inci
+          .map((i) =>
+            i.percentage ? `${i.name} (${i.percentage})` : i.name
+          )
+          .join(", ")
+      : "-";
+
+    doc.text(`INCI: ${inciText}`, 14, 46);
     doc.text(`Remarks: ${product.remarks || "-"}`, 14, 52);
 
     // Compute total formula weight
@@ -53,7 +61,7 @@ export default function ExportInternalPDFButton({
       startY: 60,
       head: [["Ingredient", "% of Formula", "Cost / kg", "Line Cost"]],
       body: components.map((c) => {
-        const percent = totalKg > 0 ? c.quantity * 100 : 0; // since quantity is in kg of 1kg batch
+        const percent = totalKg > 0 ? c.quantity * 100 : 0;
         return [
           c.name,
           `${percent.toFixed(2)}%`,
@@ -62,6 +70,7 @@ export default function ExportInternalPDFButton({
         ];
       }),
       theme: "grid",
+      headStyles: { fillColor: "#0e5439", textColor: "#fff" },
     });
 
     // Packaging
@@ -75,6 +84,7 @@ export default function ExportInternalPDFButton({
         `$${p.line_cost.toFixed(2)}`,
       ]),
       theme: "grid",
+      headStyles: { fillColor: "#0e5439", textColor: "#fff" },
     });
 
     // Cost summary
@@ -92,6 +102,7 @@ export default function ExportInternalPDFButton({
         ],
       ],
       theme: "grid",
+      headStyles: { fillColor: "#0e5439", textColor: "#fff" },
     });
 
     // Tiered Pricing
@@ -106,6 +117,7 @@ export default function ExportInternalPDFButton({
         ]
       ),
       theme: "grid",
+      headStyles: { fillColor: "#0e5439", textColor: "#fff" },
     });
 
     // Bulk Pricing
@@ -124,6 +136,7 @@ export default function ExportInternalPDFButton({
         ]
       ),
       theme: "grid",
+      headStyles: { fillColor: "#0e5439", textColor: "#fff" },
     });
 
     doc.save(`${product.product_name || "product"}_internal.pdf`);
