@@ -1,4 +1,3 @@
-// src/app/components/ExportInternalPDFButton.tsx
 "use client";
 
 import React from "react";
@@ -53,10 +52,6 @@ export default function ExportInternalPDFButton({
     );
     doc.text(inciWrapped, 14, 46);
 
-    doc.text(inciWrapped, 14, 46);
-
-    doc.text(inciWrapped, 14, 46);
-
     // ===== Remarks =====
     const remarksWrapped = doc.splitTextToSize(
       `Remarks: ${product.remarks || "-"}`,
@@ -66,7 +61,7 @@ export default function ExportInternalPDFButton({
     doc.text(remarksWrapped, 14, remarksY);
 
     // Dynamic Y after INCI + Remarks
-    let currentY = remarksY + remarksWrapped.length * 6 + 10;
+    const currentY = remarksY + remarksWrapped.length * 6 + 10;
 
     // ===== Ingredients =====
     const totalKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);

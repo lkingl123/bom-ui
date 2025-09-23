@@ -1,4 +1,3 @@
-// src/app/components/ExportClientPDFButton.tsx
 "use client";
 
 import React from "react";
@@ -43,8 +42,6 @@ export default function ExportClientPDFButton({
     );
     doc.text(inciWrapped, 14, 40);
 
-    doc.text(inciWrapped, 14, 40);
-
     // ===== Remarks =====
     const remarksWrapped = doc.splitTextToSize(
       `Remarks: ${product.remarks || "-"}`,
@@ -54,23 +51,24 @@ export default function ExportClientPDFButton({
     doc.text(remarksWrapped, 14, remarksY);
 
     // Dynamic Y after INCI + Remarks
-    let currentY = remarksY + remarksWrapped.length * 6 + 10;
+    const currentY = remarksY + remarksWrapped.length * 6 + 10;
 
     // ===== Bulk Pricing =====
     autoTable(doc, {
       startY: currentY,
       head: [["Size", "MSRP", "Profit", "Packaging"]],
-      body: Object.entries(product.bulk_pricing || {}).map(
-        ([size, data]: [
-          string,
-          { msrp: number; profit: number; packaging: number }
-        ]) => [
-          size,
-          `$${data.msrp.toFixed(2)}`,
-          `$${data.profit.toFixed(2)}`,
-          `$${data.packaging.toFixed(2)}`,
-        ]
-      ) || [["-", "-", "-", "-"]],
+      body:
+        Object.entries(product.bulk_pricing || {}).map(
+          ([size, data]: [
+            string,
+            { msrp: number; profit: number; packaging: number }
+          ]) => [
+            size,
+            `$${data.msrp.toFixed(2)}`,
+            `$${data.profit.toFixed(2)}`,
+            `$${data.packaging.toFixed(2)}`,
+          ]
+        ) || [["-", "-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
       headStyles: { halign: "center", fillColor: [14, 84, 57] },
@@ -80,13 +78,14 @@ export default function ExportClientPDFButton({
     autoTable(doc, {
       startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 20,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
-      body: Object.entries(product.tiered_pricing || {}).map(
-        ([qty, data]: [string, { price: number; profit: number }]) => [
-          qty,
-          `$${data.price.toFixed(2)}`,
-          `$${data.profit.toFixed(2)}`,
-        ]
-      ) || [["-", "-", "-"]],
+      body:
+        Object.entries(product.tiered_pricing || {}).map(
+          ([qty, data]: [string, { price: number; profit: number }]) => [
+            qty,
+            `$${data.price.toFixed(2)}`,
+            `$${data.profit.toFixed(2)}`,
+          ]
+        ) || [["-", "-", "-"]],
       theme: "grid",
       styles: { halign: "right" },
       headStyles: { halign: "center", fillColor: [14, 84, 57] },
