@@ -19,7 +19,7 @@ export type CalcOptions = {
 
   // ✅ overrides
   bulkOverrides?: Record<string, number>;
-  tierMarginOverrides?: Record<string, number>; // <-- add this
+  tierMarginOverrides?: Record<string, number>;
 };
 
 export function buildProductCalc(
@@ -36,7 +36,7 @@ export function buildProductCalc(
     totalOzPerUnit,
     gramsPerOz,
     baseProfitMargin = 0.25,
-    tierMarginOverrides = {}, // ✅ default empty
+    tierMarginOverrides = {},
   } = opts;
 
   // ===== Ingredient Costs =====
@@ -57,7 +57,12 @@ export function buildProductCalc(
 
   // ===== Formula Stats =====
   const formulaKg = components.reduce((sum, c) => sum + (c.quantity || 0), 0);
-  const costPerKg = formulaKg > 0 ? ingredientCostTotal / formulaKg : 0;
+
+  // If the BOM is much less than 1.0, assume remainder is water (cost = 0)
+  const normalizedKg = formulaKg < 0.9 ? 1.0 : formulaKg;
+
+  const costPerKg =
+    normalizedKg > 0 ? ingredientCostTotal / normalizedKg : 0;
 
   // ===== Excel-Style Per-Unit Conversion =====
   const unitWeightKg = (totalOzPerUnit * gramsPerOz) / 1000;
@@ -87,7 +92,7 @@ export function buildProductCalc(
   > = {};
 
   Object.entries(marginMultipliers).forEach(([qty, defaultMargin]) => {
-    const margin = tierMarginOverrides[qty] ?? defaultMargin; // ✅ use override if present
+    const margin = tierMarginOverrides[qty] ?? defaultMargin;
     const profit = baseCostPerUnit * baseProfitMargin * margin;
     const price = baseCostPerUnit + profit;
     tieredPricing[qty] = {
@@ -97,7 +102,7 @@ export function buildProductCalc(
     };
   });
 
-  // ===== Bulk Pricing (unchanged, still uses baseProfitMargin) =====
+  // ===== Bulk Pricing =====
   const bulkOptions = [
     { label: "2oz - Sample", sizeKg: 2 / 35.274, packaging: 0.28 },
     { label: "16 oz", sizeKg: 16 / 35.274, packaging: 0.4 },
