@@ -7,7 +7,7 @@ export default function CalculatorWidget() {
   const [display, setDisplay] = useState<string>("");
 
   const handleClick = (value: string) => {
-    if (value === "C") {
+    if (value === "Clear") {
       setDisplay("");
     } else if (value === "=") {
       try {
