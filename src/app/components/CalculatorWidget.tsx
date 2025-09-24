@@ -6,10 +6,6 @@ import React, { useState } from "react";
 export default function CalculatorWidget() {
   const [display, setDisplay] = useState<string>("");
 
-  const sanitize = (expr: string): string => {
-    return expr.replace(/\b0+(\d)/g, "0$1"); // prevent multiple leading zeros
-  };
-
   const handleClick = (value: string) => {
     if (value === "Clear") {
       setDisplay("");
@@ -17,30 +13,23 @@ export default function CalculatorWidget() {
     }
 
     if (value === "=") {
-      if (!display.trim()) return;
+      if (!display.trim()) {
+        // ✅ if display is empty, do nothing
+        return;
+      }
       try {
+        // ⚠️ Using eval only for simplicity — consider math.js for safety
         // eslint-disable-next-line no-eval
         setDisplay(eval(display).toString());
       } catch {
+        // ✅ optional: clear instead of showing "Error"
         setDisplay("");
       }
       return;
     }
 
-    // ✅ append safely
-    let newDisplay = display + value;
-
-    // ✅ sanitize leading zeros
-    newDisplay = sanitize(newDisplay);
-
-    // ✅ prevent multiple decimals in the same number
-    const parts = newDisplay.split(/[\+\-\*\/]/); // split by operators
-    const lastPart = parts[parts.length - 1];
-    if ((value === "." && lastPart.includes("."))) {
-      return; // ignore extra decimal
-    }
-
-    setDisplay(newDisplay);
+    // ✅ only runs for digits/operators
+    setDisplay(display + value);
   };
 
   const buttons = [
