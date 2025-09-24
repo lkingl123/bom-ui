@@ -15,11 +15,10 @@ export type CalcOptions = {
   orderQuantity: number;
   totalOzPerUnit: number;
   gramsPerOz: number;
-  baseProfitMargin?: number;
 
   // ✅ overrides
   bulkOverrides?: Record<string, number>;
-  tierMarginOverrides?: Record<string, number>;
+  tierMarginOverrides?: Record<string, number>; // now stores profit overrides (not %)
 };
 
 export function buildProductCalc(
@@ -35,7 +34,6 @@ export function buildProductCalc(
     orderQuantity,
     totalOzPerUnit,
     gramsPerOz,
-    baseProfitMargin = 0.25,
     tierMarginOverrides = {},
   } = opts;
 
@@ -61,8 +59,7 @@ export function buildProductCalc(
   // If the BOM is much less than 1.0, assume remainder is water (cost = 0)
   const normalizedKg = formulaKg < 0.9 ? 1.0 : formulaKg;
 
-  const costPerKg =
-    normalizedKg > 0 ? ingredientCostTotal / normalizedKg : 0;
+  const costPerKg = normalizedKg > 0 ? ingredientCostTotal / normalizedKg : 0;
 
   // ===== Excel-Style Per-Unit Conversion =====
   const unitWeightKg = (totalOzPerUnit * gramsPerOz) / 1000;
@@ -77,7 +74,8 @@ export function buildProductCalc(
     laborCostPerUnit;
 
   // ===== Tiered Pricing =====
-  const marginMultipliers: Record<number, number> = {
+  // discount multipliers applied to the base profit (2500 tier)
+  const discountMultipliers: Record<number, number> = {
     2500: 1.0,
     5000: 0.9,
     10000: 0.8,
@@ -91,14 +89,26 @@ export function buildProductCalc(
     { price: number; profit: number; margin: number }
   > = {};
 
-  Object.entries(marginMultipliers).forEach(([qty, defaultMargin]) => {
-    const margin = tierMarginOverrides[qty] ?? defaultMargin;
-    const profit = baseCostPerUnit * baseProfitMargin * margin;
-    const price = baseCostPerUnit + profit;
+  // base profit per unit comes from tierMarginOverrides["2500"]
+  // fallback: 20% of base cost
+  let baseProfit = tierMarginOverrides["2500"];
+  if (baseProfit == null) {
+    baseProfit = baseCostPerUnit * 0.2;
+  }
+
+  Object.entries(discountMultipliers).forEach(([qty, multiplier]) => {
+    const profitPerUnit =
+      qty === "2500"
+        ? baseProfit
+        : parseFloat((baseProfit * multiplier).toFixed(3));
+
+    const price = baseCostPerUnit + profitPerUnit;
+    const margin = price > 0 ? profitPerUnit / price : 0;
+
     tieredPricing[qty] = {
       price: parseFloat(price.toFixed(3)),
-      profit: parseFloat(profit.toFixed(3)),
-      margin,
+      profit: profitPerUnit,
+      margin: parseFloat(margin.toFixed(3)),
     };
   });
 
@@ -115,7 +125,7 @@ export function buildProductCalc(
   bulkOptions.forEach(({ label, sizeKg, packaging }) => {
     const effectivePackaging = opts.bulkOverrides?.[label] ?? packaging;
     const baseCost = costPerKg * sizeKg + effectivePackaging;
-    const profit = baseCost * baseProfitMargin;
+    const profit = baseCost * 0.2; // simple 20% default profit
     const price = baseCost + profit;
 
     bulkPricing[label] = {

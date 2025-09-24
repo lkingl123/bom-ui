@@ -9,6 +9,7 @@ import ExportClientPDFButton from "./ExportClientPDFButton";
 import ExportInternalPDFButton from "./ExportInternalPDFButton";
 import CalculatorWidget from "./CalculatorWidget";
 import LoadingSpinner from "./LoadingSpinner";
+import { RotateCcw } from "lucide-react";
 import type {
   Component,
   ComponentEditable,
@@ -52,15 +53,13 @@ export default function ProductDetailClient({
   const [costPerTouchInput, setCostPerTouchInput] = useState<string>("0.09");
   const [totalOzPerUnitInput, setTotalOzPerUnitInput] = useState<string>("4");
   const [gramsPerOzInput, setGramsPerOzInput] = useState<string>("30");
-  const [baseProfitMarginInput, setBaseProfitMarginInput] =
-    useState<string>("25");
 
   // ✅ bulk packaging overrides
   const [bulkPackagingOverrides, setBulkPackagingOverrides] = useState<
     Record<string, number>
   >({});
 
-  // ✅ tier margin overrides + inputs
+  // ✅ tier profit overrides + inputs
   const [tierMarginOverrides, setTierMarginOverrides] = useState<
     Record<string, number>
   >({});
@@ -75,8 +74,17 @@ export default function ProductDetailClient({
   const debouncedCostPerTouch = useDebounce(costPerTouchInput, 400);
   const debouncedTotalOzPerUnit = useDebounce(totalOzPerUnitInput, 400);
   const debouncedGramsPerOz = useDebounce(gramsPerOzInput, 400);
-  const debouncedBaseProfitMargin = useDebounce(baseProfitMarginInput, 400);
   const debouncedTierMarginInputs = useDebounce(tierMarginInputs, 400);
+
+  // ✅ Reset handlers
+  const handleResetTieredPricing = () => {
+    setTierMarginInputs({});
+    setTierMarginOverrides({});
+  };
+
+  const handleResetBulkPricing = () => {
+    setBulkPackagingOverrides({});
+  };
 
   // ✅ Fetch and compute
   useEffect(() => {
@@ -107,11 +115,11 @@ export default function ProductDetailClient({
           })
         );
 
-        // ✅ apply debounced tier margin overrides
+        // ✅ apply debounced tier profit overrides
         const updatedTierOverrides: Record<string, number> = {};
         Object.entries(debouncedTierMarginInputs).forEach(([qty, val]) => {
           const num = Number(val);
-          if (!isNaN(num)) updatedTierOverrides[qty] = num / 100;
+          if (!isNaN(num)) updatedTierOverrides[qty] = num;
         });
 
         const enriched = buildProductCalc(
@@ -125,7 +133,6 @@ export default function ProductDetailClient({
             orderQuantity: Number(debouncedOrderQuantity) || 0,
             totalOzPerUnit: Number(debouncedTotalOzPerUnit) || 0,
             gramsPerOz: Number(debouncedGramsPerOz) || 0,
-            baseProfitMargin: (Number(debouncedBaseProfitMargin) || 0) / 100,
             bulkOverrides: bulkPackagingOverrides,
             tierMarginOverrides: updatedTierOverrides,
           }
@@ -153,7 +160,6 @@ export default function ProductDetailClient({
     debouncedOrderQuantity,
     debouncedTotalOzPerUnit,
     debouncedGramsPerOz,
-    debouncedBaseProfitMargin,
     debouncedTierMarginInputs,
     bulkPackagingOverrides,
   ]);
@@ -280,11 +286,6 @@ export default function ProductDetailClient({
                   touchPointsInput,
                   setTouchPointsInput,
                 ] as const,
-                [
-                  "Base Profit Margin (%)",
-                  baseProfitMarginInput,
-                  setBaseProfitMarginInput,
-                ] as const,
               ].map(([label, value, setter]) => (
                 <tr key={label}>
                   <td className="px-4 py-2">{label}</td>
@@ -367,6 +368,16 @@ export default function ProductDetailClient({
               <tr>
                 <td className="px-4 py-2">Tiered Pricing</td>
                 <td className="px-4 py-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium">Tiers</span>
+                    <button
+                      onClick={handleResetTieredPricing}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition text-sm font-medium shadow-sm cursor-pointer"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Reset
+                    </button>
+                  </div>
                   <table className="w-full text-xs border">
                     <thead className="bg-gray-50">
                       <tr>
@@ -378,37 +389,42 @@ export default function ProductDetailClient({
                     </thead>
                     <tbody>
                       {Object.entries(product.tiered_pricing).map(
-                        ([qty, data]: [
-                          string,
-                          { price: number; profit: number; margin: number }
-                        ]) => (
+                        ([qty, data]) => (
                           <tr key={qty} className="border-t">
                             <td className="px-2 py-1">{qty}</td>
-                            <td className="px-2 py-1 text-right">
+                            {/* Price/Unit */}
+                            <td className="px-2 py-1 text-right font-semibold">
                               ${data.price.toFixed(2)}
                             </td>
-                            <td className="px-2 py-1 text-right text-gray-600">
-                              ${data.profit.toFixed(3)}
+                            {/* Profit/Unit */}
+                            <td className="px-2 py-1 text-right font-semibold">
+                              {qty === "2500" ? (
+                                <div className="flex justify-end">
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={(
+                                      Number(
+                                        tierMarginInputs[qty] ?? data.profit
+                                      ) || 0
+                                    ).toFixed(2)}
+                                    onChange={(e) =>
+                                      setTierMarginInputs((prev) => ({
+                                        ...prev,
+                                        [qty]: e.target.value,
+                                      }))
+                                    }
+                                    className="w-20 border rounded px-1 py-0.5 text-right font-mono font-semibold"
+                                  />
+                                </div>
+                              ) : (
+                                `$${data.profit.toFixed(2)}`
+                              )}
                             </td>
+
+                            {/* Margin */}
                             <td className="px-2 py-1 text-right text-gray-600">
-                              <input
-                                type="text"
-                                value={
-                                  tierMarginInputs[qty] ??
-                                  (
-                                    (tierMarginOverrides[qty] ?? data.margin) *
-                                    100
-                                  ).toString()
-                                }
-                                onChange={(e) =>
-                                  setTierMarginInputs((prev) => ({
-                                    ...prev,
-                                    [qty]: e.target.value,
-                                  }))
-                                }
-                                className="w-16 border rounded px-1 py-0.5 text-right font-mono"
-                              />
-                              %
+                              {(data.margin * 100).toFixed(1)}%
                             </td>
                           </tr>
                         )
@@ -422,6 +438,16 @@ export default function ProductDetailClient({
               <tr>
                 <td className="px-4 py-2">Bulk Pricing</td>
                 <td className="px-4 py-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium">Bulk Options</span>
+                    <button
+                      onClick={handleResetBulkPricing}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition text-sm font-medium shadow-sm cursor-pointer"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Reset
+                    </button>
+                  </div>
                   <table className="w-full text-xs border">
                     <thead className="bg-gray-50">
                       <tr>
@@ -433,10 +459,7 @@ export default function ProductDetailClient({
                     </thead>
                     <tbody>
                       {Object.entries(product.bulk_pricing).map(
-                        ([size, data]: [
-                          string,
-                          { msrp: number; profit: number; packaging: number }
-                        ]) => (
+                        ([size, data]) => (
                           <tr key={size} className="border-t">
                             <td className="px-2 py-1">{size}</td>
                             <td className="px-2 py-1 text-right">
@@ -449,9 +472,9 @@ export default function ProductDetailClient({
                               <input
                                 type="number"
                                 step="0.01"
-                                value={
+                                value={Number(
                                   bulkPackagingOverrides[size] ?? data.packaging
-                                }
+                                ).toFixed(2)}
                                 onChange={(e) =>
                                   setBulkPackagingOverrides((prev) => ({
                                     ...prev,
