@@ -445,8 +445,8 @@ export default function ProductDetailClient({
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-2 py-1 text-left">Size</th>
-                        <th className="px-2 py-1 text-right">MSRP</th>
-                        <th className="px-2 py-1 text-right">Profit</th>
+                        <th className="px-2 py-1 text-right">Price/Unit</th>
+                        <th className="px-2 py-1 text-right">Profit/Unit</th>
                         <th className="px-2 py-1 text-right">Packaging</th>
                       </tr>
                     </thead>
@@ -455,10 +455,10 @@ export default function ProductDetailClient({
                         ([size, data]) => (
                           <tr key={size} className="border-t">
                             <td className="px-2 py-1">{size}</td>
-                            <td className="px-2 py-1 text-right">
+                            <td className="px-2 py-1 text-right font-semibold">
                               ${data.msrp.toFixed(2)}
                             </td>
-                            <td className="px-2 py-1 text-right">
+                            <td className="px-2 py-1 text-right font-semibold">
                               ${data.profit.toFixed(2)}
                             </td>
                             <td className="px-2 py-1 text-right">

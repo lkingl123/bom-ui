@@ -1,3 +1,4 @@
+// src/app/components/ExportClientPDFButton.tsx
 "use client";
 
 import React from "react";
@@ -53,30 +54,9 @@ export default function ExportClientPDFButton({
     // Dynamic Y after INCI + Remarks
     const currentY = remarksY + remarksWrapped.length * 6 + 10;
 
-    // ===== Bulk Pricing =====
-    autoTable(doc, {
-      startY: currentY,
-      head: [["Size", "MSRP", "Profit", "Packaging"]],
-      body:
-        Object.entries(product.bulk_pricing || {}).map(
-          ([size, data]: [
-            string,
-            { msrp: number; profit: number; packaging: number }
-          ]) => [
-            size,
-            `$${data.msrp.toFixed(2)}`,
-            `$${data.profit.toFixed(2)}`,
-            `$${data.packaging.toFixed(2)}`,
-          ]
-        ) || [["-", "-", "-", "-"]],
-      theme: "grid",
-      styles: { halign: "right" },
-      headStyles: { halign: "center", fillColor: [14, 84, 57] },
-    });
-
     // ===== Tiered Pricing =====
     autoTable(doc, {
-      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : currentY + 20,
+      startY: currentY,
       head: [["Quantity", "Price / Unit", "Profit / Unit"]],
       body:
         Object.entries(product.tiered_pricing || {}).map(
