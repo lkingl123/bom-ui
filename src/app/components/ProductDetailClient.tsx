@@ -48,7 +48,6 @@ export default function ProductDetailClient({
 
   // Editable inputs (raw strings)
   const [orderQuantityInput, setOrderQuantityInput] = useState<string>("5000");
-  const [inflowCostInput, setInflowCostInput] = useState<string>("0");
   const [touchPointsInput, setTouchPointsInput] = useState<string>("6");
   const [costPerTouchInput, setCostPerTouchInput] = useState<string>("0.09");
   const [totalOzPerUnitInput, setTotalOzPerUnitInput] = useState<string>("4");
@@ -69,7 +68,6 @@ export default function ProductDetailClient({
 
   // ✅ Debounced values
   const debouncedOrderQuantity = useDebounce(orderQuantityInput, 400);
-  const debouncedInflowCost = useDebounce(inflowCostInput, 400);
   const debouncedTouchPoints = useDebounce(touchPointsInput, 400);
   const debouncedCostPerTouch = useDebounce(costPerTouchInput, 400);
   const debouncedTotalOzPerUnit = useDebounce(totalOzPerUnitInput, 400);
@@ -127,7 +125,6 @@ export default function ProductDetailClient({
           editableComponents,
           packagingItems,
           {
-            inflowCost: Number(debouncedInflowCost) || 0,
             touchPoints: Number(debouncedTouchPoints) || 0,
             costPerTouch: Number(debouncedCostPerTouch) || 0,
             orderQuantity: Number(debouncedOrderQuantity) || 0,
@@ -154,7 +151,6 @@ export default function ProductDetailClient({
     name,
     editableComponents,
     packagingItems,
-    debouncedInflowCost,
     debouncedTouchPoints,
     debouncedCostPerTouch,
     debouncedOrderQuantity,
@@ -272,11 +268,6 @@ export default function ProductDetailClient({
                 ] as const,
                 ["Grams per Oz", gramsPerOzInput, setGramsPerOzInput] as const,
                 [
-                  "Inflow Cost ($)",
-                  inflowCostInput,
-                  setInflowCostInput,
-                ] as const,
-                [
                   "Cost per Touch",
                   costPerTouchInput,
                   setCostPerTouchInput,
@@ -323,7 +314,6 @@ export default function ProductDetailClient({
                     }
                     originalComponents={originalComponents}
                     packagingTotal={packagingTotal}
-                    inflowCost={Number(debouncedInflowCost) || 0}
                   />
                 </td>
               </tr>
@@ -359,7 +349,7 @@ export default function ProductDetailClient({
                     ? `$${product.base_cost_per_unit.toFixed(3)}`
                     : "$-"}
                   <div className="text-xs text-gray-500">
-                    After Labor, Packaging, Inflow
+                    After Labor and Packaging
                   </div>
                 </td>
               </tr>
@@ -399,7 +389,10 @@ export default function ProductDetailClient({
                             {/* Profit/Unit */}
                             <td className="px-2 py-1 text-right font-semibold">
                               {qty === "2500" ? (
-                                <div className="flex justify-end">
+                                <div className="relative flex justify-end">
+                                  <span className="absolute left-35 top-1/2 -translate-y-1/2 text-gray-600">
+                                    $
+                                  </span>
                                   <input
                                     type="number"
                                     step="0.01"

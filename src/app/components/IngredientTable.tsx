@@ -13,7 +13,6 @@ interface IngredientTableProps {
   setLaborCost: (v: number) => void;
   originalComponents: ComponentEditable[];
   packagingTotal: number;
-  inflowCost: number;
 }
 
 export default function IngredientTable({
@@ -23,7 +22,6 @@ export default function IngredientTable({
   setLaborCost,
   originalComponents,
   packagingTotal,
-  inflowCost,
 }: IngredientTableProps): React.ReactElement {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [loadingRows, setLoadingRows] = useState<Record<number, boolean>>({});
@@ -334,15 +332,6 @@ export default function IngredientTable({
                 </td>
                 <td className="px-4 py-3 text-right font-mono">
                   ${packagingTotal.toFixed(2)}
-                </td>
-                <td></td>
-              </tr>
-              <tr className="italic border-t">
-                <td colSpan={3} className="px-4 py-3 text-right">
-                  Inflow $
-                </td>
-                <td className="px-4 py-3 text-right font-mono">
-                  ${inflowCost.toFixed(2)}
                 </td>
                 <td></td>
               </tr>

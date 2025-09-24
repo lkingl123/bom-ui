@@ -103,7 +103,6 @@ export default function ExportInternalPDFButton({
         ["Formula Weight (kg)", product.formula_kg?.toFixed(3) || "-"],
         ["Total Cost Per KG", `$${(product.cost_per_kg || 0).toFixed(2)}`],
         ["Labor Cost", `$${(product.labor_cost || 0).toFixed(2)}`],
-        ["Inflow Cost", `$${(product.inflow_cost || 0).toFixed(2)}`],
         [
           "Total Packaging Cost",
           `$${(product.packaging_cost || 0).toFixed(2)}`,

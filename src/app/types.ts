@@ -71,7 +71,6 @@ export type ProductCalc = ProductDetail & {
   packaging_cost?: number;
   labor_cost?: number;
   misc_cost?: number;
-  inflow_cost?: number;
   components: ComponentEditable[];
 
   // Labor breakdown

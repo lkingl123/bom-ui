@@ -9,7 +9,6 @@ import type {
 } from "../types";
 
 export type CalcOptions = {
-  inflowCost?: number;
   touchPoints?: number;
   costPerTouch?: number;
   orderQuantity: number;
@@ -28,7 +27,6 @@ export function buildProductCalc(
   opts: CalcOptions
 ): ProductCalc {
   const {
-    inflowCost = 0,
     touchPoints = 0,
     costPerTouch = 0,
     orderQuantity,
@@ -70,7 +68,6 @@ export function buildProductCalc(
   const baseCostPerUnit =
     costPerUnitExcel +
     packagingCostTotal / (orderQuantity || 1) +
-    inflowCost / (orderQuantity || 1) +
     laborCostPerUnit;
 
   // ===== Tiered Pricing =====
@@ -139,7 +136,6 @@ export function buildProductCalc(
     ...detail,
     components,
     packaging_cost: packagingCostTotal,
-    inflow_cost: inflowCost,
     touch_points: touchPoints,
     cost_per_touch: costPerTouch,
     labor_cost: laborCostTotal,
