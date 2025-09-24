@@ -111,7 +111,6 @@ export function buildProductCalc(
 
   // ===== Bulk Pricing =====
   const bulkOptions = [
-    { label: "2oz - Sample", sizeKg: 2 / 35.274, packaging: 0.28 },
     { label: "16 oz", sizeKg: 16 / 35.274, packaging: 0.4 },
     { label: "1 Gal", sizeKg: 3.785, packaging: 1.38 },
     { label: "5 Gal", sizeKg: 18.5, packaging: 8.25 },
