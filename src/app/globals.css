@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Light mode defaults */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +13,35 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode overrides */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0a0a0a;   /* near-black */
+    --foreground: #ededed;   /* light text */
+  }
+
+  /* Inputs in dark mode */
+  input,
+  textarea,
+  select {
+    background-color: #1f2937; /* Tailwind gray-800 */
+    color: #f9fafb;           /* Tailwind gray-100 */
+    border: 1px solid #4b5563; /* Tailwind gray-600 */
   }
 }
 
+/* Base body styles */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Inputs in light mode */
+input,
+textarea,
+select {
+  background-color: #ffffff;
+  color: #111827;             /* Tailwind gray-900 */
+  border: 1px solid #d1d5db;  /* Tailwind gray-300 */
 }

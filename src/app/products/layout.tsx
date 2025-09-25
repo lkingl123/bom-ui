@@ -6,7 +6,7 @@ export default function ProductsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen">
       <Header />
       {children}
     </div>
