@@ -15,7 +15,7 @@ export default async function ProductsPage() {
               Product Catalog
             </h2>
             <span className="text-sm text-gray-500">
-              Showing {products.length} products (initial load)
+              Displaying {products.length} products per page
             </span>
           </div>
 

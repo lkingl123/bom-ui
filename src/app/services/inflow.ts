@@ -232,3 +232,23 @@ export async function getExpandedBom(
 
   return components;
 }
+
+
+export async function getPackagingProducts(
+  count: number = 50,
+  after?: string
+) {
+  // Reuse your existing getProductsPage
+  const { products, lastId } = await getProductsPage(count, after);
+
+  // Filter only packaging-related categories
+  const packagingProducts = products.filter(p =>
+    p.category?.toLowerCase().includes("packaging")
+    || p.category?.toLowerCase().includes("bottles")
+    || p.category?.toLowerCase().includes("jars")
+    || p.category?.toLowerCase().includes("lids")
+    || p.category?.toLowerCase().includes("boxes")
+  );
+
+  return { products: packagingProducts, lastId };
+}

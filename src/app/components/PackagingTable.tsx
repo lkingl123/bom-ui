@@ -1,30 +1,30 @@
+// src/app/components/PackagingTable.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { RotateCcw, Plus, Minus } from "lucide-react";
-import type { PackagingItemEditable } from "../types";
+import type { PackagingItemEditable, ProductSummary } from "../types";
+import PackagingSearch from "./PackagingSearch";
 
 interface PackagingTableProps {
   packagingItems: PackagingItemEditable[];
   setPackagingItems: (c: PackagingItemEditable[]) => void;
+  orderQuantity: number; // ✅ passed from ProductDetailClient
 }
 
 export default function PackagingTable({
   packagingItems,
   setPackagingItems,
+  orderQuantity,
 }: PackagingTableProps): React.ReactElement {
+  const [showSearch, setShowSearch] = useState(false);
+
   const handleReset = (): void => {
     setPackagingItems([]);
   };
 
   const handleAddItem = (): void => {
-    const newItem: PackagingItemEditable = {
-      name: "New Packaging Item",
-      quantity: 0,
-      unit_cost: 0,
-      line_cost: 0,
-    };
-    setPackagingItems([...packagingItems, newItem]);
+    setShowSearch(true); // open search modal
   };
 
   const handleRemoveItem = (index: number): void => {
@@ -35,22 +35,35 @@ export default function PackagingTable({
 
   const handleEdit = (
     index: number,
-    field: "name" | "quantity" | "unit_cost" | "line_cost",
+    field: "name" | "unit_cost",
     value: string
   ): void => {
     const updated = [...packagingItems];
-
     if (field === "name") {
       updated[index] = { ...updated[index], name: value };
     } else {
       const num = parseFloat(value) || 0;
-      updated[index] = { ...updated[index], [field]: num };
+      updated[index] = { ...updated[index], unit_cost: num };
     }
 
-    updated[index].line_cost =
-      (updated[index].quantity || 0) * (updated[index].unit_cost || 0);
+    // line_cost now = unit_cost × orderQuantity
+    updated[index].line_cost = (updated[index].unit_cost || 0) * orderQuantity;
 
     setPackagingItems(updated);
+  };
+
+  const handleSelectFromSearch = (p: ProductSummary): void => {
+    const unitCost = p.cost?.cost ? parseFloat(p.cost.cost) : 0;
+
+    const newItem: PackagingItemEditable = {
+      name: p.name,
+      quantity: 1, // placeholder, but unused
+      unit_cost: unitCost,
+      line_cost: unitCost * orderQuantity, // 🔑 use global order quantity
+    };
+
+    setPackagingItems([...packagingItems, newItem]);
+    setShowSearch(false);
   };
 
   const total = packagingItems.reduce(
@@ -85,7 +98,6 @@ export default function PackagingTable({
             <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
               <tr>
                 <th className="px-4 py-3 text-left">Packaging Item</th>
-                <th className="px-4 py-3 text-right">Quantity</th>
                 <th className="px-4 py-3 text-right">Unit Cost ($)</th>
                 <th className="px-4 py-3 text-right">Line Cost ($)</th>
               </tr>
@@ -112,18 +124,6 @@ export default function PackagingTable({
                   <td className="px-4 py-2 text-right">
                     <input
                       type="number"
-                      min={0}
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleEdit(index, "quantity", e.target.value)
-                      }
-                      className="w-20 text-right border rounded px-2 py-1 text-sm font-mono"
-                    />
-                  </td>
-
-                  <td className="px-4 py-2 text-right">
-                    <input
-                      type="number"
                       step="0.01"
                       min={0}
                       value={item.unit_cost}
@@ -135,14 +135,14 @@ export default function PackagingTable({
                   </td>
 
                   <td className="px-4 py-2 text-right font-mono">
-                    ${item.line_cost.toFixed(2)}
+                    ${(item.unit_cost * orderQuantity).toFixed(2)}
                   </td>
                 </tr>
               ))}
 
               {/* Totals */}
               <tr className="bg-gray-50 font-semibold border-t">
-                <td colSpan={3} className="px-4 py-3 text-right">
+                <td colSpan={2} className="px-4 py-3 text-right">
                   Total Packaging Cost
                 </td>
                 <td className="px-4 py-3 text-right text-[#0e5439] font-mono">
@@ -153,6 +153,14 @@ export default function PackagingTable({
           </table>
         </div>
       </div>
+
+      {/* Modal Search */}
+      {showSearch && (
+        <PackagingSearch
+          onSelect={handleSelectFromSearch}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
-import type { Component, ComponentEditable, InciEntry, ProductSummary } from "../types";
+import type { ComponentEditable, InciEntry, ProductSummary } from "../types";
 import IngredientSearch from "./IngredientSearch";
 import { getProduct } from "../services/inflow";
 
@@ -69,25 +69,28 @@ export default function IngredientTable({
 
   const handleAddIngredient = (): void => setShowSearch(true);
 
-  // inside IngredientTable.tsx
+  // ✅ Selection from IngredientSearch now includes cost
+  const handleIngredientSelect = (ingredient: ProductSummary): void => {
+    console.log("[IngredientTable] Selected ingredient from search:", ingredient);
 
-const handleIngredientSelect = (ingredient: ProductSummary): void => {
-  console.log("[IngredientTable] Selected ingredient from search:", ingredient);
+    const unitCost = ingredient.cost?.cost
+      ? parseFloat(ingredient.cost.cost)
+      : 0;
 
-  // 🔄 Map ProductSummary → ComponentEditable
-  const newIngredient: ComponentEditable = {
-    name: ingredient.name,
-    sku: ingredient.sku,
-    quantity: 0,
-    uom: "kg", // 👈 default, adjust if inFlow gives you UOM later
-    has_cost: true,
-    unit_cost: 0, // 👈 inFlow search doesn’t return cost, so start at 0
-    line_cost: 0,
+    // 🔄 Map ProductSummary → ComponentEditable
+    const newIngredient: ComponentEditable = {
+      name: ingredient.name,
+      sku: ingredient.sku,
+      quantity: 0,
+      uom: "kg", // 👈 default, adjust if inFlow gives you UOM later
+      has_cost: true,
+      unit_cost: unitCost,   // ✅ use real cost if available
+      line_cost: 0,
+    };
+
+    setComponents([...components, newIngredient]);
+    setShowSearch(false);
   };
-
-  setComponents([...components, newIngredient]);
-  setShowSearch(false);
-};
 
   const handleRemoveIngredient = (index: number): void => {
     const updated = [...components];
@@ -150,7 +153,7 @@ const handleIngredientSelect = (ingredient: ProductSummary): void => {
     <div>
       {showSearch && (
         <IngredientSearch
-          onSelect={handleIngredientSelect} // ✅ now matches ProductSummary
+          onSelect={handleIngredientSelect} // ✅ now matches ProductSummary with cost
           onClose={() => setShowSearch(false)}
         />
       )}
