@@ -209,34 +209,3 @@ export type BulkPricingEntry = {
   profit: number;
   packaging: number;
 };
-
-// =============================
-// Manufacturing Order Types
-// =============================
-export type ManufacturingOrderLine = {
-  lineId?: string;
-  productId: string;
-  quantity: number;
-  uom?: string;
-  remarks?: string;
-  manufacturingOrderLines?: ManufacturingOrderLine[];
-};
-
-export type ManufacturingOrder = {
-  manufacturingOrderId: string;
-  manufacturingOrderNumber: string;
-  status: "Open" | "InProgress" | "Completed";
-  orderDate: string;
-  dueDate?: string;
-  completedDate?: string;
-  remarks?: string;
-  pickRemarks?: string;
-  putAwayRemarks?: string;
-  isCancelled?: boolean;
-  isCompleted?: boolean;
-  isPrioritized?: boolean;
-  locationId?: string;
-  primaryFinishedProductId?: string;
-  primaryFinishedProduct?: ProductSummary;
-  lines?: ManufacturingOrderLine[];
-};
