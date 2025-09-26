@@ -1,11 +1,10 @@
 import ProductCatalog from "../components/ProductCatalog";
+import { getProductsPage } from "../services/inflow";
 import type { ProductSummary } from "../types";
 
 export default async function ProductsPage() {
-  const res = await fetch("https://bom-api.fly.dev/products?", {
-    next: { revalidate: 60 },
-  });
-  const products: ProductSummary[] = await res.json();
+  // ✅ fetch first 80 as initial batch
+  const { products = [] } = await getProductsPage(80);
 
   return (
     <main className="bg-gray-50 min-h-screen">
@@ -16,12 +15,11 @@ export default async function ProductsPage() {
               Product Catalog
             </h2>
             <span className="text-sm text-gray-500">
-              {products.length} products available
+              Showing {products.length} products (initial load)
             </span>
           </div>
 
-          {/* ✅ Pass actual data, not the type */}
-          <ProductCatalog products={products} />
+          <ProductCatalog initialProducts={products as ProductSummary[]} />
         </div>
       </section>
     </main>

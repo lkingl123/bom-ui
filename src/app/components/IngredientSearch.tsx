@@ -1,3 +1,4 @@
+// src/app/components/IngredientSearch.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";

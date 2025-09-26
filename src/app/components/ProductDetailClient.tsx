@@ -5,22 +5,19 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import IngredientTable from "./IngredientTable";
 import PackagingTable from "./PackagingTable";
-import ExportClientPDFButton from "./ExportClientPDFButton";
-import ExportInternalPDFButton from "./ExportInternalPDFButton";
 import CalculatorWidget from "./CalculatorWidget";
 import LoadingSpinner from "./LoadingSpinner";
 import { RotateCcw } from "lucide-react";
 import type {
-  Component,
   ComponentEditable,
   PackagingItemEditable,
-  ProductDetail,
   ProductCalc,
-  InciEntry,
+  ProductDetail,
 } from "../types";
 import { buildProductCalc } from "../utils/calculations";
+import { getProduct, getExpandedBom } from "../services/inflow";
 
-// ✅ Simple debounce hook
+// --- debounce hook ---
 function useDebounce<T>(value: T, delay = 400): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -31,9 +28,9 @@ function useDebounce<T>(value: T, delay = 400): T {
 }
 
 export default function ProductDetailClient({
-  name,
+  productId,
 }: {
-  name: string;
+  productId: string;
 }): React.ReactElement {
   const [product, setProduct] = useState<ProductCalc | null>(null);
   const [editableComponents, setEditableComponents] = useState<
@@ -46,19 +43,17 @@ export default function ProductDetailClient({
     []
   );
 
-  // Editable inputs (raw strings)
-  const [orderQuantityInput, setOrderQuantityInput] = useState<string>("5000");
-  const [touchPointsInput, setTouchPointsInput] = useState<string>("6");
-  const [costPerTouchInput, setCostPerTouchInput] = useState<string>("0.09");
-  const [totalOzPerUnitInput, setTotalOzPerUnitInput] = useState<string>("4");
-  const [gramsPerOzInput, setGramsPerOzInput] = useState<string>("30");
+  // Inputs
+  const [orderQuantityInput, setOrderQuantityInput] = useState("5000");
+  const [touchPointsInput, setTouchPointsInput] = useState("6");
+  const [costPerTouchInput, setCostPerTouchInput] = useState("0.09");
+  const [totalOzPerUnitInput, setTotalOzPerUnitInput] = useState("4");
+  const [gramsPerOzInput, setGramsPerOzInput] = useState("30");
 
-  // ✅ bulk packaging overrides
+  // Overrides
   const [bulkPackagingOverrides, setBulkPackagingOverrides] = useState<
     Record<string, number>
   >({});
-
-  // ✅ tier profit overrides + inputs
   const [tierMarginOverrides, setTierMarginOverrides] = useState<
     Record<string, number>
   >({});
@@ -66,7 +61,7 @@ export default function ProductDetailClient({
     Record<string, string>
   >({});
 
-  // ✅ Debounced values
+  // Debounced
   const debouncedOrderQuantity = useDebounce(orderQuantityInput, 400);
   const debouncedTouchPoints = useDebounce(touchPointsInput, 400);
   const debouncedCostPerTouch = useDebounce(costPerTouchInput, 400);
@@ -74,55 +69,45 @@ export default function ProductDetailClient({
   const debouncedGramsPerOz = useDebounce(gramsPerOzInput, 400);
   const debouncedTierMarginInputs = useDebounce(tierMarginInputs, 400);
 
-  // ✅ Reset handlers
+  // Reset handlers
   const handleResetTieredPricing = () => {
     setTierMarginInputs({});
     setTierMarginOverrides({});
   };
+  const handleResetBulkPricing = () => setBulkPackagingOverrides({});
 
-  const handleResetBulkPricing = () => {
-    setBulkPackagingOverrides({});
-  };
-
-  // ✅ Fetch and compute
+  // Fetch product + its BOM
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(
-          `https://bom-api.fly.dev/products/${encodeURIComponent(name)}`
-        );
-        if (!res.ok) {
-          console.error("Failed to fetch product detail:", res.status);
-          return;
-        }
+        const data: ProductDetail = await getProduct(productId);
+        const expandedBom = await getExpandedBom(productId);
 
-        const data: ProductDetail = await res.json();
+        // Convert BOMs to ComponentEditable[]
+        const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
+          name: bom.name,
+          sku: bom.sku,
+          quantity: bom.quantity,
+          uom: bom.uom || "ea",
+          has_cost: true,
+          unit_cost: bom.cost,
+          line_cost: bom.cost * bom.quantity,
+        }));
 
-        const totalQuantity = data.components.reduce(
-          (sum: number, c: Component) => sum + (c.quantity || 0),
-          0
-        );
-
-        const normalized: ComponentEditable[] = data.components.map(
-          (c: Component) => ({
-            ...c,
-            percent:
-              totalQuantity > 0
-                ? parseFloat(((c.quantity / totalQuantity) * 100).toFixed(2))
-                : 0,
-          })
-        );
-
-        // ✅ apply debounced tier profit overrides
+        // Apply overrides
         const updatedTierOverrides: Record<string, number> = {};
         Object.entries(debouncedTierMarginInputs).forEach(([qty, val]) => {
           const num = Number(val);
           if (!isNaN(num)) updatedTierOverrides[qty] = num;
         });
 
+        // Enrich for calculations
         const enriched = buildProductCalc(
-          data,
-          editableComponents,
+          {
+            ...data,
+            components: rawComponents,
+          } as any,
+          rawComponents,
           packagingItems,
           {
             touchPoints: Number(debouncedTouchPoints) || 0,
@@ -136,19 +121,17 @@ export default function ProductDetailClient({
         );
 
         setProduct(enriched);
-        // only set once when fetching — not on every calc
-        setOriginalComponents(normalized);
-        if (editableComponents.length === 0) {
-          setEditableComponents(normalized); // ✅ only initialize if empty
-        }
+        setOriginalComponents(rawComponents);
+        if (editableComponents.length === 0)
+          setEditableComponents(rawComponents);
       } catch (err) {
-        console.error("Error fetching product detail:", err);
+        console.error("Error fetching product:", err);
       }
     };
 
     fetchData();
   }, [
-    name,
+    productId,
     editableComponents,
     packagingItems,
     debouncedTouchPoints,
@@ -191,61 +174,17 @@ export default function ProductDetailClient({
               </tr>
               <tr>
                 <td className="px-4 py-2">Name of Product</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={product.product_name || ""}
-                    onChange={(e) =>
-                      setProduct({ ...product, product_name: e.target.value })
-                    }
-                    className="w-full border rounded px-2 py-1 font-mono"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">INCI</td>
-                <td className="px-4 py-2">
-                  <textarea
-                    value={
-                      Array.isArray(product.inci)
-                        ? product.inci
-                            .map((i: InciEntry) =>
-                              i.percentage
-                                ? `${i.name} (${i.percentage})`
-                                : i.name
-                            )
-                            .join(", ")
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setProduct({
-                        ...product,
-                        inci: e.target.value
-                          .split(",")
-                          .map((s) => ({ name: s.trim() })),
-                      })
-                    }
-                    className="w-full border rounded px-2 py-1 font-mono text-sm h-16"
-                  />
-                </td>
+                <td className="px-4 py-2">{product.name || "-"}</td>
               </tr>
               <tr>
                 <td className="px-4 py-2">Remarks</td>
-                <td className="px-4 py-2">
-                  <textarea
-                    value={product.remarks || ""}
-                    onChange={(e) =>
-                      setProduct({ ...product, remarks: e.target.value })
-                    }
-                    className="w-full border rounded px-2 py-1 font-mono text-sm h-8"
-                  />
-                </td>
+                <td className="px-4 py-2">{product.remarks || "-"}</td>
               </tr>
               <tr>
-                <td className="px-4 py-2">SKU / Barcode / Category</td>
+                <td className="px-4 py-2">SKU / Category</td>
                 <td className="px-4 py-2 text-gray-700">
-                  {product.sku || "-"} / {product.barcode || "-"} /{" "}
-                  {product.category || "-"}
+                  {product.sku || "-"} /{" "}
+                  {(product as any).category?.toString() || "-"}
                 </td>
               </tr>
 
@@ -256,27 +195,11 @@ export default function ProductDetailClient({
                 </td>
               </tr>
               {[
-                [
-                  "Order Quantity",
-                  orderQuantityInput,
-                  setOrderQuantityInput,
-                ] as const,
-                [
-                  "Total Oz Per Unit",
-                  totalOzPerUnitInput,
-                  setTotalOzPerUnitInput,
-                ] as const,
+                ["Order Quantity", orderQuantityInput, setOrderQuantityInput] as const,
+                ["Total Oz Per Unit", totalOzPerUnitInput, setTotalOzPerUnitInput] as const,
                 ["Grams per Oz", gramsPerOzInput, setGramsPerOzInput] as const,
-                [
-                  "Cost per Touch",
-                  costPerTouchInput,
-                  setCostPerTouchInput,
-                ] as const,
-                [
-                  "Touch Points",
-                  touchPointsInput,
-                  setTouchPointsInput,
-                ] as const,
+                ["Cost per Touch", costPerTouchInput, setCostPerTouchInput] as const,
+                ["Touch Points", touchPointsInput, setTouchPointsInput] as const,
               ].map(([label, value, setter]) => (
                 <tr key={label}>
                   <td className="px-4 py-2">{label}</td>
@@ -493,14 +416,14 @@ export default function ProductDetailClient({
               </tr>
               <tr>
                 <td className="px-4 py-2">Export</td>
-                <td className="px-4 py-2 text-right flex gap-2 justify-end">
+                {/* <td className="px-4 py-2 text-right flex gap-2 justify-end">
                   <ExportClientPDFButton product={product} />
                   <ExportInternalPDFButton
                     product={product}
                     components={editableComponents}
                     packagingItems={packagingItems}
                   />
-                </td>
+                </td> */}
               </tr>
             </tbody>
           </table>
