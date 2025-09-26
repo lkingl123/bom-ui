@@ -61,7 +61,7 @@ export default function ProductDetailClient({
     Record<string, string>
   >({});
 
-  // Debounced
+  // Debounced inputs
   const debouncedOrderQuantity = useDebounce(orderQuantityInput, 400);
   const debouncedTouchPoints = useDebounce(touchPointsInput, 400);
   const debouncedCostPerTouch = useDebounce(costPerTouchInput, 400);
@@ -76,7 +76,7 @@ export default function ProductDetailClient({
   };
   const handleResetBulkPricing = () => setBulkPackagingOverrides({});
 
-  // Fetch product + its BOM
+  // --- Fetch product + BOM once (when productId changes) ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -94,46 +94,47 @@ export default function ProductDetailClient({
           line_cost: bom.cost * bom.quantity,
         }));
 
-        // Apply overrides
-        const updatedTierOverrides: Record<string, number> = {};
-        Object.entries(debouncedTierMarginInputs).forEach(([qty, val]) => {
-          const num = Number(val);
-          if (!isNaN(num)) updatedTierOverrides[qty] = num;
-        });
-
-        // Enrich for calculations
-        const enriched = buildProductCalc(
-          {
-            ...data,
-            components: rawComponents,
-          } as any,
-          rawComponents,
-          packagingItems,
-          {
-            touchPoints: Number(debouncedTouchPoints) || 0,
-            costPerTouch: Number(debouncedCostPerTouch) || 0,
-            orderQuantity: Number(debouncedOrderQuantity) || 0,
-            totalOzPerUnit: Number(debouncedTotalOzPerUnit) || 0,
-            gramsPerOz: Number(debouncedGramsPerOz) || 0,
-            bulkOverrides: bulkPackagingOverrides,
-            tierMarginOverrides: updatedTierOverrides,
-          }
-        );
-
-        setProduct(enriched);
         setOriginalComponents(rawComponents);
-        if (editableComponents.length === 0)
-          setEditableComponents(rawComponents);
+        setEditableComponents(rawComponents);
+        setProduct({
+          ...data,
+          components: rawComponents,
+        } as ProductCalc);
       } catch (err) {
         console.error("Error fetching product:", err);
       }
     };
 
     fetchData();
+  }, [productId]);
+
+  // --- Recalculate values when inputs/overrides change ---
+  useEffect(() => {
+    if (!product) return;
+
+    const updatedTierOverrides: Record<string, number> = {};
+    Object.entries(debouncedTierMarginInputs).forEach(([qty, val]) => {
+      const num = Number(val);
+      if (!isNaN(num)) updatedTierOverrides[qty] = num;
+    });
+
+    const enriched = buildProductCalc(
+      product,
+      editableComponents,
+      packagingItems,
+      {
+        touchPoints: Number(debouncedTouchPoints) || 0,
+        costPerTouch: Number(debouncedCostPerTouch) || 0,
+        orderQuantity: Number(debouncedOrderQuantity) || 0,
+        totalOzPerUnit: Number(debouncedTotalOzPerUnit) || 0,
+        gramsPerOz: Number(debouncedGramsPerOz) || 0,
+        bulkOverrides: bulkPackagingOverrides,
+        tierMarginOverrides: updatedTierOverrides,
+      }
+    );
+
+    setProduct(enriched);
   }, [
-    productId,
-    editableComponents,
-    packagingItems,
     debouncedTouchPoints,
     debouncedCostPerTouch,
     debouncedOrderQuantity,
@@ -141,6 +142,8 @@ export default function ProductDetailClient({
     debouncedGramsPerOz,
     debouncedTierMarginInputs,
     bulkPackagingOverrides,
+    packagingItems,
+    editableComponents,
   ]);
 
   if (!product) return <LoadingSpinner />;
@@ -162,6 +165,7 @@ export default function ProductDetailClient({
           </Link>
         </div>
 
+        {/* Product Dashboard */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Product Cost Dashboard</h2>
           <table className="min-w-full text-sm border border-gray-200 rounded-lg">
@@ -183,8 +187,7 @@ export default function ProductDetailClient({
               <tr>
                 <td className="px-4 py-2">SKU / Category</td>
                 <td className="px-4 py-2 text-gray-700">
-                  {product.sku || "-"} /{" "}
-                  {(product as any).category?.toString() || "-"}
+                  {product.sku || "-"} / {(product as any).category?.toString() || "-"}
                 </td>
               </tr>
 
@@ -301,50 +304,54 @@ export default function ProductDetailClient({
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(product.tiered_pricing).map(
-                        ([qty, data]) => (
-                          <tr key={qty} className="border-t">
-                            <td className="px-2 py-1">{qty}</td>
-                            {/* Price/Unit */}
-                            <td className="px-2 py-1 text-right font-semibold">
-                              ${data.price.toFixed(2)}
-                            </td>
-                            {/* Profit/Unit */}
-                            <td className="px-2 py-1 text-right font-semibold">
-                              {qty === "2500" ? (
-                                <div className="relative flex justify-end">
-                                  <span className="absolute left-35 top-1/2 -translate-y-1/2 text-gray-600">
-                                    $
-                                  </span>
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    value={(
-                                      Number(
-                                        tierMarginInputs[qty] ?? data.profit
-                                      ) || 0
-                                    ).toFixed(2)}
-                                    onChange={(e) =>
-                                      setTierMarginInputs((prev) => ({
-                                        ...prev,
-                                        [qty]: e.target.value,
-                                      }))
-                                    }
-                                    className="w-20 border rounded px-1 py-0.5 text-right font-mono font-semibold"
-                                  />
-                                </div>
-                              ) : (
-                                `$${data.profit.toFixed(2)}`
-                              )}
-                            </td>
-
-                            {/* Margin */}
-                            <td className="px-2 py-1 text-right text-gray-600">
-                              {(data.margin * 100).toFixed(1)}%
+                      {product.tiered_pricing
+                        ? Object.entries(product.tiered_pricing).map(
+                            ([qty, data]) => (
+                              <tr key={qty} className="border-t">
+                                <td className="px-2 py-1">{qty}</td>
+                                <td className="px-2 py-1 text-right font-semibold">
+                                  ${data.price.toFixed(2)}
+                                </td>
+                                <td className="px-2 py-1 text-right font-semibold">
+                                  {qty === "2500" ? (
+                                    <div className="relative flex justify-end">
+                                      <span className="absolute left-35 top-1/2 -translate-y-1/2 text-gray-600">
+                                        $
+                                      </span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={(
+                                          Number(
+                                            tierMarginInputs[qty] ?? data.profit
+                                          ) || 0
+                                        ).toFixed(2)}
+                                        onChange={(e) =>
+                                          setTierMarginInputs((prev) => ({
+                                            ...prev,
+                                            [qty]: e.target.value,
+                                          }))
+                                        }
+                                        className="w-20 border rounded px-1 py-0.5 text-right font-mono font-semibold"
+                                      />
+                                    </div>
+                                  ) : (
+                                    `$${data.profit.toFixed(2)}`
+                                  )}
+                                </td>
+                                <td className="px-2 py-1 text-right text-gray-600">
+                                  {(data.margin * 100).toFixed(1)}%
+                                </td>
+                              </tr>
+                            )
+                          )
+                        : (
+                          <tr>
+                            <td colSpan={4} className="px-2 py-2 text-center text-gray-500">
+                              No tiered pricing available
                             </td>
                           </tr>
-                        )
-                      )}
+                        )}
                     </tbody>
                   </table>
                 </td>
@@ -374,35 +381,43 @@ export default function ProductDetailClient({
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(product.bulk_pricing).map(
-                        ([size, data]) => (
-                          <tr key={size} className="border-t">
-                            <td className="px-2 py-1">{size}</td>
-                            <td className="px-2 py-1 text-right font-semibold">
-                              ${data.msrp.toFixed(2)}
-                            </td>
-                            <td className="px-2 py-1 text-right font-semibold">
-                              ${data.profit.toFixed(2)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={Number(
-                                  bulkPackagingOverrides[size] ?? data.packaging
-                                ).toFixed(2)}
-                                onChange={(e) =>
-                                  setBulkPackagingOverrides((prev) => ({
-                                    ...prev,
-                                    [size]: Number(e.target.value) || 0,
-                                  }))
-                                }
-                                className="w-20 border rounded px-1 py-0.5 text-right font-mono"
-                              />
+                      {product.bulk_pricing
+                        ? Object.entries(product.bulk_pricing).map(
+                            ([size, data]) => (
+                              <tr key={size} className="border-t">
+                                <td className="px-2 py-1">{size}</td>
+                                <td className="px-2 py-1 text-right font-semibold">
+                                  ${data.msrp.toFixed(2)}
+                                </td>
+                                <td className="px-2 py-1 text-right font-semibold">
+                                  ${data.profit.toFixed(2)}
+                                </td>
+                                <td className="px-2 py-1 text-right">
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={Number(
+                                      bulkPackagingOverrides[size] ?? data.packaging
+                                    ).toFixed(2)}
+                                    onChange={(e) =>
+                                      setBulkPackagingOverrides((prev) => ({
+                                        ...prev,
+                                        [size]: Number(e.target.value) || 0,
+                                      }))
+                                    }
+                                    className="w-20 border rounded px-1 py-0.5 text-right font-mono"
+                                  />
+                                </td>
+                              </tr>
+                            )
+                          )
+                        : (
+                          <tr>
+                            <td colSpan={4} className="px-2 py-2 text-center text-gray-500">
+                              No bulk pricing available
                             </td>
                           </tr>
-                        )
-                      )}
+                        )}
                     </tbody>
                   </table>
                 </td>
@@ -416,14 +431,6 @@ export default function ProductDetailClient({
               </tr>
               <tr>
                 <td className="px-4 py-2">Export</td>
-                {/* <td className="px-4 py-2 text-right flex gap-2 justify-end">
-                  <ExportClientPDFButton product={product} />
-                  <ExportInternalPDFButton
-                    product={product}
-                    components={editableComponents}
-                    packagingItems={packagingItems}
-                  />
-                </td> */}
               </tr>
             </tbody>
           </table>

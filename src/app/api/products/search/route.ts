@@ -21,11 +21,14 @@ export async function GET(req: Request) {
     if (q) url += `&filter[name]=${encodeURIComponent(q)}`;
     if (after) url += `&after=${after}`;
 
+    // ✅ inflowFetch handles caching
     const page = await inflowFetch<ProductSummary[]>(url);
 
+    // ✅ Return cached / fresh data
     return NextResponse.json({
       products: page,
       lastId: page.length > 0 ? page[page.length - 1].productId : undefined,
+      cached: true, // optional flag for debugging
     });
   } catch (err: any) {
     return NextResponse.json(
