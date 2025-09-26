@@ -3,8 +3,9 @@
 
 import React, { useState } from "react";
 import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
-import type { Component, ComponentEditable, InciEntry } from "../types";
+import type { Component, ComponentEditable, InciEntry, ProductSummary } from "../types";
 import IngredientSearch from "./IngredientSearch";
+import { getProduct } from "../services/inflow";
 
 interface IngredientTableProps {
   components: ComponentEditable[];
@@ -27,10 +28,8 @@ export default function IngredientTable({
   const [loadingRows, setLoadingRows] = useState<Record<number, boolean>>({});
   const [showSearch, setShowSearch] = useState(false);
 
-  const toggleExpand = async (
-    index: number,
-    ingredientName: string
-  ): Promise<void> => {
+  // 🔑 Expand row → fetch details from inFlow (cached)
+  const toggleExpand = async (index: number, childProductId?: string) => {
     if (expandedRows[index]) {
       setExpandedRows((prev) => ({ ...prev, [index]: false }));
       return;
@@ -38,26 +37,23 @@ export default function IngredientTable({
 
     setExpandedRows((prev) => ({ ...prev, [index]: true }));
 
-    if (!components[index].inci && !components[index].remarks) {
+    if (childProductId && !components[index].remarks) {
       try {
         setLoadingRows((prev) => ({ ...prev, [index]: true }));
-        const res = await fetch(
-          `https://bom-api.fly.dev/ingredients/${encodeURIComponent(
-            ingredientName
-          )}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          const updated = [...components];
-          updated[index] = {
-            ...updated[index],
-            ...data,
-          };
-          setComponents(updated);
-        }
+
+        const detail = await getProduct(childProductId);
+
+        const updated = [...components];
+        updated[index] = {
+          ...updated[index],
+          remarks: detail.remarks ?? "",
+          vendor: detail.vendorItems?.[0]?.vendor?.name ?? "",
+          inci: (detail as any).inci ?? [],
+        };
+        setComponents(updated);
       } catch (err) {
         console.error(
-          `Failed to fetch ingredient details for ${ingredientName}`,
+          `Failed to fetch inFlow details for ${childProductId}`,
           err
         );
       } finally {
@@ -71,21 +67,27 @@ export default function IngredientTable({
     setLaborCost(0);
   };
 
-  const handleAddIngredient = (): void => {
-    setShowSearch(true);
+  const handleAddIngredient = (): void => setShowSearch(true);
+
+  // inside IngredientTable.tsx
+
+const handleIngredientSelect = (ingredient: ProductSummary): void => {
+  console.log("[IngredientTable] Selected ingredient from search:", ingredient);
+
+  // 🔄 Map ProductSummary → ComponentEditable
+  const newIngredient: ComponentEditable = {
+    name: ingredient.name,
+    sku: ingredient.sku,
+    quantity: 0,
+    uom: "kg", // 👈 default, adjust if inFlow gives you UOM later
+    has_cost: true,
+    unit_cost: 0, // 👈 inFlow search doesn’t return cost, so start at 0
+    line_cost: 0,
   };
 
-  const handleIngredientSelect = (ingredient: Component): void => {
-    const newIngredient: ComponentEditable = {
-      ...ingredient,
-      quantity: 0,
-      has_cost: true,
-      unit_cost: ingredient.unit_cost ?? 0,
-      line_cost: 0,
-    };
-    setComponents([...components, newIngredient]);
-    setShowSearch(false);
-  };
+  setComponents([...components, newIngredient]);
+  setShowSearch(false);
+};
 
   const handleRemoveIngredient = (index: number): void => {
     const updated = [...components];
@@ -98,7 +100,6 @@ export default function IngredientTable({
     0
   );
 
-  // ✅ Round to 2 decimals consistently
   const round2 = (num: number): number =>
     Math.round((num + Number.EPSILON) * 100) / 100;
 
@@ -129,7 +130,6 @@ export default function IngredientTable({
     let num = parseFloat(value);
     if (isNaN(num)) num = 0;
 
-    // % of Formula → quantity = percent / 100
     updated[index].quantity = num / 100;
     updated[index].line_cost =
       updated[index].quantity * (updated[index].unit_cost || 0);
@@ -150,7 +150,7 @@ export default function IngredientTable({
     <div>
       {showSearch && (
         <IngredientSearch
-          onSelect={handleIngredientSelect}
+          onSelect={handleIngredientSelect} // ✅ now matches ProductSummary
           onClose={() => setShowSearch(false)}
         />
       )}
@@ -241,7 +241,9 @@ export default function IngredientTable({
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
-                        onClick={() => toggleExpand(i, c.name)}
+                        onClick={() =>
+                          toggleExpand(i, (c as any).childProductId)
+                        }
                         className="text-gray-600 hover:text-gray-900"
                       >
                         {expandedRows[i] ? (
@@ -264,23 +266,20 @@ export default function IngredientTable({
                           <div className="text-sm text-gray-700 space-y-2">
                             <div>
                               <span className="font-semibold">INCI: </span>
-                              {(() => {
-                                const inciList = c.inci ?? [];
-                                return inciList.length > 0 ? (
-                                  inciList.map((i: InciEntry, idx: number) => (
-                                    <span key={idx}>
-                                      {i.percentage
-                                        ? `${i.name} (${i.percentage})`
-                                        : i.name}
-                                      {idx < inciList.length - 1 ? ", " : ""}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="italic text-gray-400">
-                                    N/A
+                              {c.inci && c.inci.length > 0 ? (
+                                c.inci.map((i: InciEntry, idx: number) => (
+                                  <span key={idx}>
+                                    {i.percentage
+                                      ? `${i.name} (${i.percentage})`
+                                      : i.name}
+                                    {idx < c.inci!.length - 1 ? ", " : ""}
                                   </span>
-                                );
-                              })()}
+                                ))
+                              ) : (
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
+                              )}
                             </div>
 
                             <div>

@@ -49,10 +49,18 @@ export type ProductSummary = {
   name: string;
   sku?: string;
   description?: string;
-  category?: string; // 🔄 plain string
+  category?: string;
   totalQuantityOnHand?: number;
   isActive?: boolean;
   itemType?: "StockedProduct" | "NonstockedProduct" | "Service";
+
+  // ✅ extra fields you’re using
+  remarks?: string;
+  standardUomName?: string;
+  cost?: ProductCost;
+  vendorItems?: any[];
+  lastVendor?: { name?: string };
+  customFields?: Record<string, string | null>;
 };
 
 /// --- Quantity wrapper ---
@@ -64,8 +72,8 @@ export type QuantityWithUom = {
 // --- BOM entry from API (raw) ---
 export type ItemBom = {
   itemBomId: string;
-  productId: string;       // parent product ID
-  childProductId: string;  // component product ID
+  productId: string; // parent product ID
+  childProductId: string; // component product ID
   quantity: {
     standardQuantity: string;
     uomQuantity: string;
@@ -86,8 +94,6 @@ export type BomComponentUI = {
   uom: string;
 };
 
-
-
 // --- Product Detail (detail view) ---
 export type ProductDetail = ProductSummary & {
   autoAssemble?: boolean;
@@ -104,7 +110,10 @@ export type ProductDetail = ProductSummary & {
   lastModifiedDateTime?: string;
   vendorItems?: any[];
   inventoryLines?: any[];
-  itemBoms?: ItemBom[]; 
+  itemBoms?: ItemBom[];
+
+  // ✅ allow pulling INCI / custom fields
+  customFields?: Record<string, string | null>;
 };
 
 // =============================
@@ -135,6 +144,9 @@ export type Component = {
   storage_type?: string;
   inci?: InciEntry[];
   remarks?: string;
+
+  // ✅ link back to BOM child
+  childProductId?: string;
 };
 
 // =============================

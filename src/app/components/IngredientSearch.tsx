@@ -1,12 +1,15 @@
 // src/app/components/IngredientSearch.tsx
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Search, X } from "lucide-react";
-import type { Component } from "../types"; // ✅ use your existing type
+import React, { useState, useEffect } from "react";
+import type { ProductSummary } from "../types";
+import { inflowFetch } from "../services/inflow";
+
+// Simple in-memory cache for search queries
+const searchCache: Record<string, ProductSummary[]> = {};
 
 interface IngredientSearchProps {
-  onSelect: (ingredient: Component) => void;
+  onSelect: (ingredient: ProductSummary) => void;
   onClose: () => void;
 }
 
@@ -14,131 +17,85 @@ export default function IngredientSearch({
   onSelect,
   onClose,
 }: IngredientSearchProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [allIngredients, setAllIngredients] = useState<Component[]>([]);
-  const [filteredIngredients, setFilteredIngredients] = useState<Component[]>(
-    []
-  );
-  const [loading, setLoading] = useState(true);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ProductSummary[]>([]);
+  const [loading, setLoading] = useState(false);
 
+  // Debounce input (avoid hitting API every keystroke)
   useEffect(() => {
-    const fetchIngredients = async () => {
+    if (!query) {
+      setResults([]);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      console.log(`[IngredientSearch] Searching for query: "${query}"`);
+
+      if (searchCache[query]) {
+        console.log(
+          `[IngredientSearch] ✅ Cache hit for "${query}"`,
+          searchCache[query]
+        );
+        setResults(searchCache[query]);
+        return;
+      }
+
       try {
-        const res = await fetch("https://bom-api.fly.dev/ingredients");
-        if (res.ok) {
-          const data = await res.json();
+        setLoading(true);
+        console.log(`[IngredientSearch] 🔄 Fetching from inFlow API...`);
 
-          const normalized: Component[] = data.map(
-            (ing: Component & { cost?: number }) => ({
-              ...ing,
-              quantity: 0,
-              uom: ing.uom || "kg",
-              has_cost: true,
-              unit_cost: ing.unit_cost ?? ing.cost ?? 0,
-              line_cost: 0,
-            })
-          );
+        const page = await inflowFetch<ProductSummary[]>(
+          `/products?count=20&sortBy=name&sortOrder=asc&filter[name]=${encodeURIComponent(
+            query
+          )}`
+        );
 
-          setAllIngredients(normalized);
-          setFilteredIngredients(normalized.slice(0, 20));
-        }
-      } catch (error) {
-        console.error("Failed to fetch ingredients:", error);
+        console.log(`[IngredientSearch] ✅ API returned`, page);
+
+        searchCache[query] = page;
+        setResults(page);
+      } catch (err) {
+        console.error(`[IngredientSearch] ❌ Search failed:`, err);
       } finally {
         setLoading(false);
       }
-    };
-    fetchIngredients();
-  }, []);
+    }, 500); // ⏳ 500ms debounce
 
-  useEffect(() => {
-    searchInputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = allIngredients.filter((ing) =>
-        ing.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredIngredients(filtered.slice(0, 50));
-    } else {
-      setFilteredIngredients(allIngredients.slice(0, 20));
-    }
-  }, [searchTerm, allIngredients]);
-
-  const handleSelect = (ingredient: Component) => {
-    onSelect(ingredient);
-    onClose();
-  };
+    return () => clearTimeout(handler);
+  }, [query]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Add Ingredient</h3>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-lg transition"
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">Search Ingredients</h3>
+        <input
+          type="text"
+          className="w-full border px-3 py-2 rounded mb-3"
+          placeholder="Search by name..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {loading && <p className="text-sm text-gray-500">Searching...</p>}
+        <ul className="max-h-64 overflow-y-auto">
+          {results.map((r) => (
+            <li
+              key={r.productId}
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                console.log(`[IngredientSearch] 🟢 Selected ingredient`, r);
+                onSelect(r);
+              }}
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search ingredients..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0e5439]"
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              Loading ingredients...
-            </div>
-          ) : filteredIngredients.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No ingredients found
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredIngredients.map((ingredient, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSelect(ingredient)}
-                  className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 hover:border-[#0e5439] transition"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        {ingredient.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {ingredient.vendor && `${ingredient.vendor} • `}
-                        {ingredient.category}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-[#0e5439]">
-                        ${ingredient.unit_cost.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {ingredient.uom || "unit"}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+              {r.name} ({r.sku})
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={onClose}
+          className="mt-4 px-3 py-2 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          Close
+        </button>
       </div>
     </div>
   );

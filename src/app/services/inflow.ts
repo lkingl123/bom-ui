@@ -110,15 +110,16 @@ export async function getProductsPage(
   count: number = 50,
   after?: string,
   forceRefresh: boolean = false
-): Promise<{ products: ProductSummaryUI[]; lastId?: string }> {
+): Promise<{ products: ProductDetailUI[]; lastId?: string }> {
+  if (count > 100) count = 100; // 🔒 enforce API max
+
   let url = `/products?count=${count}&include=cost,defaultPrice,vendorItems,inventoryLines&sortBy=name&sortOrder=asc`;
   if (after) {
     url += `&after=${after}`;
   }
 
-  const page = await inflowFetch<ProductSummary[]>(url, { forceRefresh });
+  const page = await inflowFetch<ProductDetail[]>(url, { forceRefresh });
 
-  // Map results into UI-friendly shape
   const mapped = page.map((p) => ({
     ...p,
     category: p.category ?? "Uncategorized",
@@ -188,8 +189,13 @@ export async function calculateProductCost(
   // Recursive case: roll up children
   let total = 0;
   for (const bom of product.itemBoms) {
-    const qty = bom.quantity?.uomQuantity ? Number(bom.quantity.uomQuantity) : 0;
-    const childCost = await calculateProductCost(bom.childProductId, forceRefresh);
+    const qty = bom.quantity?.uomQuantity
+      ? Number(bom.quantity.uomQuantity)
+      : 0;
+    const childCost = await calculateProductCost(
+      bom.childProductId,
+      forceRefresh
+    );
     total += childCost * qty;
   }
   return total;
@@ -206,7 +212,10 @@ export async function getExpandedBom(
   const components = await Promise.all(
     product.itemBoms.map(async (bom) => {
       const child = await getProduct(bom.childProductId, forceRefresh);
-      const rolledCost = await calculateProductCost(bom.childProductId, forceRefresh);
+      const rolledCost = await calculateProductCost(
+        bom.childProductId,
+        forceRefresh
+      );
       return {
         itemBomId: bom.itemBomId,
         childProductId: bom.childProductId,
