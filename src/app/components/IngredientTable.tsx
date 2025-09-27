@@ -1,9 +1,13 @@
-// src/app/components/IngredientTable.tsx
 "use client";
 
 import React, { useState } from "react";
 import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
-import type { ComponentEditable, InciEntry, ProductSummary } from "../types";
+import type {
+  ComponentEditable,
+  InciEntry,
+  ProductSummary,
+  ProductDetail,
+} from "../types";
 import IngredientSearch from "./IngredientSearch";
 import { getProduct } from "../services/inflow";
 
@@ -41,14 +45,15 @@ export default function IngredientTable({
       try {
         setLoadingRows((prev) => ({ ...prev, [index]: true }));
 
-        const detail = await getProduct(childProductId);
+        const detail: ProductDetail = await getProduct(childProductId);
 
         const updated = [...components];
         updated[index] = {
           ...updated[index],
           remarks: detail.remarks ?? "",
-          vendor: detail.vendorItems?.[0]?.vendor?.name ?? "",
-          inci: (detail as any).inci ?? [],
+          vendor: detail.vendorItems?.[0]?.vendorName ?? "",
+          // ✅ safe: inci might be part of customFields or detail
+          inci: (detail as ProductDetail & { inci?: InciEntry[] }).inci ?? [],
         };
         setComponents(updated);
       } catch (err) {
@@ -84,7 +89,7 @@ export default function IngredientTable({
       quantity: 0,
       uom: "kg", // 👈 default, adjust if inFlow gives you UOM later
       has_cost: true,
-      unit_cost: unitCost,   // ✅ use real cost if available
+      unit_cost: unitCost,
       line_cost: 0,
     };
 
@@ -153,7 +158,7 @@ export default function IngredientTable({
     <div>
       {showSearch && (
         <IngredientSearch
-          onSelect={handleIngredientSelect} // ✅ now matches ProductSummary with cost
+          onSelect={handleIngredientSelect}
           onClose={() => setShowSearch(false)}
         />
       )}
@@ -244,9 +249,7 @@ export default function IngredientTable({
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
-                        onClick={() =>
-                          toggleExpand(i, (c as any).childProductId)
-                        }
+                        onClick={() => toggleExpand(i, c.childProductId)}
                         className="text-gray-600 hover:text-gray-900"
                       >
                         {expandedRows[i] ? (
@@ -270,11 +273,11 @@ export default function IngredientTable({
                             <div>
                               <span className="font-semibold">INCI: </span>
                               {c.inci && c.inci.length > 0 ? (
-                                c.inci.map((i: InciEntry, idx: number) => (
+                                c.inci.map((inciItem, idx) => (
                                   <span key={idx}>
-                                    {i.percentage
-                                      ? `${i.name} (${i.percentage})`
-                                      : i.name}
+                                    {inciItem.percentage
+                                      ? `${inciItem.name} (${inciItem.percentage})`
+                                      : inciItem.name}
                                     {idx < c.inci!.length - 1 ? ", " : ""}
                                   </span>
                                 ))
