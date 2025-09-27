@@ -226,12 +226,15 @@ export default function ProductDetailClient({
           <tbody>
             <tr className="bg-gray-100 font-medium">
               <td colSpan={2} className="px-4 py-2">
-                Inputs
+                <div className="flex items-center gap-220">
+                  <span>Inputs</span>
+                  <span>Labor Cost</span>
+                </div>
               </td>
             </tr>
             <tr>
               <td colSpan={2} className="px-4 py-2">
-                <div className="flex flex-wrap gap-6">
+                <div className="flex flex-wrap gap-12">
                   {/* Left side */}
                   <div className="flex flex-col gap-2">
                     <label className="text-sm">
@@ -262,7 +265,8 @@ export default function ProductDetailClient({
                       />
                     </label>
                   </div>
-                  {/* Right side */}
+
+                  {/* Right side inputs (no heading here anymore) */}
                   <div className="flex flex-col gap-2 ml-auto">
                     <label className="text-sm">
                       Cost per Touch
@@ -370,7 +374,7 @@ export default function ProductDetailClient({
                             <td className="px-2 py-1 text-right font-semibold">
                               {qty === "2500" ? (
                                 <div className="relative flex justify-end">
-                                  <span className="absolute left-35 top-1/2 -translate-y-1/2 text-gray-600">
+                                  <span className="absolute left-70 top-1/2 -translate-y-1/2 text-gray-600">
                                     $
                                   </span>
                                   <input
@@ -475,7 +479,7 @@ export default function ProductDetailClient({
                               />
                             </td>
                           </tr>
- )
+                        )
                       )
                     ) : (
                       <tr>
