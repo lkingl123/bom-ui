@@ -1,4 +1,5 @@
-// src/app/services/inflow.ts
+"use server"; // ensure this file is only used on the server
+
 import type {
   ProductSummary,
   ProductDetail,
@@ -6,9 +7,10 @@ import type {
   BomComponentUI,
 } from "../types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_INFLOW_BASE_URL!;
-const COMPANY_ID = process.env.NEXT_PUBLIC_INFLOW_COMPANY_ID!;
-const API_KEY = process.env.NEXT_PUBLIC_INFLOW_API_KEY!;
+// --- Environment variables (server-only) ---
+const BASE_URL = process.env.INFLOW_BASE_URL!;
+const COMPANY_ID = process.env.INFLOW_COMPANY_ID!;
+const API_KEY = process.env.INFLOW_API_KEY!;
 
 // --- UI-friendly types ---
 export type ProductSummaryUI = ProductSummary & {
@@ -37,7 +39,6 @@ async function enforceRateLimit() {
   }
 
   if (requestLog.length >= RATE_LIMIT) {
-    // Wait until the oldest request drops out of the 60s window
     const wait = 60000 - (now - requestLog[0]) + 50;
     await new Promise((r) => setTimeout(r, wait));
   }
@@ -45,7 +46,7 @@ async function enforceRateLimit() {
   requestLog.push(Date.now());
 }
 
-// --- Shared fetch helper with caching + rate limiting ---
+// --- Shared fetch helper (with caching + rate limiting) ---
 export async function inflowFetch<T>(
   endpoint: string,
   options: RequestInit & { forceRefresh?: boolean } = {}
@@ -54,13 +55,13 @@ export async function inflowFetch<T>(
   const key = `${endpoint}:${JSON.stringify(fetchOptions)}`;
   const now = Date.now();
 
-  // ✅ Return from cache if valid and not force-refresh
+  // ✅ return cached if valid
   const cached = cache.get(key);
   if (!forceRefresh && cached && cached.expires > now) {
     return cached.data as T;
   }
 
-  // ✅ Enforce local rate limiting
+  // ✅ enforce local rate limit
   await enforceRateLimit();
 
   const headers = new Headers({
@@ -91,7 +92,7 @@ export async function inflowFetch<T>(
 
   const data = (await res.json()) as T;
 
-  // ✅ Save into cache
+  // ✅ store in cache
   cache.set(key, { data, expires: now + TTL_MS });
 
   return data;
@@ -101,22 +102,15 @@ export async function inflowFetch<T>(
 // Products
 // =============================
 
-/**
- * Fetch a single page of products.
- * @param count Number of products per page (max 100).
- * @param after Cursor for pagination.
- */
 export async function getProductsPage(
   count: number = 50,
   after?: string,
   forceRefresh: boolean = false
 ): Promise<{ products: ProductDetailUI[]; lastId?: string }> {
-  if (count > 100) count = 100; // 🔒 enforce API max
+  if (count > 100) count = 100;
 
   let url = `/products?count=${count}&include=cost,defaultPrice,vendorItems,inventoryLines&sortBy=name&sortOrder=asc`;
-  if (after) {
-    url += `&after=${after}`;
-  }
+  if (after) url += `&after=${after}`;
 
   const page = await inflowFetch<ProductDetail[]>(url, { forceRefresh });
 
@@ -165,7 +159,6 @@ export async function getProductInventorySummary(
   }>(`/products/${productId}/summary`, { forceRefresh });
 }
 
-// --- Get raw BOM entries straight from API ---
 export async function getProductBomsRaw(
   productId: string,
   forceRefresh: boolean = false
@@ -174,19 +167,16 @@ export async function getProductBomsRaw(
   return product.itemBoms ?? [];
 }
 
-// --- Recursively calculate rolled-up cost of a product ---
 export async function calculateProductCost(
   productId: string,
   forceRefresh: boolean = false
 ): Promise<number> {
   const product = await getProduct(productId, forceRefresh);
 
-  // Base case: no BOM → just return its own cost
   if (!product.itemBoms || product.itemBoms.length === 0) {
     return product.cost?.cost ? Number(product.cost.cost) : 0;
   }
 
-  // Recursive case: roll up children
   let total = 0;
   for (const bom of product.itemBoms) {
     const qty = bom.quantity?.uomQuantity
@@ -201,7 +191,6 @@ export async function calculateProductCost(
   return total;
 }
 
-// --- Get expanded BOM entries with rolled-up child costs ---
 export async function getExpandedBom(
   productId: string,
   forceRefresh: boolean = false
@@ -233,22 +222,22 @@ export async function getExpandedBom(
   return components;
 }
 
-
 export async function getPackagingProducts(
   count: number = 50,
   after?: string
 ) {
-  // Reuse your existing getProductsPage
   const { products, lastId } = await getProductsPage(count, after);
 
-  // Filter only packaging-related categories
-  const packagingProducts = products.filter(p =>
-    p.category?.toLowerCase().includes("packaging")
-    || p.category?.toLowerCase().includes("bottles")
-    || p.category?.toLowerCase().includes("jars")
-    || p.category?.toLowerCase().includes("lids")
-    || p.category?.toLowerCase().includes("boxes")
-  );
+  const packagingProducts = products.filter((p) => {
+    const cat = p.category?.toString().toLowerCase();
+    return (
+      cat?.includes("packaging") ||
+      cat?.includes("bottle") ||
+      cat?.includes("jar") ||
+      cat?.includes("lid") ||
+      cat?.includes("box")
+    );
+  });
 
   return { products: packagingProducts, lastId };
 }
