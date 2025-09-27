@@ -128,6 +128,7 @@ export default function ProductDetailClient({
     );
 
     setProduct(enriched);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     debouncedTouchPoints,
     debouncedCostPerTouch,
@@ -181,8 +182,7 @@ export default function ProductDetailClient({
               <tr>
                 <td className="px-4 py-2">SKU / Category</td>
                 <td className="px-4 py-2 text-gray-700">
-                  {product.sku || "-"} /{" "}
-                  {(product as any).category?.toString() || "-"}
+                  {product.sku || "-"} / {product.category?.toString() || "-"}
                 </td>
               </tr>
 
@@ -193,27 +193,11 @@ export default function ProductDetailClient({
                 </td>
               </tr>
               {[
-                [
-                  "Order Quantity",
-                  orderQuantityInput,
-                  setOrderQuantityInput,
-                ] as const,
-                [
-                  "Total Oz Per Unit",
-                  totalOzPerUnitInput,
-                  setTotalOzPerUnitInput,
-                ] as const,
+                ["Order Quantity", orderQuantityInput, setOrderQuantityInput] as const,
+                ["Total Oz Per Unit", totalOzPerUnitInput, setTotalOzPerUnitInput] as const,
                 ["Grams per Oz", gramsPerOzInput, setGramsPerOzInput] as const,
-                [
-                  "Cost per Touch",
-                  costPerTouchInput,
-                  setCostPerTouchInput,
-                ] as const,
-                [
-                  "Touch Points",
-                  touchPointsInput,
-                  setTouchPointsInput,
-                ] as const,
+                ["Cost per Touch", costPerTouchInput, setCostPerTouchInput] as const,
+                ["Touch Points", touchPointsInput, setTouchPointsInput] as const,
               ].map(([label, value, setter]) => (
                 <tr key={label}>
                   <td className="px-4 py-2">{label}</td>
@@ -239,7 +223,7 @@ export default function ProductDetailClient({
                   <PackagingTable
                     packagingItems={packagingItems}
                     setPackagingItems={setPackagingItems}
-                    orderQuantity={Number(debouncedOrderQuantity) || 0} 
+                    orderQuantity={Number(debouncedOrderQuantity) || 0}
                   />
                   <IngredientTable
                     components={editableComponents}
