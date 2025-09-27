@@ -129,7 +129,6 @@ export default function ProductDetailClient({
 
     setProduct(enriched);
   }, [
-    product, // ✅ added missing dependency
     debouncedTouchPoints,
     debouncedCostPerTouch,
     debouncedOrderQuantity,
