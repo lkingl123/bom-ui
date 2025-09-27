@@ -2,14 +2,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import type { ProductSummary } from "../types";
+import type { ProductSummaryUI } from "../services/inflow"; // ✅ use enriched type
 import { inflowFetch } from "../services/inflow";
 
 // Simple in-memory cache for search queries
-const searchCache: Record<string, ProductSummary[]> = {};
+const searchCache: Record<string, ProductSummaryUI[]> = {};
 
 interface PackagingSearchProps {
-  onSelect: (packaging: ProductSummary) => void;
+  onSelect: (packaging: ProductSummaryUI) => void;
   onClose: () => void;
 }
 
@@ -18,29 +18,23 @@ export default function PackagingSearch({
   onClose,
 }: PackagingSearchProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ProductSummary[]>([]);
+  const [results, setResults] = useState<ProductSummaryUI[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Helper to check if a product looks like "packaging"
-  function isPackagingCategory(cat?: string | { name?: string }): boolean {
-  if (!cat) return false;
-
-  // Normalize: handle object vs string
-  const c =
-    typeof cat === "string"
-      ? cat.toLowerCase()
-      : (cat.name ?? "").toLowerCase();
-
-  return (
-    c.includes("packaging") ||
-    c.includes("bottle") ||
-    c.includes("jar") ||
-    c.includes("lid") ||
-    c.includes("cap") ||
-    c.includes("carton") ||
-    c.includes("box")
-  );
-}
+  function isPackagingCategory(cat?: string): boolean {
+    if (!cat) return false;
+    const c = cat.toLowerCase();
+    return (
+      c.includes("packaging") ||
+      c.includes("bottle") ||
+      c.includes("jar") ||
+      c.includes("lid") ||
+      c.includes("cap") ||
+      c.includes("carton") ||
+      c.includes("box")
+    );
+  }
 
   // Debounce search
   useEffect(() => {
@@ -65,14 +59,19 @@ export default function PackagingSearch({
         setLoading(true);
         console.log(`[PackagingSearch] 🔄 Fetching from inFlow API...`);
 
-        const page = await inflowFetch<ProductSummary[]>(
-          `/products?count=30&sortBy=name&sortOrder=asc&include=cost,category&filter[name]=${encodeURIComponent(
+        // ✅ Fetch and type as ProductSummaryUI
+        const page = await inflowFetch<ProductSummaryUI[]>(
+          `/products?count=30&sortBy=name&sortOrder=asc&include=cost&filter[name]=${encodeURIComponent(
             query
           )}`
         );
 
-        // Filter down to packaging only
-        const filtered = page.filter((p) => isPackagingCategory(p.category));
+        // ✅ Filter using enriched category fields
+        const filtered = page.filter(
+          (p) =>
+            isPackagingCategory(p.category) ||
+            isPackagingCategory(p.topLevelCategory)
+        );
 
         console.log(
           `[PackagingSearch] ✅ API returned ${page.length}, ${filtered.length} matched packaging`

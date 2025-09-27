@@ -70,41 +70,47 @@ export default function ProductDetailClient({
 
   // --- Fetch product + BOM once (when productId changes) ---
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data: ProductDetail = await getProduct(productId);
-        const expandedBom = await getExpandedBom(productId);
-
-        const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
-          name: bom.name,
-          sku: bom.sku,
-          quantity: bom.quantity,
-          uom: bom.uom || "ea",
-          has_cost: true,
-          unit_cost: bom.cost,
-          line_cost: bom.cost * bom.quantity,
-        }));
-
-        const productObject = {
-          ...data,
-          components: rawComponents,
-        } as ProductCalc;
-
-        console.log(
-          "[ProductDetailClient] Raw API product object:",
-          JSON.stringify(productObject, null, 2)
-        );
-
-        setOriginalComponents(rawComponents);
-        setEditableComponents(rawComponents);
-        setProduct(productObject);
-      } catch (err) {
-        console.error("Error fetching product:", err);
+  const fetchData = async () => {
+    try {
+      const data = await getProduct(productId);
+      if (!data) {
+        console.warn(`[ProductDetailClient] No product found for ${productId}`);
+        return;
       }
-    };
 
-    fetchData();
-  }, [productId]);
+      const expandedBom = await getExpandedBom(productId);
+
+      const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
+        name: bom.name,
+        sku: bom.sku,
+        quantity: bom.quantity,
+        uom: bom.uom || "ea",
+        has_cost: true,
+        unit_cost: bom.cost,
+        line_cost: bom.cost * bom.quantity,
+      }));
+
+      const productObject: ProductCalc = {
+        ...data,
+        components: rawComponents,
+      };
+
+      console.log(
+        "[ProductDetailClient] Raw API product object:",
+        JSON.stringify(productObject, null, 2)
+      );
+
+      setOriginalComponents(rawComponents);
+      setEditableComponents(rawComponents);
+      setProduct(productObject);
+    } catch (err) {
+      console.error("Error fetching product:", err);
+    }
+  };
+
+  fetchData();
+}, [productId]);
+
 
   // --- Recalculate values when inputs/overrides change ---
   useEffect(() => {
@@ -212,12 +218,12 @@ export default function ProductDetailClient({
           </tbody>
         </table>
 
-        {/* Packaging & Ingredients */}
+        {/* Components */}
         <table className="min-w-full text-sm border border-gray-200 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 font-medium">
               <td colSpan={2} className="px-4 py-2">
-                Packaging & Ingredients
+                Packaging Component and Components
               </td>
             </tr>
             <tr>

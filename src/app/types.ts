@@ -71,6 +71,7 @@ export type ProductSummary = {
   name: string;
   sku?: string;
   description?: string;
+  categoryId?: string;
   category?: string;
   totalQuantityOnHand?: number;
   isActive?: boolean;
@@ -195,28 +196,40 @@ export type LaborItemEditable = {
 // Enriched Product for Calc
 // =============================
 
-export type ProductCalc = ProductDetail & {
+export type ProductDetailUI = ProductDetail & {
+  totalQuantityOnHand?: number;
+  topLevelCategory?: string;
+  category?: string;
+};
+
+export type ProductCalc = ProductDetailUI & {
+  components: ComponentEditable[];
+
+  // Costs
   packaging_cost?: number;
   labor_cost?: number;
   misc_cost?: number;
-  components: ComponentEditable[];
 
+  // Production inputs
   touch_points?: number;
   cost_per_touch?: number;
 
-  tiered_pricing: Record<string, TieredPricingEntry>;
-  bulk_pricing: Record<string, BulkPricingEntry>;
+  // Pricing (optional until buildProductCalc fills them)
+  tiered_pricing?: Record<string, TieredPricingEntry>;
+  bulk_pricing?: Record<string, BulkPricingEntry>;
 
+  // Formula metadata
   formula_kg?: number;
   cost_per_kg?: number;
   vendor_suggestions?: string[];
 
-  unit_weight_kg: number;
-  cost_per_unit_excel: number;
-  total_cost_excel: number;
-
-  base_cost_per_unit: number;
+  // Derived numbers (also optional until calculated)
+  unit_weight_kg?: number;
+  cost_per_unit_excel?: number;
+  total_cost_excel?: number;
+  base_cost_per_unit?: number;
 };
+
 
 // =============================
 // Pricing Entries

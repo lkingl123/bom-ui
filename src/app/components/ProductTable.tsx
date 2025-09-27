@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { ProductSummary } from "../types";
+import type { ProductSummaryUI } from "../services/inflow"; // ✅ use enriched type
 
-export default function ProductTable({ products }: { products: ProductSummary[] }) {
+export default function ProductTable({ products }: { products: ProductSummaryUI[] }) {
   return (
     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((p) => {
@@ -23,7 +23,8 @@ export default function ProductTable({ products }: { products: ProductSummary[] 
                 {p.name}
               </h2>
               <p className="text-sm text-gray-500">
-                {p.category || "Uncategorized"}
+                {/* ✅ Prefer the top-level category if available */}
+                {p.topLevelCategory || p.category || "Uncategorized"}
               </p>
             </div>
 

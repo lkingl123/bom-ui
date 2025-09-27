@@ -1,10 +1,15 @@
 import ProductCatalog from "../components/ProductCatalog";
 import { getProductsPage } from "../services/inflow";
-import type { ProductSummary } from "../types";
+import type { ProductSummaryUI } from "../services/inflow";
 
 export default async function ProductsPage() {
-  // ✅ fetch first 80 as initial batch
+  // fetch initial batch
   const { products = [] } = await getProductsPage(80);
+
+  // derive distinct categories
+  const categories = ["All", ...Array.from(new Set(
+    products.map((p) => p.topLevelCategory || "Uncategorized")
+  ))];
 
   return (
     <main className="bg-gray-50 min-h-screen">
@@ -19,7 +24,11 @@ export default async function ProductsPage() {
             </span>
           </div>
 
-          <ProductCatalog initialProducts={products as ProductSummary[]} />
+          {/* ✅ pass categories into ProductCatalog */}
+          <ProductCatalog
+            initialProducts={products as ProductSummaryUI[]}
+            categories={categories}
+          />
         </div>
       </section>
     </main>

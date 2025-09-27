@@ -45,7 +45,14 @@ export default function IngredientTable({
       try {
         setLoadingRows((prev) => ({ ...prev, [index]: true }));
 
-        const detail: ProductDetail = await getProduct(childProductId);
+        const detail = await getProduct(childProductId);
+        if (!detail) {
+          console.warn(
+            `[IngredientTable] No detail found for productId=${childProductId}`
+          );
+          setLoadingRows((prev) => ({ ...prev, [index]: false }));
+          return; // 🚫 stop here if null
+        }
 
         const updated = [...components];
         updated[index] = {
@@ -76,7 +83,10 @@ export default function IngredientTable({
 
   // ✅ Selection from IngredientSearch now includes cost
   const handleIngredientSelect = (ingredient: ProductSummary): void => {
-    console.log("[IngredientTable] Selected ingredient from search:", ingredient);
+    console.log(
+      "[IngredientTable] Selected ingredient from search:",
+      ingredient
+    );
 
     const unitCost = ingredient.cost?.cost
       ? parseFloat(ingredient.cost.cost)
@@ -170,7 +180,7 @@ export default function IngredientTable({
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#0e5439] text-white hover:bg-[#0c4630] transition text-sm font-medium shadow-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Add Ingredient
+          Add Component
         </button>
         <button
           onClick={handleReset}

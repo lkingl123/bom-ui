@@ -80,7 +80,7 @@ export default function PackagingTable({
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#0e5439] text-white hover:bg-[#0c4630] transition text-sm font-medium shadow-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Add Packaging Item
+          Add Packaging Component
         </button>
         <button
           onClick={handleReset}
@@ -97,7 +97,7 @@ export default function PackagingTable({
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
               <tr>
-                <th className="px-4 py-3 text-left">Packaging Item</th>
+                <th className="px-4 py-3 text-left">Packaging Component</th>
                 <th className="px-4 py-3 text-right">Unit Cost ($)</th>
                 <th className="px-4 py-3 text-right">Line Cost ($)</th>
               </tr>

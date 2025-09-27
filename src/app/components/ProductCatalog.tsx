@@ -1,29 +1,53 @@
 "use client";
 
+import type { ProductSummaryUI } from "../services/inflow";
 import { useState, useEffect, useRef } from "react";
 import ProductTable from "./ProductTable";
-import type { ProductSummary } from "../types";
+import LoadingSpinner from "./LoadingSpinner"; // ✅ import spinner
 
 export default function ProductCatalog({
   initialProducts,
+  categories,
+  onCountChange,
 }: {
-  initialProducts: ProductSummary[];
+  initialProducts: ProductSummaryUI[];
+  categories?: string[];
+  onCountChange?: (count: number) => void;
 }) {
+  const [products, setProducts] = useState<ProductSummaryUI[]>(initialProducts);
   const [query, setQuery] = useState("");
-  const [products, setProducts] = useState<ProductSummary[]>(initialProducts);
   const [lastId, setLastId] = useState<string | undefined>(
-    initialProducts.length > 0 ? initialProducts[initialProducts.length - 1].productId : undefined
+    initialProducts.length > 0
+      ? initialProducts[initialProducts.length - 1].productId
+      : undefined
   );
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  // ✅ category filter
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
   const observerRef = useRef<HTMLDivElement | null>(null);
 
-  // Reset when query changes
+  // 🔄 update parent count
+  const filteredProducts =
+    selectedCategory === "All"
+      ? products
+      : products.filter((p) => p.topLevelCategory === selectedCategory);
+
+  useEffect(() => {
+    onCountChange?.(filteredProducts.length);
+  }, [filteredProducts.length, onCountChange]);
+
+  // 🔍 search effect
   useEffect(() => {
     if (query.trim() === "") {
       setProducts(initialProducts);
-      setLastId(initialProducts.length > 0 ? initialProducts[initialProducts.length - 1].productId : undefined);
+      setLastId(
+        initialProducts.length > 0
+          ? initialProducts[initialProducts.length - 1].productId
+          : undefined
+      );
       setHasMore(true);
       return;
     }
@@ -32,7 +56,9 @@ export default function ProductCatalog({
     async function fetchSearch() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(
+          `/api/products/search?q=${encodeURIComponent(query)}`
+        );
         const data = await res.json();
         if (!cancelled) {
           setProducts(data.products ?? []);
@@ -45,10 +71,12 @@ export default function ProductCatalog({
     }
 
     fetchSearch();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [query, initialProducts]);
 
-  // Infinite scroll
+  // ♾️ infinite scroll
   useEffect(() => {
     if (!observerRef.current) return;
 
@@ -58,7 +86,9 @@ export default function ProductCatalog({
           setLoading(true);
           try {
             const res = await fetch(
-              `/api/products/search?q=${encodeURIComponent(query)}&after=${lastId ?? ""}`
+              `/api/products/search?q=${encodeURIComponent(
+                query
+              )}&after=${lastId ?? ""}`
             );
             const data = await res.json();
             setProducts((prev) => [...prev, ...(data.products ?? [])]);
@@ -89,11 +119,37 @@ export default function ProductCatalog({
         />
       </div>
 
-      <ProductTable products={products} />
+      {/* Category filter buttons */}
+      {categories && categories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                selectedCategory === cat
+                  ? "bg-[#0e5439] text-white shadow"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Loader sentinel for infinite scroll */}
-      <div ref={observerRef} className="h-10 flex justify-center items-center text-gray-500">
-        {loading ? "Loading more..." : hasMore ? "Scroll for more..." : "No more results"}
+      {/* Product table */}
+      <ProductTable products={filteredProducts} />
+
+      {/* Loader sentinel */}
+      <div ref={observerRef} className="h-16 flex justify-center items-center">
+        {loading ? (
+          <LoadingSpinner /> // ✅ show your spinner
+        ) : hasMore ? (
+          <span className="text-gray-500"></span>
+        ) : (
+          <span className="text-gray-500">No more results</span>
+        )}
       </div>
     </div>
   );
