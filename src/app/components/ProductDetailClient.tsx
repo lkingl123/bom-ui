@@ -72,35 +72,43 @@ export default function ProductDetailClient({
 
   // --- Fetch product + BOM once (when productId changes) ---
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data: ProductDetail = await getProduct(productId);
-        const expandedBom = await getExpandedBom(productId);
+  const fetchData = async () => {
+    try {
+      const data: ProductDetail = await getProduct(productId);
+      const expandedBom = await getExpandedBom(productId);
 
-        // Convert BOMs to ComponentEditable[]
-        const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
-          name: bom.name,
-          sku: bom.sku,
-          quantity: bom.quantity,
-          uom: bom.uom || "ea",
-          has_cost: true,
-          unit_cost: bom.cost,
-          line_cost: bom.cost * bom.quantity,
-        }));
+      const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
+        name: bom.name,
+        sku: bom.sku,
+        quantity: bom.quantity,
+        uom: bom.uom || "ea",
+        has_cost: true,
+        unit_cost: bom.cost,
+        line_cost: bom.cost * bom.quantity,
+      }));
 
-        setOriginalComponents(rawComponents);
-        setEditableComponents(rawComponents);
-        setProduct({
-          ...data,
-          components: rawComponents,
-        } as ProductCalc);
-      } catch (err) {
-        console.error("Error fetching product:", err);
-      }
-    };
+      const productObject = {
+        ...data,
+        components: rawComponents,
+      } as ProductCalc;
 
-    fetchData();
-  }, [productId]);
+      // 👇 add your log here
+      console.log(
+        "[ProductDetailClient] Raw API product object:",
+        JSON.stringify(productObject, null, 2)
+      );
+
+      setOriginalComponents(rawComponents);
+      setEditableComponents(rawComponents);
+      setProduct(productObject);
+    } catch (err) {
+      console.error("Error fetching product:", err);
+    }
+  };
+
+  fetchData();
+}, [productId]);
+
 
   // --- Recalculate values when inputs/overrides change ---
   useEffect(() => {
