@@ -23,7 +23,7 @@ export type ProductDetailUI = ProductDetail & {
 
 // --- In-memory cache ---
 type CacheEntry<T> = { data: T; expires: number };
-const cache = new Map<string, CacheEntry<any>>();
+const cache: Map<string, CacheEntry<unknown>> = new Map();
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // --- Request log for rate limiting ---
@@ -56,9 +56,9 @@ export async function inflowFetch<T>(
   const now = Date.now();
 
   // ✅ return cached if valid
-  const cached = cache.get(key);
+  const cached = cache.get(key) as CacheEntry<T> | undefined;
   if (!forceRefresh && cached && cached.expires > now) {
-    return cached.data as T;
+    return cached.data;
   }
 
   // ✅ enforce local rate limit

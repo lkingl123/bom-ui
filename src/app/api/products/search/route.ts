@@ -1,4 +1,3 @@
-// src/app/api/products/search/route.ts
 import { NextResponse } from "next/server";
 import { inflowFetch, getExpandedBom } from "../../../services/inflow";
 import type { ProductSummary } from "@/app/types";
@@ -24,16 +23,14 @@ export async function GET(req: Request) {
     // ✅ inflowFetch handles caching
     const page = await inflowFetch<ProductSummary[]>(url);
 
-    // ✅ Return cached / fresh data
     return NextResponse.json({
       products: page,
       lastId: page.length > 0 ? page[page.length - 1].productId : undefined,
-      cached: true, // optional flag for debugging
+      cached: true,
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Search failed" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Search failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
