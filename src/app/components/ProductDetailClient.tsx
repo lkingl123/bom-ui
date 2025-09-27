@@ -1,4 +1,3 @@
-// src/app/components/ProductDetailClient.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -53,9 +52,6 @@ export default function ProductDetailClient({
   const [bulkPackagingOverrides, setBulkPackagingOverrides] = useState<
     Record<string, number>
   >({});
-  const [tierMarginOverrides, setTierMarginOverrides] = useState<
-    Record<string, number>
-  >({});
   const [tierMarginInputs, setTierMarginInputs] = useState<
     Record<string, string>
   >({});
@@ -71,7 +67,6 @@ export default function ProductDetailClient({
   // Reset handlers
   const handleResetTieredPricing = () => {
     setTierMarginInputs({});
-    setTierMarginOverrides({});
   };
   const handleResetBulkPricing = () => setBulkPackagingOverrides({});
 
@@ -134,6 +129,7 @@ export default function ProductDetailClient({
 
     setProduct(enriched);
   }, [
+    product, // ✅ added missing dependency
     debouncedTouchPoints,
     debouncedCostPerTouch,
     debouncedOrderQuantity,
