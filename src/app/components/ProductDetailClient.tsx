@@ -176,14 +176,37 @@ export default function ProductDetailClient({
               <td className="px-4 py-2">Name of Product</td>
               <td className="px-4 py-2">{product.name || "-"}</td>
             </tr>
+
+            {/* ✅ Description right below name */}
+            <tr>
+              <td className="px-4 py-2">Description</td>
+              <td className="px-4 py-2">{product.description || "-"}</td>
+            </tr>
+
+            {/* ✅ Remarks right after description */}
             <tr>
               <td className="px-4 py-2">Remarks</td>
               <td className="px-4 py-2">{product.remarks || "-"}</td>
             </tr>
+
             <tr>
               <td className="px-4 py-2">SKU / Category</td>
               <td className="px-4 py-2 text-gray-700">
                 {product.sku || "-"} / {product.category?.toString() || "-"}
+              </td>
+            </tr>
+
+            {/* ✅ Custom fields */}
+            <tr>
+              <td className="px-4 py-2">INCI</td>
+              <td className="px-4 py-2">
+                {product.customFields?.custom1 || "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Account</td>
+              <td className="px-4 py-2">
+                {product.customFields?.custom8 || "-"}
               </td>
             </tr>
           </tbody>

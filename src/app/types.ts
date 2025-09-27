@@ -75,10 +75,10 @@ export type ProductSummary = {
   totalQuantityOnHand?: number;
   isActive?: boolean;
   itemType?: "StockedProduct" | "NonstockedProduct" | "Service";
-
   // ✅ extra fields you’re using
   remarks?: string;
   standardUomName?: string;
+  
   cost?: ProductCost;
   vendorItems?: VendorItem[];
   lastVendor?: { name?: string };
