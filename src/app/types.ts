@@ -39,6 +39,28 @@ export type Image = {
   thumbUrl?: string;
 };
 
+// --- Vendor Item ---
+export type VendorItem = {
+  vendorItemId: string;
+  vendorName?: string;
+  sku?: string;
+  cost?: ProductCost;
+  uom?: string;
+  timestamp?: string;
+};
+
+// --- Inventory Line ---
+export type InventoryLine = {
+  inventoryLineId: string;
+  locationId?: string;
+  locationName?: string;
+  quantityOnHand?: number;
+  uom?: string;
+  batchNumber?: string;
+  expirationDate?: string;
+  timestamp?: string;
+};
+
 // =============================
 // Product Types
 // =============================
@@ -58,12 +80,12 @@ export type ProductSummary = {
   remarks?: string;
   standardUomName?: string;
   cost?: ProductCost;
-  vendorItems?: any[];
+  vendorItems?: VendorItem[];
   lastVendor?: { name?: string };
   customFields?: Record<string, string | null>;
 };
 
-/// --- Quantity wrapper ---
+// --- Quantity wrapper ---
 export type QuantityWithUom = {
   quantity: number;
   uom?: string;
@@ -108,8 +130,8 @@ export type ProductDetail = ProductSummary & {
   height?: string;
   length?: string;
   lastModifiedDateTime?: string;
-  vendorItems?: any[];
-  inventoryLines?: any[];
+  vendorItems?: VendorItem[];
+  inventoryLines?: InventoryLine[];
   itemBoms?: ItemBom[];
 
   // ✅ allow pulling INCI / custom fields
@@ -172,6 +194,7 @@ export type LaborItemEditable = {
 // =============================
 // Enriched Product for Calc
 // =============================
+
 export type ProductCalc = ProductDetail & {
   packaging_cost?: number;
   labor_cost?: number;
@@ -198,6 +221,7 @@ export type ProductCalc = ProductDetail & {
 // =============================
 // Pricing Entries
 // =============================
+
 export type TieredPricingEntry = {
   price: number;
   profit: number;
