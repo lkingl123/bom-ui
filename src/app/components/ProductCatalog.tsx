@@ -36,8 +36,19 @@ export default function ProductCatalog({
       : products.filter((p) => p.topLevelCategory === selectedCategory);
 
   useEffect(() => {
+    console.log("[ProductCatalog] Initial products loaded:", initialProducts);
+    console.log(
+      "[ProductCatalog] Distinct categories from initialProducts:",
+      Array.from(new Set(initialProducts.map((p) => p.topLevelCategory)))
+    );
+  }, [initialProducts]);
+
+  useEffect(() => {
     onCountChange?.(filteredProducts.length);
-  }, [filteredProducts.length, onCountChange]);
+    console.log(
+      `[ProductCatalog] Active filter="${selectedCategory}", showing ${filteredProducts.length} products`
+    );
+  }, [filteredProducts.length, onCountChange, selectedCategory]);
 
   // 🔍 search effect
   useEffect(() => {
@@ -60,6 +71,7 @@ export default function ProductCatalog({
           `/api/products/search?q=${encodeURIComponent(query)}`
         );
         const data = await res.json();
+        console.log("[ProductCatalog] Search results:", data);
         if (!cancelled) {
           setProducts(data.products ?? []);
           setLastId(data.lastId);
@@ -91,6 +103,7 @@ export default function ProductCatalog({
               )}&after=${lastId ?? ""}`
             );
             const data = await res.json();
+            console.log("[ProductCatalog] Infinite scroll results:", data);
             setProducts((prev) => [...prev, ...(data.products ?? [])]);
             setLastId(data.lastId);
             setHasMore(Boolean(data.lastId));
@@ -125,8 +138,11 @@ export default function ProductCatalog({
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              onClick={() => {
+                console.log(`[ProductCatalog] Selected category="${cat}"`);
+                setSelectedCategory(cat);
+              }}
+              className={`cursor-pointer px-4 py-2 rounded-full text-sm font-medium transition ${
                 selectedCategory === cat
                   ? "bg-[#0e5439] text-white shadow"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"

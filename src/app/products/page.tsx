@@ -6,10 +6,16 @@ export default async function ProductsPage() {
   // fetch initial batch
   const { products = [] } = await getProductsPage(80);
 
-  // derive distinct categories
-  const categories = ["All", ...Array.from(new Set(
-    products.map((p) => p.topLevelCategory || "Uncategorized")
-  ))];
+  // ✅ hardcoded top-level categories
+  const TOP_LEVELS = [
+    "Finished Goods",
+    "Bulk",
+    "Ingredients",
+    "Materials",
+    "Account",
+  ];
+
+  const categories = ["All", ...TOP_LEVELS];
 
   return (
     <main className="bg-gray-50 min-h-screen">
@@ -21,7 +27,6 @@ export default async function ProductsPage() {
             </h2>
           </div>
 
-          {/* ✅ pass categories into ProductCatalog */}
           <ProductCatalog
             initialProducts={products as ProductSummaryUI[]}
             categories={categories}
