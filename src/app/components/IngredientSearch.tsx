@@ -117,7 +117,7 @@ export default function IngredientSearch({
         
         {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-800">Search Ingredients</h3>
+          <h3 className="text-xl font-semibold text-gray-800">Search Component</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition"
@@ -128,7 +128,7 @@ export default function IngredientSearch({
         </div>
         
         {/* Search Input Area */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-gray-200">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
