@@ -52,12 +52,6 @@ function useIngredientSearch(query: string, debounceTime = 500) {
         const url = buildSearchUrl(query);
         const data = await inflowFetch<ProductSummary[]>(url);
 
-        // 🔍 Debug log to inspect the raw data
-        console.log(
-          `[useIngredientSearch] Results for "${query}":`,
-          JSON.stringify(data, null, 2) // ✅ stringify with indentation
-        );
-
         if (isMounted.current) {
           searchCache[cacheKey] = data;
           setResults(data);
@@ -101,8 +95,6 @@ export default function IngredientSearch({
   const { results, loading } = useIngredientSearch(query);
 
   const handleSelect = (r: ProductSummary) => {
-    // 🔍 Log the selected product object
-    console.log("[IngredientSearch] Selected ingredient:", r);
     onSelect(r);
     onClose();
   };

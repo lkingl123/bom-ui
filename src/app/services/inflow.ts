@@ -114,8 +114,6 @@ export async function getCategories(forceRefresh = false): Promise<Category[]> {
     if (page.length < 80) break;
     after = page[page.length - 1].categoryId;
   }
-
-  console.log(`[getCategories] ✅ Loaded ${all.length} categories`);
   categoryCache = all;
   return all;
 }
@@ -165,10 +163,6 @@ export async function getProductsPage(
     getCategories(forceRefresh),
   ]);
 
-  console.log(
-    `[getProductsPage] 🔄 Raw page (count=${page.length}, after=${after})`
-  );
-
   const mapped: ProductSummaryUI[] = page.map((p) => {
     const cat = categories.find((c) => c.categoryId === p.categoryId);
     const top = resolveTopLevelCategory(cat, categories);
@@ -188,16 +182,6 @@ export async function getProductsPage(
       p.topLevelCategory !== "Uncategorized" &&
       p.topLevelCategory !== "Default"
   );
-
-  // 🔎 Dump full product data as JSON
-  console.log(
-    `[getProductsPage] ✅ Returning products (after=${after})\n${JSON.stringify(
-      filtered,
-      null,
-      2
-    )}`
-  );
-
   const lastId =
     filtered.length > 0 ? filtered[filtered.length - 1].productId : undefined;
 

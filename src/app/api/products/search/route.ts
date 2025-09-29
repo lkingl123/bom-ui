@@ -25,10 +25,6 @@ export async function GET(req: Request) {
         )
       : products;
 
-    console.log(
-      `[products/search] Returning ${filtered.length} products (after=${after ?? "none"})`
-    );
-
     return NextResponse.json({
       products: filtered,
       lastId,
