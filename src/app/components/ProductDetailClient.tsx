@@ -70,47 +70,48 @@ export default function ProductDetailClient({
 
   // --- Fetch product + BOM once (when productId changes) ---
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const data = await getProduct(productId);
-      if (!data) {
-        console.warn(`[ProductDetailClient] No product found for ${productId}`);
-        return;
+    const fetchData = async () => {
+      try {
+        const data = await getProduct(productId);
+        if (!data) {
+          console.warn(
+            `[ProductDetailClient] No product found for ${productId}`
+          );
+          return;
+        }
+
+        const expandedBom = await getExpandedBom(productId);
+
+        const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
+          name: bom.name,
+          sku: bom.sku,
+          quantity: bom.quantity,
+          uom: bom.uom || "ea",
+          has_cost: true,
+          unit_cost: bom.cost,
+          line_cost: bom.cost * bom.quantity,
+        }));
+
+        const productObject: ProductCalc = {
+          ...data,
+          components: rawComponents,
+        };
+
+        console.log(
+          "[ProductDetailClient] Raw API product object:",
+          JSON.stringify(productObject, null, 2)
+        );
+
+        setOriginalComponents(rawComponents);
+        setEditableComponents(rawComponents);
+        setProduct(productObject);
+      } catch (err) {
+        console.error("Error fetching product:", err);
       }
+    };
 
-      const expandedBom = await getExpandedBom(productId);
-
-      const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
-        name: bom.name,
-        sku: bom.sku,
-        quantity: bom.quantity,
-        uom: bom.uom || "ea",
-        has_cost: true,
-        unit_cost: bom.cost,
-        line_cost: bom.cost * bom.quantity,
-      }));
-
-      const productObject: ProductCalc = {
-        ...data,
-        components: rawComponents,
-      };
-
-      console.log(
-        "[ProductDetailClient] Raw API product object:",
-        JSON.stringify(productObject, null, 2)
-      );
-
-      setOriginalComponents(rawComponents);
-      setEditableComponents(rawComponents);
-      setProduct(productObject);
-    } catch (err) {
-      console.error("Error fetching product:", err);
-    }
-  };
-
-  fetchData();
-}, [productId]);
-
+    fetchData();
+  }, [productId]);
 
   // --- Recalculate values when inputs/overrides change ---
   useEffect(() => {
@@ -169,8 +170,7 @@ export default function ProductDetailClient({
             ← Back to Catalog
           </Link>
         </div>
-
-        {/* Product Info */}
+        {/* Product Info (Editable) */}
         <table className="min-w-full text-sm border border-gray-200 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 font-medium">
@@ -178,72 +178,130 @@ export default function ProductDetailClient({
                 Product Info
               </td>
             </tr>
+
+            {/* ✅ Name */}
             <tr>
               <td className="px-4 py-2">Name of Product</td>
-              <td className="px-4 py-2">{product.name || "-"}</td>
+              <td className="px-4 py-2">
+                <input
+                  type="text"
+                  value={product.name || ""}
+                  onChange={(e) =>
+                    setProduct((prev) =>
+                      prev ? { ...prev, name: e.target.value } : prev
+                    )
+                  }
+                  className="w-full border rounded px-2 py-1 font-mono"
+                />
+              </td>
             </tr>
 
-            {/* ✅ Description right below name */}
+            {/* ✅ Description */}
             <tr>
               <td className="px-4 py-2">Description</td>
-              <td className="px-4 py-2">{product.description || "-"}</td>
+              <td className="px-4 py-2">
+                <textarea
+                  value={product.description || ""}
+                  onChange={(e) =>
+                    setProduct((prev) =>
+                      prev ? { ...prev, description: e.target.value } : prev
+                    )
+                  }
+                  className="w-full border rounded px-2 py-1 font-mono"
+                />
+              </td>
             </tr>
 
-            {/* ✅ Remarks right after description */}
+            {/* ✅ Remarks */}
             <tr>
               <td className="px-4 py-2">Remarks</td>
-              <td className="px-4 py-2">{product.remarks || "-"}</td>
+              <td className="px-4 py-2">
+                <textarea
+                  value={product.remarks || ""}
+                  onChange={(e) =>
+                    setProduct((prev) =>
+                      prev ? { ...prev, remarks: e.target.value } : prev
+                    )
+                  }
+                  className="w-full border rounded px-2 py-1 font-mono"
+                />
+              </td>
             </tr>
 
+            {/* ✅ SKU / Category (both editable now) */}
             <tr>
               <td className="px-4 py-2">SKU / Category</td>
               <td className="px-4 py-2 text-gray-700">
-                {product.sku || "-"} / {product.category?.toString() || "-"}
+                <input
+                  type="text"
+                  value={product.sku || ""}
+                  onChange={(e) =>
+                    setProduct((prev) =>
+                      prev ? { ...prev, sku: e.target.value } : prev
+                    )
+                  }
+                  className="w-48 border rounded px-2 py-1 font-mono mr-2"
+                />
+                /
+                <input
+                  type="text"
+                  value={product.category?.toString() || ""}
+                  onChange={(e) =>
+                    setProduct((prev) =>
+                      prev ? { ...prev, category: e.target.value } : prev
+                    )
+                  }
+                  className="ml-2 w-48 border rounded px-2 py-1 font-mono"
+                />
               </td>
             </tr>
 
-            {/* ✅ Custom fields */}
+            {/* ✅ INCI */}
             <tr>
               <td className="px-4 py-2">INCI</td>
               <td className="px-4 py-2">
-                {product.customFields?.custom1 || "-"}
+                <input
+                  type="text"
+                  value={product.customFields?.custom1 || ""}
+                  onChange={(e) =>
+                    setProduct((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            customFields: {
+                              ...prev.customFields,
+                              custom1: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
+                  }
+                  className="w-full border rounded px-2 py-1 font-mono"
+                />
               </td>
             </tr>
+
+            {/* ✅ Account */}
             <tr>
               <td className="px-4 py-2">Account</td>
               <td className="px-4 py-2">
-                {product.customFields?.custom8 || "-"}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* Components */}
-        <table className="min-w-full text-sm border border-gray-200 rounded-lg">
-          <tbody>
-            <tr className="bg-gray-100 font-medium">
-              <td colSpan={2} className="px-4 py-2">
-                Packaging Component and Components
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={2} className="px-4 py-2">
-                <PackagingTable
-                  packagingItems={packagingItems}
-                  setPackagingItems={setPackagingItems}
-                  orderQuantity={Number(debouncedOrderQuantity) || 0}
-                />
-                <IngredientTable
-                  components={editableComponents}
-                  setComponents={setEditableComponents}
-                  laborCost={product.labor_cost ?? 0}
-                  setLaborCost={(v) =>
+                <input
+                  type="text"
+                  value={product.customFields?.custom8 || ""}
+                  onChange={(e) =>
                     setProduct((prev) =>
-                      prev ? { ...prev, labor_cost: v } : prev
+                      prev
+                        ? {
+                            ...prev,
+                            customFields: {
+                              ...prev.customFields,
+                              custom8: e.target.value,
+                            },
+                          }
+                        : prev
                     )
                   }
-                  originalComponents={originalComponents}
-                  packagingTotal={packagingTotal}
+                  className="w-full border rounded px-2 py-1 font-mono"
                 />
               </td>
             </tr>
@@ -255,7 +313,7 @@ export default function ProductDetailClient({
           <tbody>
             <tr className="bg-gray-100 font-medium">
               <td colSpan={2} className="px-4 py-2">
-                <div className="flex items-center gap-220">
+                <div className="flex items-center gap-212">
                   <span>Inputs</span>
                   <span>Labor Cost</span>
                 </div>
