@@ -87,6 +87,7 @@ export default function ProductDetailClient({
           has_cost: true,
           unit_cost: bom.cost,
           line_cost: bom.cost * bom.quantity,
+          childProductId: bom.childProductId, // Added for component detail fetching
         }));
 
         const productObject: ProductCalc = {
@@ -174,8 +175,8 @@ export default function ProductDetailClient({
             <tr>
               <td className="px-4 py-2">Name of Product</td>
               <td className="px-4 py-2">
-                <input
-                  type="text"
+                <textarea // 👈 Changed to textarea for word-wrap
+                  rows={2} // 👈 Added rows
                   value={product.name || ""}
                   onChange={(e) =>
                     setProduct((prev) => (prev ? { ...prev, name: e.target.value } : prev))
@@ -210,7 +211,7 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
-             {/* SKU */}
+             {/* SKU (Now on its own line and w-full) */}
             <tr>
               <td className="px-4 py-2">SKU</td>
               <td className="px-4 py-2">
@@ -220,11 +221,11 @@ export default function ProductDetailClient({
                   onChange={(e) =>
                     setProduct((prev) => (prev ? { ...prev, sku: e.target.value } : prev))
                   }
-                  className="w-48 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600" // 👈 Changed w-48 to w-full
                 />
               </td>
             </tr>
-            {/* Category */}
+            {/* Category (Now on its own line and w-full) */}
             <tr>
               <td className="px-4 py-2">Category</td>
               <td className="px-4 py-2">
@@ -234,17 +235,16 @@ export default function ProductDetailClient({
                   onChange={(e) =>
                     setProduct((prev) => (prev ? { ...prev, category: e.target.value } : prev))
                   }
-                  // Removed the combined styling classes
-                  className="w-48 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600" // 👈 Changed w-48 to w-full
                 />
               </td>
             </tr>
-            {/* INCI */}
+            {/* INCI (Changed to textarea for word-wrap) */}
             <tr>
               <td className="px-4 py-2">INCI</td>
               <td className="px-4 py-2">
-                <input
-                  type="text"
+                <textarea // 👈 Changed to textarea
+                  rows={3} // 👈 Added rows
                   value={product.customFields?.custom1 || ""}
                   onChange={(e) =>
                     setProduct((prev) =>
@@ -257,7 +257,7 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
-            {/* Account */}
+            {/* Account (Now w-full) */}
             <tr>
               <td className="px-4 py-2">Account</td>
               <td className="px-4 py-2">
