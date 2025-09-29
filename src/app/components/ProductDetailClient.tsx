@@ -73,7 +73,9 @@ export default function ProductDetailClient({
       try {
         const data = await getProduct(productId);
         if (!data) {
-          console.warn(`[ProductDetailClient] No product found for ${productId}`);
+          console.warn(
+            `[ProductDetailClient] No product found for ${productId}`
+          );
           return;
         }
 
@@ -164,12 +166,13 @@ export default function ProductDetailClient({
             ← Back to Catalog
           </Link>
         </div>
-
         {/* Product Info */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Product Info</td>
+              <td colSpan={2} className="px-4 py-2">
+                Product Info
+              </td>
             </tr>
             {/* Name */}
             <tr>
@@ -179,7 +182,9 @@ export default function ProductDetailClient({
                   rows={2} // 👈 Added rows
                   value={product.name || ""}
                   onChange={(e) =>
-                    setProduct((prev) => (prev ? { ...prev, name: e.target.value } : prev))
+                    setProduct((prev) =>
+                      prev ? { ...prev, name: e.target.value } : prev
+                    )
                   }
                   className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
@@ -192,7 +197,9 @@ export default function ProductDetailClient({
                 <textarea
                   value={product.description || ""}
                   onChange={(e) =>
-                    setProduct((prev) => (prev ? { ...prev, description: e.target.value } : prev))
+                    setProduct((prev) =>
+                      prev ? { ...prev, description: e.target.value } : prev
+                    )
                   }
                   className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
@@ -205,13 +212,15 @@ export default function ProductDetailClient({
                 <textarea
                   value={product.remarks || ""}
                   onChange={(e) =>
-                    setProduct((prev) => (prev ? { ...prev, remarks: e.target.value } : prev))
+                    setProduct((prev) =>
+                      prev ? { ...prev, remarks: e.target.value } : prev
+                    )
                   }
                   className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
               </td>
             </tr>
-             {/* SKU (Now on its own line and w-full) */}
+            {/* SKU (Now on its own line and w-full) */}
             <tr>
               <td className="px-4 py-2">SKU</td>
               <td className="px-4 py-2">
@@ -219,7 +228,9 @@ export default function ProductDetailClient({
                   type="text"
                   value={product.sku || ""}
                   onChange={(e) =>
-                    setProduct((prev) => (prev ? { ...prev, sku: e.target.value } : prev))
+                    setProduct((prev) =>
+                      prev ? { ...prev, sku: e.target.value } : prev
+                    )
                   }
                   className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600" // 👈 Changed w-48 to w-full
                 />
@@ -233,7 +244,9 @@ export default function ProductDetailClient({
                   type="text"
                   value={product.category?.toString() || ""}
                   onChange={(e) =>
-                    setProduct((prev) => (prev ? { ...prev, category: e.target.value } : prev))
+                    setProduct((prev) =>
+                      prev ? { ...prev, category: e.target.value } : prev
+                    )
                   }
                   className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600" // 👈 Changed w-48 to w-full
                 />
@@ -249,7 +262,13 @@ export default function ProductDetailClient({
                   onChange={(e) =>
                     setProduct((prev) =>
                       prev
-                        ? { ...prev, customFields: { ...prev.customFields, custom1: e.target.value } }
+                        ? {
+                            ...prev,
+                            customFields: {
+                              ...prev.customFields,
+                              custom1: e.target.value,
+                            },
+                          }
                         : prev
                     )
                   }
@@ -267,7 +286,13 @@ export default function ProductDetailClient({
                   onChange={(e) =>
                     setProduct((prev) =>
                       prev
-                        ? { ...prev, customFields: { ...prev.customFields, custom8: e.target.value } }
+                        ? {
+                            ...prev,
+                            customFields: {
+                              ...prev.customFields,
+                              custom8: e.target.value,
+                            },
+                          }
                         : prev
                     )
                   }
@@ -277,12 +302,13 @@ export default function ProductDetailClient({
             </tr>
           </tbody>
         </table>
-
         {/* Components */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Packaging Component and Components</td>
+              <td colSpan={2} className="px-4 py-2">
+                Packaging Component and Components
+              </td>
             </tr>
             <tr>
               <td colSpan={2} className="px-4 py-2">
@@ -296,7 +322,9 @@ export default function ProductDetailClient({
                   setComponents={setEditableComponents}
                   laborCost={product.labor_cost ?? 0}
                   setLaborCost={(v) =>
-                    setProduct((prev) => (prev ? { ...prev, labor_cost: v } : prev))
+                    setProduct((prev) =>
+                      prev ? { ...prev, labor_cost: v } : prev
+                    )
                   }
                   originalComponents={originalComponents}
                   packagingTotal={packagingTotal}
@@ -305,84 +333,107 @@ export default function ProductDetailClient({
             </tr>
           </tbody>
         </table>
-
-        {/* Inputs */}
+        {/* Production Inputs */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Inputs</td>
-            </tr>
-            <tr>
+              {/* Changed colSpan to 2, but we'll use 2 standard columns below */}
               <td colSpan={2} className="px-4 py-2">
-                <div className="flex flex-wrap gap-12">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm">
-                      Order Quantity
-                      <input
-                        type="text"
-                        value={orderQuantityInput}
-                        onChange={(e) => setOrderQuantityInput(e.target.value)}
-                        className="ml-2 w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                      />
-                    </label>
-                    <label className="text-sm">
-                      Total Oz Per Unit
-                      <input
-                        type="text"
-                        value={totalOzPerUnitInput}
-                        onChange={(e) => setTotalOzPerUnitInput(e.target.value)}
-                        className="ml-2 w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                      />
-                    </label>
-                    <label className="text-sm">
-                      Grams per Oz
-                      <input
-                        type="text"
-                        value={gramsPerOzInput}
-                        onChange={(e) => setGramsPerOzInput(e.target.value)}
-                        className="ml-2 w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                      />
-                    </label>
-                  </div>
-                  <div className="flex flex-col gap-2 ml-auto">
-                    <label className="text-sm">
-                      Cost per Touch
-                      <input
-                        type="text"
-                        value={costPerTouchInput}
-                        onChange={(e) => setCostPerTouchInput(e.target.value)}
-                        className="ml-2 w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                      />
-                    </label>
-                    <label className="text-sm">
-                      Touch Points
-                      <input
-                        type="text"
-                        value={touchPointsInput}
-                        onChange={(e) => setTouchPointsInput(e.target.value)}
-                        className="ml-2 w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                      />
-                    </label>
-                  </div>
-                </div>
+                Production Inputs
+              </td>
+            </tr>
+            {/* Row 1: Order Quantity */}
+            <tr>
+              <td className="px-4 py-2 w-1/2">Order Quantity</td>{" "}
+              {/* w-1/2 to define column width */}
+              <td className="px-4 py-2 w-1/2">
+                <input
+                  type="text"
+                  value={orderQuantityInput}
+                  onChange={(e) => setOrderQuantityInput(e.target.value)}
+                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                />
+              </td>
+            </tr>
+            {/* Row 2: Total Oz Per Unit */}
+            <tr>
+              <td className="px-4 py-2">Total Oz Per Unit</td>
+              <td className="px-4 py-2">
+                <input
+                  type="text"
+                  value={totalOzPerUnitInput}
+                  onChange={(e) => setTotalOzPerUnitInput(e.target.value)}
+                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                />
+              </td>
+            </tr>
+            {/* Row 3: Grams per Oz */}
+            <tr>
+              <td className="px-4 py-2">Grams per Oz</td>
+              <td className="px-4 py-2">
+                <input
+                  type="text"
+                  value={gramsPerOzInput}
+                  onChange={(e) => setGramsPerOzInput(e.target.value)}
+                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                />
               </td>
             </tr>
           </tbody>
         </table>
-
+        {/* Labor Inputs */}
+        <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+          <tbody>
+            <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
+              <td colSpan={2} className="px-4 py-2">
+                Labor Inputs
+              </td>
+            </tr>
+            {/* Row 1: Cost per Touch */}
+            <tr>
+              <td className="px-4 py-2 w-1/2">Cost per Touch</td>
+              <td className="px-4 py-2 w-1/2">
+                <input
+                  type="text"
+                  value={costPerTouchInput}
+                  onChange={(e) => setCostPerTouchInput(e.target.value)}
+                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                />
+              </td>
+            </tr>
+            {/* Row 2: Touch Points */}
+            <tr>
+              <td className="px-4 py-2">Touch Points</td>
+              <td className="px-4 py-2">
+                <input
+                  type="text"
+                  value={touchPointsInput}
+                  onChange={(e) => setTouchPointsInput(e.target.value)}
+                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
         {/* Pricing */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Pricing</td>
+              <td colSpan={2} className="px-4 py-2">
+                Pricing
+              </td>
             </tr>
             <tr>
               <td className="px-4 py-2">Unit Weight (kg)</td>
-              <td className="px-4 py-2">{product.unit_weight_kg?.toFixed(3) || "-"}</td>
+              <td className="px-4 py-2">
+                {product.unit_weight_kg?.toFixed(3) || "-"}
+              </td>
             </tr>
             <tr>
               <td className="px-4 py-2">Component Cost per Unit</td>
-              <td className="px-4 py-2">${product.cost_per_unit_excel?.toFixed(3) || "-"}</td>
+              <td className="px-4 py-2">
+                ${product.cost_per_unit_excel?.toFixed(3) || "-"}
+              </td>
             </tr>
             <tr>
               <td className="px-4 py-2">Total cost by Components</td>
@@ -393,18 +444,23 @@ export default function ProductDetailClient({
             <tr>
               <td className="px-4 py-2">Base Cost per Unit</td>
               <td className="px-4 py-2 font-mono">
-                {product.base_cost_per_unit ? `$${product.base_cost_per_unit.toFixed(3)}` : "$-"}
-                <div className="text-xs text-gray-500 dark:text-gray-400">After Labor and Packaging</div>
+                {product.base_cost_per_unit
+                  ? `$${product.base_cost_per_unit.toFixed(3)}`
+                  : "$-"}
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  After Labor and Packaging
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
-
         {/* Tiered Pricing */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Tiered Pricing</td>
+              <td colSpan={2} className="px-4 py-2">
+                Tiered Pricing
+              </td>
             </tr>
             <tr>
               <td colSpan={2} className="px-4 py-2">
@@ -429,36 +485,54 @@ export default function ProductDetailClient({
                   </thead>
                   <tbody>
                     {product.tiered_pricing ? (
-                      Object.entries(product.tiered_pricing).map(([qty, data]) => (
-                        <tr key={qty} className="border-t dark:border-gray-700">
-                          <td className="px-2 py-1">{qty}</td>
-                          <td className="px-2 py-1 text-right font-semibold">${data.price.toFixed(2)}</td>
-                          <td className="px-2 py-1 text-right font-semibold">
-                            {qty === "2500" ? (
-                              <div className="relative flex justify-end">
-                                <span className="absolute left-70 top-1/2 -translate-y-1/2 text-gray-600">$</span>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  value={(Number(tierMarginInputs[qty] ?? data.profit) || 0).toFixed(2)}
-                                  onChange={(e) =>
-                                    setTierMarginInputs((prev) => ({ ...prev, [qty]: e.target.value }))
-                                  }
-                                  className="w-20 border rounded px-1 py-0.5 text-right font-mono font-semibold dark:bg-gray-800 dark:border-gray-600"
-                                />
-                              </div>
-                            ) : (
-                              `$${data.profit.toFixed(2)}`
-                            )}
-                          </td>
-                          <td className="px-2 py-1 text-right text-gray-600">
-                            {(data.margin * 100).toFixed(1)}%
-                          </td>
-                        </tr>
-                      ))
+                      Object.entries(product.tiered_pricing).map(
+                        ([qty, data]) => (
+                          <tr
+                            key={qty}
+                            className="border-t dark:border-gray-700"
+                          >
+                            <td className="px-2 py-1">{qty}</td>
+                            <td className="px-2 py-1 text-right font-semibold">
+                              ${data.price.toFixed(2)}
+                            </td>
+                            {/* The focused Profit/Unit cell with alignment fix */}
+                            <td className="px-2 py-1 text-right font-semibold">
+                              {qty === "2500" ? (
+                                <div className="flex items-center justify-end">
+                                  <span className="mr-1 text-gray-600">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={(
+                                      Number(
+                                        tierMarginInputs[qty] ?? data.profit
+                                      ) || 0
+                                    ).toFixed(2)}
+                                    onChange={(e) =>
+                                      setTierMarginInputs((prev) => ({
+                                        ...prev,
+                                        [qty]: e.target.value,
+                                      }))
+                                    }
+                                    className="w-20 border rounded px-1 py-0.5 text-right font-mono font-semibold dark:bg-gray-800 dark:border-gray-600"
+                                  />
+                                </div>
+                              ) : (
+                                `$${data.profit.toFixed(2)}`
+                              )}
+                            </td>
+                            <td className="px-2 py-1 text-right text-gray-600">
+                              {(data.margin * 100).toFixed(1)}%
+                            </td>
+                          </tr>
+                        )
+                      )
                     ) : (
                       <tr>
-                        <td colSpan={4} className="px-2 py-2 text-center text-gray-500">
+                        <td
+                          colSpan={4}
+                          className="px-2 py-2 text-center text-gray-500"
+                        >
                           No tiered pricing available
                         </td>
                       </tr>
@@ -469,12 +543,13 @@ export default function ProductDetailClient({
             </tr>
           </tbody>
         </table>
-
         {/* Bulk Pricing */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Bulk Pricing</td>
+              <td colSpan={2} className="px-4 py-2">
+                Bulk Pricing
+              </td>
             </tr>
             <tr>
               <td colSpan={2} className="px-4 py-2">
@@ -499,30 +574,44 @@ export default function ProductDetailClient({
                   </thead>
                   <tbody>
                     {product.bulk_pricing ? (
-                      Object.entries(product.bulk_pricing).map(([size, data]) => (
-                        <tr key={size} className="border-t dark:border-gray-700">
-                          <td className="px-2 py-1">{size}</td>
-                          <td className="px-2 py-1 text-right font-semibold">${data.msrp.toFixed(2)}</td>
-                          <td className="px-2 py-1 text-right font-semibold">${data.profit.toFixed(2)}</td>
-                          <td className="px-2 py-1 text-right">
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={Number(bulkPackagingOverrides[size] ?? data.packaging).toFixed(2)}
-                              onChange={(e) =>
-                                setBulkPackagingOverrides((prev) => ({
-                                  ...prev,
-                                  [size]: Number(e.target.value) || 0,
-                                }))
-                              }
-                              className="w-20 border rounded px-1 py-0.5 text-right font-mono dark:bg-gray-800 dark:border-gray-600"
-                            />
-                          </td>
-                        </tr>
-                      ))
+                      Object.entries(product.bulk_pricing).map(
+                        ([size, data]) => (
+                          <tr
+                            key={size}
+                            className="border-t dark:border-gray-700"
+                          >
+                            <td className="px-2 py-1">{size}</td>
+                            <td className="px-2 py-1 text-right font-semibold">
+                              ${data.msrp.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right font-semibold">
+                              ${data.profit.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={Number(
+                                  bulkPackagingOverrides[size] ?? data.packaging
+                                ).toFixed(2)}
+                                onChange={(e) =>
+                                  setBulkPackagingOverrides((prev) => ({
+                                    ...prev,
+                                    [size]: Number(e.target.value) || 0,
+                                  }))
+                                }
+                                className="w-20 border rounded px-1 py-0.5 text-right font-mono dark:bg-gray-800 dark:border-gray-600"
+                              />
+                            </td>
+                          </tr>
+                        )
+                      )
                     ) : (
                       <tr>
-                        <td colSpan={4} className="px-2 py-2 text-center text-gray-500">
+                        <td
+                          colSpan={4}
+                          className="px-2 py-2 text-center text-gray-500"
+                        >
                           No bulk pricing available
                         </td>
                       </tr>
@@ -533,12 +622,13 @@ export default function ProductDetailClient({
             </tr>
           </tbody>
         </table>
-
         {/* Actions */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
             <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">Actions</td>
+              <td colSpan={2} className="px-4 py-2">
+                Actions
+              </td>
             </tr>
             <tr>
               <td className="px-4 py-2">Export</td>
