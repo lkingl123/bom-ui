@@ -344,7 +344,7 @@ export default function ProductDetailClient({
             </tr>
             {/* Row 1: Order Quantity */}
             <tr>
-              <td className="px-4 py-2 w-1/2">Order Quantity</td>{" "}
+              <td className="px-4 py-2 w-1/2">Order Quantity</td>
               {/* w-1/2 to define column width */}
               <td className="px-4 py-2 w-1/2">
                 <input
