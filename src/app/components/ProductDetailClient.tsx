@@ -210,9 +210,9 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
-            {/* SKU + Category */}
+             {/* SKU */}
             <tr>
-              <td className="px-4 py-2">SKU / Category</td>
+              <td className="px-4 py-2">SKU</td>
               <td className="px-4 py-2">
                 <input
                   type="text"
@@ -220,16 +220,22 @@ export default function ProductDetailClient({
                   onChange={(e) =>
                     setProduct((prev) => (prev ? { ...prev, sku: e.target.value } : prev))
                   }
-                  className="w-48 border rounded px-2 py-1 font-mono mr-2 dark:bg-gray-800 dark:border-gray-600"
+                  className="w-48 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
-                /
+              </td>
+            </tr>
+            {/* Category */}
+            <tr>
+              <td className="px-4 py-2">Category</td>
+              <td className="px-4 py-2">
                 <input
                   type="text"
                   value={product.category?.toString() || ""}
                   onChange={(e) =>
                     setProduct((prev) => (prev ? { ...prev, category: e.target.value } : prev))
                   }
-                  className="ml-2 w-48 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  // Removed the combined styling classes
+                  className="w-48 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
               </td>
             </tr>

@@ -295,20 +295,3 @@ export async function getExpandedBom(
 
   return components;
 }
-
-export async function getPackagingProducts(count: number = 50, after?: string) {
-  const { products, lastId } = await getProductsPage(count, after);
-
-  const packagingProducts = products.filter((p) => {
-    const cat = p.category?.toString().toLowerCase();
-    return (
-      cat?.includes("packaging") ||
-      cat?.includes("bottle") ||
-      cat?.includes("jar") ||
-      cat?.includes("lid") ||
-      cat?.includes("box")
-    );
-  });
-
-  return { products: packagingProducts, lastId };
-}
