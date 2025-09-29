@@ -19,9 +19,6 @@ export default async function ProductsPage() {
             <h2 className="text-2xl font-semibold text-gray-800">
               Product Catalog
             </h2>
-            <span className="text-sm text-gray-500">
-              Displaying {products.length} products per page
-            </span>
           </div>
 
           {/* ✅ pass categories into ProductCatalog */}
