@@ -135,19 +135,12 @@ export type ProductDetail = ProductSummary & {
   inventoryLines?: InventoryLine[];
   itemBoms?: ItemBom[];
 
-  // ✅ allow pulling INCI / custom fields
   customFields?: Record<string, string | null>;
 };
 
 // =============================
-// INCI + Component Types
+// Component Types
 // =============================
-
-// ✅ INCI entry type used everywhere
-export type InciEntry = {
-  name: string;
-  percentage?: string;
-};
 
 // --- Component (raw material / ingredient) ---
 export type Component = {
@@ -165,7 +158,6 @@ export type Component = {
   description?: string;
   category?: string;
   storage_type?: string;
-  inci?: InciEntry[];
   remarks?: string;
 
   // ✅ link back to BOM child
