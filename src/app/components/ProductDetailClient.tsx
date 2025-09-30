@@ -624,7 +624,8 @@ export default function ProductDetailClient({
             <tr>
               <td className="px-4 py-2">Total Base Cost</td>
               <td className="px-4 py-2 font-mono text-[#0e5439] font-semibold">
-                {product.total_base_cost
+                {product.total_base_cost !== undefined &&
+                !isNaN(product.total_base_cost)
                   ? `$${product.total_base_cost.toFixed(2)}`
                   : "$-"}
               </td>

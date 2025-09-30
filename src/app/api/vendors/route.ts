@@ -45,7 +45,11 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json(vendors);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("[vendors] ❌", err);
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Unknown error" }, { status: 500 });
   }
 }

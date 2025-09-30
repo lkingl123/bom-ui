@@ -38,8 +38,12 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(updated);
-  } catch (err: any) {
-    console.error("[products/update] ❌", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("[products/update] ❌", err);
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+    console.error("[products/update] ❌ Unknown error", err);
+    return NextResponse.json({ error: "Unknown error" }, { status: 500 });
   }
 }
