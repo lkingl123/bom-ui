@@ -657,7 +657,7 @@ export default function ProductDetailClient({
                   }}
                   className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition"
                 >
-                  Save &amp; Update in inFlow
+                  Save &amp; Update in inFlow (Only Product Info)
                 </button>
               </td>
             </tr>
