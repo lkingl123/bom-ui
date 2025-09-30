@@ -222,6 +222,8 @@ export type ProductCalc = ProductDetailUI & {
   total_cost_excel?: number;
   base_cost_per_unit?: number;
   total_base_cost?: number;
+
+  packagingItems?: PackagingItemEditable[];
 };
 
 // =============================

@@ -1,9 +1,34 @@
+// ./src/app/components/ExportInternalPDFButton.tsx
 "use client";
 
 import React from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import type { ProductCalc, ComponentEditable, PackagingItemEditable } from "../types";
+import autoTable, { RowInput } from "jspdf-autotable";
+import type {
+  ProductCalc,
+  ComponentEditable,
+  PackagingItemEditable,
+} from "../types";
+
+// Add explicit types for tiered and bulk pricing
+interface TieredPricingData {
+  price: number;
+  profit: number;
+  margin: number;
+}
+
+interface BulkPricingData {
+  msrp: number;
+  profit: number;
+  packaging: number;
+}
+
+// Extend jsPDF instance type for autoTable
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
 
 export default function ExportInternalPDFButton({
   product,
@@ -11,7 +36,7 @@ export default function ExportInternalPDFButton({
   product: ProductCalc;
 }) {
   const handleExport = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF() as JsPDFWithAutoTable;
 
     // -------------------------
     // Product Info
@@ -37,32 +62,36 @@ export default function ExportInternalPDFButton({
       autoTable(doc, {
         startY: y,
         head: [["Component", "% of Formula", "Cost/kg", "Cost"]],
-        body: product.components.map((c: ComponentEditable) => [
-          c.name,
-          `${(c.quantity * 100).toFixed(2)}%`,
-          `$${c.unit_cost?.toFixed(2)}`,
-          `$${c.line_cost?.toFixed(2)}`,
-        ]),
+        body: product.components.map(
+          (c: ComponentEditable): RowInput => [
+            c.name,
+            `${(c.quantity * 100).toFixed(2)}%`,
+            `$${c.unit_cost?.toFixed(2)}`,
+            `$${c.line_cost?.toFixed(2)}`,
+          ]
+        ),
         styles: { fontSize: 8 },
       });
-      y = (doc as any).lastAutoTable.finalY + 10;
+      y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : y + 10;
     }
 
     // -------------------------
     // Packaging Table
     // -------------------------
-    if ((product as any).packagingItems?.length) {
+    if (product.packagingItems?.length) {
       autoTable(doc, {
         startY: y,
         head: [["Packaging Component", "Unit Cost", "Line Cost"]],
-        body: (product as any).packagingItems.map((p: PackagingItemEditable) => [
-          p.name,
-          `$${p.unit_cost?.toFixed(2)}`,
-          `$${p.line_cost?.toFixed(2)}`,
-        ]),
+        body: product.packagingItems.map(
+          (p: PackagingItemEditable): RowInput => [
+            p.name,
+            `$${p.unit_cost?.toFixed(2)}`,
+            `$${p.line_cost?.toFixed(2)}`,
+          ]
+        ),
         styles: { fontSize: 8 },
       });
-      y = (doc as any).lastAutoTable.finalY + 10;
+      y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : y + 10;
     }
 
     // -------------------------
@@ -72,15 +101,17 @@ export default function ExportInternalPDFButton({
       autoTable(doc, {
         startY: y,
         head: [["Qty", "Price/Unit", "Profit/Unit", "Margin %"]],
-        body: Object.entries(product.tiered_pricing).map(([qty, data]: any) => [
-          qty,
-          `$${data.price.toFixed(2)}`,
-          `$${data.profit.toFixed(2)}`,
-          `${(data.margin * 100).toFixed(1)}%`,
-        ]),
+        body: Object.entries(product.tiered_pricing).map(
+          ([qty, data]: [string, TieredPricingData]): RowInput => [
+            qty,
+            `$${data.price.toFixed(2)}`,
+            `$${data.profit.toFixed(2)}`,
+            `${(data.margin * 100).toFixed(1)}%`,
+          ]
+        ),
         styles: { fontSize: 8 },
       });
-      y = (doc as any).lastAutoTable.finalY + 10;
+      y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : y + 10;
     }
 
     // -------------------------
@@ -90,15 +121,17 @@ export default function ExportInternalPDFButton({
       autoTable(doc, {
         startY: y,
         head: [["Size", "MSRP", "Profit/Unit", "Packaging"]],
-        body: Object.entries(product.bulk_pricing).map(([size, data]: any) => [
-          size,
-          `$${data.msrp.toFixed(2)}`,
-          `$${data.profit.toFixed(2)}`,
-          `$${data.packaging.toFixed(2)}`,
-        ]),
+        body: Object.entries(product.bulk_pricing).map(
+          ([size, data]: [string, BulkPricingData]): RowInput => [
+            size,
+            `$${data.msrp.toFixed(2)}`,
+            `$${data.profit.toFixed(2)}`,
+            `$${data.packaging.toFixed(2)}`,
+          ]
+        ),
         styles: { fontSize: 8 },
       });
-      y = (doc as any).lastAutoTable.finalY + 10;
+      y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : y + 10;
     }
 
     // -------------------------
