@@ -239,3 +239,30 @@ export type BulkPricingEntry = {
   profit: number;
   packaging: number;
 };
+
+
+// =============================
+// Vendor + Estimate Form Types
+// =============================
+
+export type Vendor = {
+  vendorId: string;
+  name: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+};
+
+export type EstimateForm = {
+  vendorId: string;
+  name: string;
+  company: string;
+  address: string;
+  phone: string;
+  email: string;
+  estimateNo: string;
+  estimateDate: string;
+  validFor: string;
+  notes: string;
+};

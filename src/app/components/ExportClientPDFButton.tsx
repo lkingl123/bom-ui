@@ -1,26 +1,23 @@
+// src/app/components/ExportClientPDFButton.tsx
 "use client";
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import LoadingSpinner from "./LoadingSpinner";
+import type { ProductCalc, Vendor, EstimateForm } from "../types";
 
-type Vendor = {
-  vendorId: string;
-  name: string;
-  contactName?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-};
-
-export default function ExportClientPDFButton({ product }: { product: any }) {
+export default function ExportClientPDFButton({
+  product,
+}: {
+  product: ProductCalc;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loadingVendors, setLoadingVendors] = useState(false);
   const [search, setSearch] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<EstimateForm>({
     vendorId: "",
     name: "",
     company: "",
@@ -45,7 +42,7 @@ export default function ExportClientPDFButton({ product }: { product: any }) {
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to fetch vendors");
-        const data = await res.json();
+        const data: Vendor[] = await res.json();
         setVendors(data);
       } catch (err) {
         console.error("[ExportClientPDFButton] Error fetching vendors:", err);
@@ -89,14 +86,16 @@ export default function ExportClientPDFButton({ product }: { product: any }) {
         head: [
           [
             "Description",
-            ...Object.keys(product.tiered_pricing).map((q) => `${q} Units`),
+            ...Object.keys(product.tiered_pricing ?? {}).map(
+              (q) => `${q} Units`
+            ),
           ],
         ],
         body: [
           [
             product.name,
-            ...Object.values(product.tiered_pricing).map(
-              (d: any) => `$${d.price.toFixed(2)}`
+            ...Object.values(product.tiered_pricing ?? {}).map(
+              (d) => `$${d.price.toFixed(2)}`
             ),
           ],
         ],
@@ -104,7 +103,11 @@ export default function ExportClientPDFButton({ product }: { product: any }) {
         headStyles: { fillColor: [14, 84, 57] },
       });
 
-      const finalY = (doc as any).lastAutoTable?.finalY || 100;
+      // `lastAutoTable` isn’t typed, so cast doc as unknown first
+      const finalY =
+        (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable
+          ?.finalY ?? 100;
+
       doc.text("Notes:", 14, finalY + 15);
       doc.text(form.notes || "-", 14, finalY + 22);
 
@@ -180,26 +183,23 @@ export default function ExportClientPDFButton({ product }: { product: any }) {
             ) : null}
 
             {/* Manual fields */}
-            {[
-              "company",
-              "address",
-              "phone",
-              "email",
-              "estimateNo",
-              "estimateDate",
-              "validFor",
-            ].map((field) => (
-              <input
-                key={field}
-                placeholder={field}
-                value={(form as any)[field] ?? ""} // ✅ always controlled
-                required
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, [field]: e.target.value }))
-                }
-                className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              />
-            ))}
+            {(Object.keys(form) as (keyof EstimateForm)[])
+              .filter(
+                (field) =>
+                  !["vendorId", "name", "notes"].includes(field as string)
+              )
+              .map((field) => (
+                <input
+                  key={field}
+                  placeholder={field}
+                  value={form[field]}
+                  required
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, [field]: e.target.value }))
+                  }
+                  className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              ))}
 
             <textarea
               placeholder="Notes"
