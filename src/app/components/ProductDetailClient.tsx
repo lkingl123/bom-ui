@@ -179,12 +179,13 @@ export default function ProductDetailClient({
                 Product Info
               </td>
             </tr>
+
             {/* Name */}
             <tr>
               <td className="px-4 py-2">Name of Product</td>
               <td className="px-4 py-2">
-                <textarea // 👈 Changed to textarea for word-wrap
-                  rows={2} // 👈 Added rows
+                <textarea
+                  rows={2}
                   value={product.name || ""}
                   onChange={(e) =>
                     setProduct((prev) =>
@@ -195,6 +196,7 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
+
             {/* Description */}
             <tr>
               <td className="px-4 py-2">Description</td>
@@ -210,6 +212,7 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
+
             {/* Remarks */}
             <tr>
               <td className="px-4 py-2">Remarks</td>
@@ -225,7 +228,8 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
-            {/* SKU (Now on its own line and w-full) */}
+
+            {/* SKU */}
             <tr>
               <td className="px-4 py-2">SKU</td>
               <td className="px-4 py-2">
@@ -237,11 +241,12 @@ export default function ProductDetailClient({
                       prev ? { ...prev, sku: e.target.value } : prev
                     )
                   }
-                  className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600" // 👈 Changed w-48 to w-full
+                  className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
               </td>
             </tr>
-            {/* Category (Now on its own line and w-full) */}
+
+            {/* Category */}
             <tr>
               <td className="px-4 py-2">Category</td>
               <td className="px-4 py-2">
@@ -253,16 +258,17 @@ export default function ProductDetailClient({
                       prev ? { ...prev, category: e.target.value } : prev
                     )
                   }
-                  className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600" // 👈 Changed w-48 to w-full
+                  className="w-full border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
                 />
               </td>
             </tr>
-            {/* INCI (Changed to textarea for word-wrap) */}
+
+            {/* INCI */}
             <tr>
               <td className="px-4 py-2">INCI</td>
               <td className="px-4 py-2">
-                <textarea // 👈 Changed to textarea
-                  rows={3} // 👈 Added rows
+                <textarea
+                  rows={3}
                   value={product.customFields?.custom1 || ""}
                   onChange={(e) =>
                     setProduct((prev) =>
@@ -281,7 +287,8 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
-            {/* Account (Now w-full) */}
+
+            {/* Account */}
             <tr>
               <td className="px-4 py-2">Account</td>
               <td className="px-4 py-2">
@@ -305,8 +312,43 @@ export default function ProductDetailClient({
                 />
               </td>
             </tr>
+
+            {/* Save button row */}
+            {/* Save button row */}
+            <tr>
+              <td colSpan={2} className="px-4 py-3 text-right">
+                <button
+                  onClick={async () => {
+                    if (!product) return;
+                    const confirmed = window.confirm(
+                      "Are you sure you want to save and update this product in inFlow?"
+                    );
+                    if (!confirmed) return;
+
+                    try {
+                      const res = await fetch("/api/products/update", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(serializeForUpdate(product)),
+                      });
+                      if (!res.ok) throw new Error("Failed to save");
+
+                      alert("✅ Product saved & updated in inFlow!");
+                      router.push("/products");
+                    } catch (err) {
+                      console.error("Save failed:", err);
+                      alert("❌ Failed to update product in inFlow");
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition cursor-pointer"
+                >
+                  Save &amp; Update in inFlow
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
+
         {/* Components */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
