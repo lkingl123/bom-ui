@@ -15,6 +15,7 @@ import type {
 } from "../types";
 import { buildProductCalc } from "../utils/calculations";
 import { getProduct, getExpandedBom } from "../services/inflow";
+import { useRouter } from "next/navigation";
 
 // --- debounce hook ---
 function useDebounce<T>(value: T, delay = 400): T {
@@ -41,6 +42,7 @@ export default function ProductDetailClient({
   const [packagingItems, setPackagingItems] = useState<PackagingItemEditable[]>(
     []
   );
+  const router = useRouter();
 
   // Inputs
   const [orderQuantityInput, setOrderQuantityInput] = useState("5000");
@@ -655,9 +657,11 @@ export default function ProductDetailClient({
                         body: JSON.stringify(serializeForUpdate(product)),
                       });
                       if (!res.ok) throw new Error("Failed to save");
-                      const saved = await res.json();
+
                       alert("✅ Product saved & updated in inFlow!");
-                      setProduct({ ...product, ...saved });
+
+                      // ✅ redirect to catalog
+                      router.push("/products");
                     } catch (err) {
                       console.error("Save failed:", err);
                       alert("❌ Failed to update product in inFlow");
