@@ -148,5 +148,6 @@ export function buildProductCalc(
     cost_per_unit_excel: costPerUnitExcel,
     total_cost_excel: totalCostExcel,
     base_cost_per_unit: baseCostPerUnit,
+    total_base_cost: baseCostPerUnit * (orderQuantity || 0),
   };
 }

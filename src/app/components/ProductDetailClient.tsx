@@ -415,45 +415,6 @@ export default function ProductDetailClient({
           </table>
         </div>
 
-        {/* Pricing */}
-        <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
-          <tbody>
-            <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">
-                Pricing
-              </td>
-            </tr>
-            <tr>
-              <td className="px-4 py-2">Unit Weight (kg)</td>
-              <td className="px-4 py-2">
-                {product.unit_weight_kg?.toFixed(3) || "-"}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-4 py-2">Component Cost per Unit</td>
-              <td className="px-4 py-2">
-                ${product.cost_per_unit_excel?.toFixed(3) || "-"}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-4 py-2">Total cost by Components</td>
-              <td className="px-4 py-2 text-[#0e5439] font-semibold">
-                ${product.total_cost_excel?.toFixed(2) || "-"}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-4 py-2">Base Cost per Unit</td>
-              <td className="px-4 py-2 font-mono">
-                {product.base_cost_per_unit
-                  ? `$${product.base_cost_per_unit.toFixed(3)}`
-                  : "$-"}
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  After Labor and Packaging
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
         {/* Tiered Pricing */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
@@ -618,6 +579,54 @@ export default function ProductDetailClient({
                     )}
                   </tbody>
                 </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Pricing */}
+        <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+          <tbody>
+            <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
+              <td colSpan={2} className="px-4 py-2">
+                Pricing
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Unit Weight (kg)</td>
+              <td className="px-4 py-2">
+                {product.unit_weight_kg?.toFixed(3) || "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Component Cost per Unit</td>
+              <td className="px-4 py-2">
+                ${product.cost_per_unit_excel?.toFixed(3) || "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Total cost by Components</td>
+              <td className="px-4 py-2 text-[#0e5439] font-semibold">
+                ${product.total_cost_excel?.toFixed(2) || "-"}
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Base Cost per Unit</td>
+              <td className="px-4 py-2 font-mono">
+                {product.base_cost_per_unit
+                  ? `$${product.base_cost_per_unit.toFixed(3)}`
+                  : "$-"}
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  After Labor and Packaging
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Total Base Cost</td>
+              <td className="px-4 py-2 font-mono text-[#0e5439] font-semibold">
+                {product.total_base_cost
+                  ? `$${product.total_base_cost.toFixed(2)}`
+                  : "$-"}
               </td>
             </tr>
           </tbody>

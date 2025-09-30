@@ -221,6 +221,7 @@ export type ProductCalc = ProductDetailUI & {
   cost_per_unit_excel?: number;
   total_cost_excel?: number;
   base_cost_per_unit?: number;
+  total_base_cost?: number;
 };
 
 // =============================
