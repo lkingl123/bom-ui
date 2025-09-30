@@ -6,6 +6,8 @@ import IngredientTable from "./IngredientTable";
 import PackagingTable from "./PackagingTable";
 import LoadingSpinner from "./LoadingSpinner";
 import { RotateCcw } from "lucide-react";
+import { serializeForUpdate } from "../utils/serializeProduct";
+import ExportClientPDFButton from "./ExportClientPDFButton";
 import type {
   ComponentEditable,
   PackagingItemEditable,
@@ -465,7 +467,7 @@ export default function ProductDetailClient({
             <tr>
               <td colSpan={2} className="px-4 py-2">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium">Tiers</span>
+                  <span className="font-medium"></span>
                   <button
                     onClick={handleResetTieredPricing}
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm font-medium shadow-sm cursor-pointer"
@@ -554,7 +556,7 @@ export default function ProductDetailClient({
             <tr>
               <td colSpan={2} className="px-4 py-2">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium">Bulk Options</span>
+                  <span className="font-medium"></span>
                   <button
                     onClick={handleResetBulkPricing}
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm font-medium shadow-sm cursor-pointer"
@@ -630,12 +632,46 @@ export default function ProductDetailClient({
                 Actions
               </td>
             </tr>
+
+            {/* Save Button */}
+            <tr>
+              <td className="px-4 py-2">Save Changes</td>
+              <td className="px-4 py-2 cursor-pointer">
+                <button
+                  onClick={async () => {
+                    if (!product) return;
+                    try {
+                      const res = await fetch("/api/products/update", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(serializeForUpdate(product)), 
+                      });
+                      if (!res.ok) throw new Error("Failed to save");
+                      const saved = await res.json();
+                      alert("✅ Product saved & updated in inFlow!");
+                      setProduct({ ...product, ...saved });
+                    } catch (err) {
+                      console.error("Save failed:", err);
+                      alert("❌ Failed to update product in inFlow");
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition"
+                >
+                  Save &amp; Update in inFlow
+                </button>
+              </td>
+            </tr>
+
+            {/* Export buttons */}
             <tr>
               <td className="px-4 py-2">Export</td>
-              <td className="px-4 py-2">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">
-                  Export PDF
-                </button>
+              <td className="px-4 py-2 flex gap-2">
+                {/* Client-facing export */}
+                <ExportClientPDFButton product={product} />
+
+                {/* <button className="px-4 py-2 bg-gray-600 text-white rounded shadow hover:bg-gray-700 transition">
+                  Export Internal PDF
+                </button> */}
               </td>
             </tr>
           </tbody>

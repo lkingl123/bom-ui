@@ -79,7 +79,7 @@ export type ProductSummary = {
   // ✅ extra fields you’re using
   remarks?: string;
   standardUomName?: string;
-  
+
   cost?: ProductCost;
   vendorItems?: VendorItem[];
   lastVendor?: { name?: string };
@@ -136,6 +136,7 @@ export type ProductDetail = ProductSummary & {
   itemBoms?: ItemBom[];
 
   customFields?: Record<string, string | null>;
+  timestamp: string;
 };
 
 // =============================
@@ -221,7 +222,6 @@ export type ProductCalc = ProductDetailUI & {
   total_cost_excel?: number;
   base_cost_per_unit?: number;
 };
-
 
 // =============================
 // Pricing Entries
