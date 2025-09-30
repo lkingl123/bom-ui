@@ -684,38 +684,6 @@ export default function ProductDetailClient({
                 Actions
               </td>
             </tr>
-
-            {/* Save Button */}
-            <tr>
-              <td className="px-4 py-2">Save Changes</td>
-              <td className="px-4 py-2 cursor-pointer">
-                <button
-                  onClick={async () => {
-                    if (!product) return;
-                    try {
-                      const res = await fetch("/api/products/update", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(serializeForUpdate(product)),
-                      });
-                      if (!res.ok) throw new Error("Failed to save");
-
-                      alert("✅ Product saved & updated in inFlow!");
-
-                      // ✅ redirect to catalog
-                      router.push("/products");
-                    } catch (err) {
-                      console.error("Save failed:", err);
-                      alert("❌ Failed to update product in inFlow");
-                    }
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition"
-                >
-                  Save &amp; Update in inFlow (Only Product Info)
-                </button>
-              </td>
-            </tr>
-
             {/* Export buttons */}
             <tr>
               <td className="px-4 py-2">Export</td>
