@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import LoadingSpinner from "./LoadingSpinner";
-import type { ProductCalc, Vendor, EstimateForm } from "../types";
+import type { ProductCalc, Customer, EstimateForm } from "../types";
 
 export default function ExportClientPDFButton({
   product,
@@ -12,13 +12,13 @@ export default function ExportClientPDFButton({
   product: ProductCalc;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loadingVendors, setLoadingVendors] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [search, setSearch] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
   const [form, setForm] = useState<EstimateForm>({
-    vendorId: "",
+    customerId: "",
     name: "",
     company: "",
     address: "",
@@ -32,26 +32,26 @@ export default function ExportClientPDFButton({
 
   const isFormValid = Object.values(form).every((val) => val.trim() !== "");
 
-  // 🔎 Fetch vendors when searching
+  // 🔎 Fetch customers when searching
   useEffect(() => {
     if (!isOpen || search.length < 2) return;
 
-    const fetchVendors = async () => {
-      setLoadingVendors(true);
-      const url = `/api/vendors?smart=${encodeURIComponent(search)}`;
+    const fetchCustomers = async () => {
+      setLoadingCustomers(true);
+      const url = `/api/customers?smart=${encodeURIComponent(search)}`;
       try {
         const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch vendors");
-        const data: Vendor[] = await res.json();
-        setVendors(data);
+        if (!res.ok) throw new Error("Failed to fetch customers");
+        const data: Customer[] = await res.json();
+        setCustomers(data);
       } catch (err) {
-        console.error("[ExportClientPDFButton] Error fetching vendors:", err);
+        console.error("[ExportClientPDFButton] Error fetching customers:", err);
       } finally {
-        setLoadingVendors(false);
+        setLoadingCustomers(false);
       }
     };
 
-    const timeout = setTimeout(fetchVendors, 400);
+    const timeout = setTimeout(fetchCustomers, 400);
     return () => clearTimeout(timeout);
   }, [search, isOpen]);
 
@@ -139,31 +139,31 @@ export default function ExportClientPDFButton({
           <div className="bg-white dark:bg-gray-900 p-6 rounded shadow w-96 space-y-4 text-gray-900 dark:text-gray-100">
             <h2 className="text-lg font-bold">Fill Estimate Details</h2>
 
-            {/* 🔍 Vendor search */}
+            {/* 🔍 Customer search */}
             <input
-              placeholder="Search Vendor..."
+              placeholder="Search Customer..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
 
-            {/* Vendor dropdown */}
-            {loadingVendors ? (
+            {/* Customer dropdown */}
+            {loadingCustomers ? (
               <div className="flex justify-center py-2">
                 <LoadingSpinner />
               </div>
-            ) : vendors.length > 0 ? (
+            ) : customers.length > 0 ? (
               <select
-                value={form.vendorId}
+                value={form.customerId}
                 required
                 onChange={(e) => {
-                  const selected = vendors.find(
-                    (v) => v.vendorId === e.target.value
+                  const selected = customers.find(
+                    (c) => c.customerId === e.target.value
                   );
                   if (selected) {
                     setForm((prev) => ({
                       ...prev,
-                      vendorId: selected.vendorId,
+                      customerId: selected.customerId,
                       name: selected.contactName || "",
                       company: selected.name || "",
                       phone: selected.phone || "",
@@ -173,10 +173,10 @@ export default function ExportClientPDFButton({
                 }}
                 className="w-full border rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
-                <option value="">Select Vendor</option>
-                {vendors.map((v) => (
-                  <option key={v.vendorId} value={v.vendorId}>
-                    {v.name} — {v.contactName}
+                <option value="">Select Customer</option>
+                {customers.map((c) => (
+                  <option key={c.customerId} value={c.customerId}>
+                    {c.name} — {c.contactName}
                   </option>
                 ))}
               </select>
@@ -186,7 +186,7 @@ export default function ExportClientPDFButton({
             {(Object.keys(form) as (keyof EstimateForm)[])
               .filter(
                 (field) =>
-                  !["vendorId", "name", "notes"].includes(field as string)
+                  !["customerId", "name", "notes"].includes(field as string)
               )
               .map((field) => (
                 <input

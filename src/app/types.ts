@@ -244,11 +244,11 @@ export type BulkPricingEntry = {
 
 
 // =============================
-// Vendor + Estimate Form Types
+// Customer + Estimate Form Types
 // =============================
 
-export type Vendor = {
-  vendorId: string;
+export type Customer = {
+  customerId: string;
   name: string;
   contactName?: string;
   email?: string;
@@ -256,8 +256,9 @@ export type Vendor = {
   website?: string;
 };
 
+
 export type EstimateForm = {
-  vendorId: string;
+  customerId: string;
   name: string;
   company: string;
   address: string;
