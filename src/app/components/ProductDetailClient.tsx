@@ -8,6 +8,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import { RotateCcw } from "lucide-react";
 import { serializeForUpdate } from "../utils/serializeProduct";
 import ExportClientPDFButton from "./ExportClientPDFButton";
+import ExportInternalPDFButton from "./ExportInternalPDFButton";
 import type {
   ComponentEditable,
   PackagingItemEditable,
@@ -607,7 +608,9 @@ export default function ProductDetailClient({
               </td>
             </tr>
             <tr>
-              <td className="px-4 py-2">Base Cost per Unit (After Labor and Packaging)</td>
+              <td className="px-4 py-2">
+                Base Cost per Unit (After Labor and Packaging)
+              </td>
               <td className="px-4 py-2 font-mono">
                 {product.base_cost_per_unit
                   ? `$${product.base_cost_per_unit.toFixed(3)}`
@@ -678,9 +681,8 @@ export default function ProductDetailClient({
                 {/* Client-facing export */}
                 <ExportClientPDFButton product={product} />
 
-                {/* <button className="px-4 py-2 bg-gray-600 text-white rounded shadow hover:bg-gray-700 transition">
-                  Export Internal PDF
-                </button> */}
+                {/* Internal export */}
+                <ExportInternalPDFButton product={product} />
               </td>
             </tr>
           </tbody>

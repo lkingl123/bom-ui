@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     // 2. Build minimal payload with fresh timestamp + edits
     const payload = {
       productId: fresh.productId,
-      timestamp: fresh.timestamp, // ✅ required
+      timestamp: fresh.timestamp,
       name: updates.name ?? fresh.name,
       description: updates.description ?? fresh.description,
       remarks: updates.remarks ?? fresh.remarks,
@@ -32,12 +32,15 @@ export async function POST(req: Request) {
     };
 
     // 3. PUT update to inFlow
-    const updated = await inflowFetch("/products", {
+    await inflowFetch("/products", {
       method: "PUT",
       body: JSON.stringify(payload),
     });
 
-    return NextResponse.json(updated);
+    // 4. Re-fetch the updated product to get the NEW timestamp ✅
+    const updatedFresh = await getProduct(productId);
+
+    return NextResponse.json(updatedFresh);
   } catch (err: unknown) {
     if (err instanceof Error) {
       console.error("[products/update] ❌", err);
