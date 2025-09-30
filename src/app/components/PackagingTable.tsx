@@ -29,18 +29,9 @@ export default function PackagingTable({
     setPackagingItems(updated);
   };
 
-  const handleEdit = (
-    index: number,
-    field: "name" | "unit_cost",
-    value: string
-  ): void => {
+  const handleEdit = (index: number, field: "name", value: string): void => {
     const updated = [...packagingItems];
-    if (field === "name") {
-      updated[index] = { ...updated[index], name: value };
-    } else {
-      const num = parseFloat(value) || 0;
-      updated[index] = { ...updated[index], unit_cost: num };
-    }
+    updated[index] = { ...updated[index], name: value };
     updated[index].line_cost = (updated[index].unit_cost || 0) * orderQuantity;
     setPackagingItems(updated);
   };
@@ -115,15 +106,9 @@ export default function PackagingTable({
                     />
                   </td>
 
-                  <td className="px-4 py-2 text-right">
-                    <input
-                      type="number"
-                      step="0.01"
-                      min={0}
-                      value={item.unit_cost}
-                      onChange={(e) => handleEdit(index, "unit_cost", e.target.value)}
-                      className="w-24 text-right border rounded px-2 py-1 text-sm font-mono bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                    />
+                  {/* Read-only Unit Cost */}
+                  <td className="px-4 py-2 text-right font-mono">
+                    {item.unit_cost !== undefined ? `$${item.unit_cost.toFixed(2)}` : "$0.00"}
                   </td>
 
                   <td className="px-4 py-2 text-right font-mono text-gray-900 dark:text-gray-100">

@@ -27,7 +27,9 @@ export default function IngredientTable({
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [loadingRows, setLoadingRows] = useState<Record<number, boolean>>({});
   const [showSearch, setShowSearch] = useState(false);
-  const [extraDetails, setExtraDetails] = useState<Record<number, { inci?: string; description?: string; remarks?: string }>>({});
+  const [extraDetails, setExtraDetails] = useState<
+    Record<number, { inci?: string; description?: string; remarks?: string }>
+  >({});
 
   // 🔑 Expand row → fetch details
   const toggleExpand = async (index: number, childProductId?: string) => {
@@ -46,7 +48,6 @@ export default function IngredientTable({
           return;
         }
 
-        // Save extra details separately (keeps Component type clean)
         setExtraDetails((prev) => ({
           ...prev,
           [index]: {
@@ -72,9 +73,7 @@ export default function IngredientTable({
   const handleAddIngredient = (): void => setShowSearch(true);
 
   const handleIngredientSelect = (ingredient: ProductSummary): void => {
-    const unitCost = ingredient.cost?.cost
-      ? parseFloat(ingredient.cost.cost)
-      : 0;
+    const unitCost = ingredient.cost?.cost ? parseFloat(ingredient.cost.cost) : 0;
     const newIngredient: ComponentEditable = {
       name: ingredient.name,
       sku: ingredient.sku,
@@ -94,7 +93,6 @@ export default function IngredientTable({
     updated.splice(index, 1);
     setComponents(updated);
 
-    // clean up extra details too
     const { [index]: _, ...rest } = extraDetails;
     setExtraDetails(rest);
   };
@@ -107,25 +105,11 @@ export default function IngredientTable({
   const round2 = (num: number): number =>
     Math.round((num + Number.EPSILON) * 100) / 100;
 
-  const handleEdit = (
-    index: number,
-    field: "name" | "unit_cost" | "line_cost",
-    value: string
-  ): void => {
+  const handleEdit = (index: number, field: "name", value: string): void => {
     const updated = [...components];
-    let num = parseFloat(value);
-    if (isNaN(num)) num = 0;
-
-    if (field === "unit_cost") {
-      updated[index].unit_cost = round2(num);
-      updated[index].line_cost =
-        (updated[index].quantity || 0) * updated[index].unit_cost;
-    } else if (field === "line_cost") {
-      updated[index].line_cost = round2(num);
-    } else if (field === "name") {
+    if (field === "name") {
       updated[index].name = value;
     }
-
     setComponents(updated);
   };
 
@@ -136,15 +120,6 @@ export default function IngredientTable({
     updated[index].quantity = num / 100;
     updated[index].line_cost =
       updated[index].quantity * (updated[index].unit_cost || 0);
-    setComponents(updated);
-  };
-
-  const handleBlur = (
-    index: number,
-    field: "unit_cost" | "line_cost"
-  ): void => {
-    const updated = [...components];
-    updated[index][field] = round2(updated[index][field] || 0);
     setComponents(updated);
   };
 
@@ -217,25 +192,13 @@ export default function IngredientTable({
                       />
                       <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">%</span>
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={c.unit_cost.toFixed(2)}
-                        onChange={(e) => handleEdit(i, "unit_cost", e.target.value)}
-                        onBlur={() => handleBlur(i, "unit_cost")}
-                        className="w-24 text-right border rounded px-2 py-1 text-sm font-mono bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                      />
+                    {/* Read-only Cost/kg */}
+                    <td className="px-4 py-2 text-right font-mono">
+                      {c.unit_cost !== undefined ? `$${c.unit_cost.toFixed(2)}` : "$0.00"}
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={c.line_cost.toFixed(2)}
-                        onChange={(e) => handleEdit(i, "line_cost", e.target.value)}
-                        onBlur={() => handleBlur(i, "line_cost")}
-                        className="w-24 text-right border rounded px-2 py-1 text-sm font-mono bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                      />
+                    {/* Read-only Cost */}
+                    <td className="px-4 py-2 text-right font-mono">
+                      {c.line_cost !== undefined ? `$${c.line_cost.toFixed(2)}` : "$0.00"}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
