@@ -314,11 +314,6 @@ export default function ProductDetailClient({
             </tr>
             <tr>
               <td colSpan={2} className="px-4 py-2">
-                <PackagingTable
-                  packagingItems={packagingItems}
-                  setPackagingItems={setPackagingItems}
-                  orderQuantity={Number(debouncedOrderQuantity) || 0}
-                />
                 <IngredientTable
                   components={editableComponents}
                   setComponents={setEditableComponents}
@@ -331,92 +326,95 @@ export default function ProductDetailClient({
                   originalComponents={originalComponents}
                   packagingTotal={packagingTotal}
                 />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Production Inputs */}
-        <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
-          <tbody>
-            <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              {/* Changed colSpan to 2, but we'll use 2 standard columns below */}
-              <td colSpan={2} className="px-4 py-2">
-                Production Inputs
-              </td>
-            </tr>
-            {/* Row 1: Order Quantity */}
-            <tr>
-              <td className="px-4 py-2 w-1/2">Order Quantity</td>
-              {/* w-1/2 to define column width */}
-              <td className="px-4 py-2 w-1/2">
-                <input
-                  type="text"
-                  value={orderQuantityInput}
-                  onChange={(e) => setOrderQuantityInput(e.target.value)}
-                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                />
-              </td>
-            </tr>
-            {/* Row 2: Total Oz Per Unit */}
-            <tr>
-              <td className="px-4 py-2">Total Oz Per Unit</td>
-              <td className="px-4 py-2">
-                <input
-                  type="text"
-                  value={totalOzPerUnitInput}
-                  onChange={(e) => setTotalOzPerUnitInput(e.target.value)}
-                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                />
-              </td>
-            </tr>
-            {/* Row 3: Grams per Oz */}
-            <tr>
-              <td className="px-4 py-2">Grams per Oz</td>
-              <td className="px-4 py-2">
-                <input
-                  type="text"
-                  value={gramsPerOzInput}
-                  onChange={(e) => setGramsPerOzInput(e.target.value)}
-                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                <PackagingTable
+                  packagingItems={packagingItems}
+                  setPackagingItems={setPackagingItems}
+                  orderQuantity={Number(debouncedOrderQuantity) || 0}
                 />
               </td>
             </tr>
           </tbody>
         </table>
-        {/* Labor Inputs */}
-        <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
-          <tbody>
-            <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
-              <td colSpan={2} className="px-4 py-2">
-                Labor Inputs
-              </td>
-            </tr>
-            {/* Row 1: Cost per Touch */}
-            <tr>
-              <td className="px-4 py-2 w-1/2">Cost per Touch</td>
-              <td className="px-4 py-2 w-1/2">
-                <input
-                  type="text"
-                  value={costPerTouchInput}
-                  onChange={(e) => setCostPerTouchInput(e.target.value)}
-                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                />
-              </td>
-            </tr>
-            {/* Row 2: Touch Points */}
-            <tr>
-              <td className="px-4 py-2">Touch Points</td>
-              <td className="px-4 py-2">
-                <input
-                  type="text"
-                  value={touchPointsInput}
-                  onChange={(e) => setTouchPointsInput(e.target.value)}
-                  className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {/* Inputs Section (Side by Side) */}
+        <div className="flex gap-6">
+          {/* Production Inputs (Left) */}
+          <table className="flex-1 text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+            <tbody>
+              <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
+                <td colSpan={2} className="px-4 py-2">
+                  Production Inputs
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2 w-1/2">Order Quantity</td>
+                <td className="px-4 py-2 w-1/2">
+                  <input
+                    type="text"
+                    value={orderQuantityInput}
+                    onChange={(e) => setOrderQuantityInput(e.target.value)}
+                    className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Total Oz Per Unit</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="text"
+                    value={totalOzPerUnitInput}
+                    onChange={(e) => setTotalOzPerUnitInput(e.target.value)}
+                    className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Grams per Oz</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="text"
+                    value={gramsPerOzInput}
+                    onChange={(e) => setGramsPerOzInput(e.target.value)}
+                    className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Labor Inputs (Right) */}
+          <table className="flex-1 text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+            <tbody>
+              <tr className="bg-gray-100 dark:bg-gray-800 font-medium">
+                <td colSpan={2} className="px-4 py-2">
+                  Labor Inputs
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2 w-1/2">Cost per Touch</td>
+                <td className="px-4 py-2 w-1/2">
+                  <input
+                    type="text"
+                    value={costPerTouchInput}
+                    onChange={(e) => setCostPerTouchInput(e.target.value)}
+                    className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2">Touch Points</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="text"
+                    value={touchPointsInput}
+                    onChange={(e) => setTouchPointsInput(e.target.value)}
+                    className="w-32 border rounded px-2 py-1 font-mono dark:bg-gray-800 dark:border-gray-600"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         {/* Pricing */}
         <table className="min-w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
           <tbody>
@@ -644,7 +642,7 @@ export default function ProductDetailClient({
                       const res = await fetch("/api/products/update", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(serializeForUpdate(product)), 
+                        body: JSON.stringify(serializeForUpdate(product)),
                       });
                       if (!res.ok) throw new Error("Failed to save");
                       const saved = await res.json();
