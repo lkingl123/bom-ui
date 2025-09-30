@@ -601,26 +601,23 @@ export default function ProductDetailClient({
               </td>
             </tr>
             <tr>
-              <td className="px-4 py-2">Component Cost per Unit</td>
+              <td className="px-4 py-2">Cost per Unit</td>
               <td className="px-4 py-2">
                 ${product.cost_per_unit_excel?.toFixed(3) || "-"}
               </td>
             </tr>
             <tr>
-              <td className="px-4 py-2">Total cost by Components</td>
-              <td className="px-4 py-2 text-[#0e5439] font-semibold">
-                ${product.total_cost_excel?.toFixed(2) || "-"}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-4 py-2">Base Cost per Unit</td>
+              <td className="px-4 py-2">Base Cost per Unit (After Labor and Packaging)</td>
               <td className="px-4 py-2 font-mono">
                 {product.base_cost_per_unit
                   ? `$${product.base_cost_per_unit.toFixed(3)}`
                   : "$-"}
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  After Labor and Packaging
-                </div>
+              </td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2">Total Cost per Unit</td>
+              <td className="px-4 py-2 text-[#0e5439] font-semibold">
+                ${product.total_cost_excel?.toFixed(2) || "-"}
               </td>
             </tr>
             <tr>
