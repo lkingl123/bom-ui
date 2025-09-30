@@ -5,6 +5,15 @@ const BASE_URL = process.env.INFLOW_BASE_URL!;
 const COMPANY_ID = process.env.INFLOW_COMPANY_ID!;
 const API_KEY = process.env.INFLOW_API_KEY!;
 
+type VendorAPIResponse = {
+  vendorId: string;
+  name: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+};
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const smart = searchParams.get("smart");
@@ -32,16 +41,16 @@ export async function GET(req: Request) {
       );
     }
 
-    const data = await res.json();
+    const data: VendorAPIResponse[] = await res.json();
 
     // ✅ Normalize vendor list
-    const vendors = (data as any[]).map((v) => ({
+    const vendors = data.map((v) => ({
       vendorId: v.vendorId,
       name: v.name,
-      contactName: v.contactName,
-      email: v.email,
-      phone: v.phone,
-      website: v.website,
+      contactName: v.contactName ?? "",
+      email: v.email ?? "",
+      phone: v.phone ?? "",
+      website: v.website ?? "",
     }));
 
     return NextResponse.json(vendors);
