@@ -8,11 +8,11 @@ export default async function ProductsPage() {
 
   // ✅ hardcoded top-level categories
   const TOP_LEVELS = [
+    "Account",
     "Finished Goods",
     "Bulk",
     "Ingredients",
     "Materials",
-    "Account",
   ];
 
   const categories = ["All", ...TOP_LEVELS];
