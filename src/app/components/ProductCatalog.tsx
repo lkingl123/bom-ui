@@ -3,7 +3,17 @@
 import type { ProductSummaryUI } from "../services/inflow";
 import { useState, useEffect, useRef } from "react";
 import ProductTable from "./ProductTable";
-import LoadingSpinner from "./LoadingSpinner"; // ✅ import spinner
+import LoadingSpinner from "./LoadingSpinner";
+
+// --- debounce hook ---
+function useDebounce<T>(value: T, delay = 400): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
 
 export default function ProductCatalog({
   initialProducts,
@@ -16,6 +26,7 @@ export default function ProductCatalog({
 }) {
   const [products, setProducts] = useState<ProductSummaryUI[]>(initialProducts);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 400);
   const [lastId, setLastId] = useState<string | undefined>(
     initialProducts.length > 0
       ? initialProducts[initialProducts.length - 1].productId
@@ -26,15 +37,15 @@ export default function ProductCatalog({
 
   // ✅ category filter
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-
   const observerRef = useRef<HTMLDivElement | null>(null);
 
-  // 🔄 update parent count
+  // filtered by category
   const filteredProducts =
     selectedCategory === "All"
       ? products
       : products.filter((p) => p.topLevelCategory === selectedCategory);
 
+  // initial logging
   useEffect(() => {
     console.log("[ProductCatalog] Initial products loaded:", initialProducts);
     console.log(
@@ -43,6 +54,7 @@ export default function ProductCatalog({
     );
   }, [initialProducts]);
 
+  // update parent count
   useEffect(() => {
     onCountChange?.(filteredProducts.length);
     console.log(
@@ -52,26 +64,15 @@ export default function ProductCatalog({
 
   // 🔍 search effect
   useEffect(() => {
-    if (query.trim() === "") {
-      setProducts(initialProducts);
-      setLastId(
-        initialProducts.length > 0
-          ? initialProducts[initialProducts.length - 1].productId
-          : undefined
-      );
-      setHasMore(true);
-      return;
-    }
-
     let cancelled = false;
+
     async function fetchSearch() {
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/products/search?q=${encodeURIComponent(query)}`
+          `/api/products/search?q=${encodeURIComponent(debouncedQuery)}`
         );
         const data = await res.json();
-        console.log("[ProductCatalog] Search results:", data);
         if (!cancelled) {
           setProducts(data.products ?? []);
           setLastId(data.lastId);
@@ -82,11 +83,23 @@ export default function ProductCatalog({
       }
     }
 
+    if (debouncedQuery.trim() === "") {
+      // reset to initial
+      setProducts(initialProducts);
+      setLastId(
+        initialProducts.length > 0
+          ? initialProducts[initialProducts.length - 1].productId
+          : undefined
+      );
+      setHasMore(true);
+      return;
+    }
+
     fetchSearch();
     return () => {
       cancelled = true;
     };
-  }, [query, initialProducts]);
+  }, [debouncedQuery, initialProducts]);
 
   // ♾️ infinite scroll
   useEffect(() => {
@@ -99,7 +112,7 @@ export default function ProductCatalog({
           try {
             const res = await fetch(
               `/api/products/search?q=${encodeURIComponent(
-                query
+                debouncedQuery
               )}&after=${lastId ?? ""}`
             );
             const data = await res.json();
@@ -117,7 +130,7 @@ export default function ProductCatalog({
 
     observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [query, lastId, hasMore, loading]);
+  }, [debouncedQuery, lastId, hasMore, loading]);
 
   return (
     <div>
@@ -160,7 +173,7 @@ export default function ProductCatalog({
       {/* Loader sentinel */}
       <div ref={observerRef} className="h-16 flex justify-center items-center">
         {loading ? (
-          <LoadingSpinner /> // ✅ show your spinner
+          <LoadingSpinner />
         ) : hasMore ? (
           <span className="text-gray-500"></span>
         ) : (

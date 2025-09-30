@@ -7,6 +7,7 @@ import type {
   BomComponentUI,
   Category,
 } from "../types";
+import { resolveTopLevelCategory } from "../utils/categories";
 
 // --- Environment variables (server-only) ---
 const BASE_URL = process.env.INFLOW_BASE_URL!;
@@ -116,33 +117,6 @@ export async function getCategories(forceRefresh = false): Promise<Category[]> {
   }
   categoryCache = all;
   return all;
-}
-
-function resolveTopLevelCategory(
-  cat: Category | undefined,
-  all: Category[]
-): string {
-  const TOP_LEVELS = [
-    "Finished Goods",
-    "Bulk",
-    "Ingredients",
-    "Materials",
-    "Account",
-  ];
-
-  let current = cat;
-  while (current && current.parentCategoryId) {
-    current = all.find(
-      (c: Category) => c.categoryId === current!.parentCategoryId
-    );
-  }
-
-  if (current) {
-    const name = current.name.trim();
-    if (TOP_LEVELS.includes(name)) return name;
-  }
-
-  return "Uncategorized"; // catch-all
 }
 
 // =============================

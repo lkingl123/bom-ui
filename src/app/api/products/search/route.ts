@@ -1,34 +1,58 @@
 // src/app/api/products/search/route.ts
 import { NextResponse } from "next/server";
-import { getProductsPage, getExpandedBom } from "../../../services/inflow";
+import { inflowFetch, getCategories } from "../../../services/inflow";
+import type { ProductDetail, Category } from "../../../types";
+import { resolveTopLevelCategory } from "../../../utils/categories";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q") ?? "";
   const after = searchParams.get("after") ?? undefined;
-  const productId = searchParams.get("productId");
+  const count = 50;
 
   try {
-    // Case 1: BOM fetch
-    if (productId) {
-      const bom = await getExpandedBom(productId);
-      return NextResponse.json({ components: bom });
+    // 🔍 Case: smart search
+    if (q.trim() !== "") {
+      let url = `/products?count=${count}&include=cost,defaultPrice,vendorItems,inventoryLines&filter[smart]=${encodeURIComponent(
+        q
+      )}`;
+      if (after) url += `&after=${after}`;
+
+      const [page, categories] = await Promise.all([
+        inflowFetch<ProductDetail[]>(url),
+        getCategories(),
+      ]);
+
+      const mapped = page.map((p) => {
+        const cat = categories.find((c: Category) => c.categoryId === p.categoryId);
+        const top = resolveTopLevelCategory(cat, categories);
+        return { ...p, topLevelCategory: top };
+      });
+
+      return NextResponse.json({
+        products: mapped,
+        lastId: page.length > 0 ? page[page.length - 1].productId : undefined,
+      });
     }
 
-    // Case 2: Product search (paged)
-    const { products, lastId } = await getProductsPage(80, after);
+    // fallback: no query → normal paged list
+    let url = `/products?count=${count}&include=cost,defaultPrice,vendorItems,inventoryLines&sortBy=name&sortOrder=asc`;
+    if (after) url += `&after=${after}`;
 
-    // ✅ Apply name filter on top of already-filtered list
-    const filtered = q
-      ? products.filter((p) =>
-          p.name.toLowerCase().includes(q.toLowerCase())
-        )
-      : products;
+    const [page, categories] = await Promise.all([
+      inflowFetch<ProductDetail[]>(url),
+      getCategories(),
+    ]);
+
+    const mapped = page.map((p) => {
+      const cat = categories.find((c: Category) => c.categoryId === p.categoryId);
+      const top = resolveTopLevelCategory(cat, categories);
+      return { ...p, topLevelCategory: top };
+    });
 
     return NextResponse.json({
-      products: filtered,
-      lastId,
-      cached: true,
+      products: mapped,
+      lastId: page.length > 0 ? page[page.length - 1].productId : undefined,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Search failed";
