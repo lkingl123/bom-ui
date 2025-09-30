@@ -5,11 +5,11 @@ export function resolveTopLevelCategory(
   all: Category[]
 ): string {
   const TOP_LEVELS = [
+    "Account",
     "Finished Goods",
     "Bulk",
     "Ingredients",
     "Materials",
-    "Account",
   ];
 
   let current = cat;
