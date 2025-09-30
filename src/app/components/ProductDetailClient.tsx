@@ -692,7 +692,10 @@ export default function ProductDetailClient({
                 <ExportClientPDFButton product={product} />
 
                 {/* Internal export */}
-                <ExportInternalPDFButton product={product} />
+                <ExportInternalPDFButton
+                  product={product}
+                  packagingItems={packagingItems}
+                />
               </td>
             </tr>
           </tbody>

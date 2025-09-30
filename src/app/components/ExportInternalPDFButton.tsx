@@ -10,7 +10,7 @@ import type {
   PackagingItemEditable,
 } from "../types";
 
-// Add explicit types for tiered and bulk pricing
+// Explicit types for tiered and bulk pricing
 interface TieredPricingData {
   price: number;
   profit: number;
@@ -32,8 +32,10 @@ interface JsPDFWithAutoTable extends jsPDF {
 
 export default function ExportInternalPDFButton({
   product,
+  packagingItems,
 }: {
   product: ProductCalc;
+  packagingItems: PackagingItemEditable[];
 }) {
   const handleExport = () => {
     const doc = new jsPDF() as JsPDFWithAutoTable;
@@ -46,12 +48,16 @@ export default function ExportInternalPDFButton({
 
     doc.setFontSize(10);
     doc.text(`Name of Product: ${product.name || "-"}`, 14, 30);
-    doc.text(`Description: ${product.description || "-"}`, 14, 36, { maxWidth: 180 });
+    doc.text(`Description: ${product.description || "-"}`, 14, 36, {
+      maxWidth: 180,
+    });
     doc.text(`Remarks: ${product.remarks || "-"}`, 14, 42, { maxWidth: 180 });
     doc.text(`SKU: ${product.sku || "-"}`, 14, 48);
     doc.text(`Category: ${product.category || "-"}`, 14, 54);
     doc.text(`Account: ${product.customFields?.custom8 || "-"}`, 14, 60);
-    doc.text(`INCI: ${product.customFields?.custom1 || "-"}`, 14, 66, { maxWidth: 180 });
+    doc.text(`INCI: ${product.customFields?.custom1 || "-"}`, 14, 66, {
+      maxWidth: 180,
+    });
 
     let y = 76;
 
@@ -78,11 +84,11 @@ export default function ExportInternalPDFButton({
     // -------------------------
     // Packaging Table
     // -------------------------
-    if (product.packagingItems?.length) {
+    if (packagingItems?.length) {
       autoTable(doc, {
         startY: y,
         head: [["Packaging Component", "Unit Cost", "Line Cost"]],
-        body: product.packagingItems.map(
+        body: packagingItems.map(
           (p: PackagingItemEditable): RowInput => [
             p.name,
             `$${p.unit_cost?.toFixed(2)}`,
@@ -141,23 +147,39 @@ export default function ExportInternalPDFButton({
     doc.text("Pricing Summary", 14, y);
     y += 6;
     doc.setFontSize(10);
-    doc.text(`Unit Weight (kg): ${product.unit_weight_kg?.toFixed(3) || "-"}`, 14, y);
+    doc.text(
+      `Unit Weight (kg): ${product.unit_weight_kg?.toFixed(3) || "-"}`,
+      14,
+      y
+    );
     y += 5;
-    doc.text(`Cost per Unit: $${product.cost_per_unit_excel?.toFixed(3) || "-"}`, 14, y);
+    doc.text(
+      `Cost per Unit: $${product.cost_per_unit_excel?.toFixed(3) || "-"}`,
+      14,
+      y
+    );
     y += 5;
     doc.text(
       `Base Cost per Unit: ${
-        product.base_cost_per_unit ? `$${product.base_cost_per_unit.toFixed(3)}` : "-"
+        product.base_cost_per_unit
+          ? `$${product.base_cost_per_unit.toFixed(3)}`
+          : "-"
       }`,
       14,
       y
     );
     y += 5;
-    doc.text(`Total Cost per Unit: $${product.total_cost_excel?.toFixed(2) || "-"}`, 14, y);
+    doc.text(
+      `Total Cost per Unit: $${product.total_cost_excel?.toFixed(2) || "-"}`,
+      14,
+      y
+    );
     y += 5;
     doc.text(
       `Total Base Cost: ${
-        product.total_base_cost !== undefined ? `$${product.total_base_cost.toFixed(2)}` : "-"
+        product.total_base_cost !== undefined
+          ? `$${product.total_base_cost.toFixed(2)}`
+          : "-"
       }`,
       14,
       y
