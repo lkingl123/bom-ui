@@ -44,6 +44,7 @@ export default function ProductDetailClient({
     []
   );
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
 
   // Inputs
   const [orderQuantityInput, setOrderQuantityInput] = useState("5000");
@@ -318,31 +319,66 @@ export default function ProductDetailClient({
             <tr>
               <td colSpan={2} className="px-4 py-3 text-right">
                 <button
+                  disabled={saving}
                   onClick={async () => {
-                    if (!product) return;
+                    if (!product || saving) return;
+
                     const confirmed = window.confirm(
                       "Are you sure you want to save and update this product in inFlow?"
                     );
                     if (!confirmed) return;
 
+                    setSaving(true);
                     try {
+                      console.log(
+                        "🚀 [Save] Sending product update request..."
+                      );
                       const res = await fetch("/api/products/update", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(serializeForUpdate(product)),
                       });
+
                       if (!res.ok) throw new Error("Failed to save");
 
+                      const updatedProduct = await res.json();
+                      console.log(
+                        "🆕 [Save] Updated product from backend:",
+                        updatedProduct
+                      );
+
+                      setProduct((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              ...updatedProduct,
+                              timestamp: updatedProduct.timestamp,
+                              customFields: {
+                                ...prev.customFields,
+                                ...updatedProduct.customFields,
+                              },
+                            }
+                          : updatedProduct
+                      );
+
+                      await new Promise((res) => setTimeout(res, 500));
                       alert("✅ Product saved & updated in inFlow!");
-                      router.push("/products");
+                      sessionStorage.setItem("forceRefreshProducts", "true");
+                      router.push("/products?forceRefresh=true");
                     } catch (err) {
-                      console.error("Save failed:", err);
+                      console.error("💥 [Save] Update failed:", err);
                       alert("❌ Failed to update product in inFlow");
+                    } finally {
+                      setSaving(false);
                     }
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition cursor-pointer"
+                  className={`px-4 py-2 rounded shadow transition cursor-pointer ${
+                    saving
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                  }`}
                 >
-                  Save &amp; Update in inFlow
+                  {saving ? "Saving..." : "Save & Update in inFlow"}
                 </button>
               </td>
             </tr>

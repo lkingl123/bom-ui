@@ -10,9 +10,10 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q") ?? "";
   const after = searchParams.get("after") ?? undefined;
+  const forceRefresh = searchParams.get("forceRefresh") === "true"; // 👈 NEW FLAG
   const count = 50;
 
-  console.log("🔍 Query params:", { q, after });
+  console.log("🔍 Query params:", { q, after, forceRefresh });
 
   try {
     // Case: smart search
@@ -25,9 +26,10 @@ export async function GET(req: Request) {
       console.log("🌐 URL:", url);
 
       const [page, categories] = await Promise.all([
-        inflowFetch<ProductDetail[]>(url),
-        getCategories(),
+        inflowFetch<ProductDetail[]>(url, { forceRefresh }), // 👈 PASS FLAG HERE
+        getCategories(forceRefresh),
       ]);
+
       console.log("✅ Data fetched:", {
         products: page.length,
         categories: categories.length,
@@ -39,7 +41,7 @@ export async function GET(req: Request) {
         console.log(`📦 Product ${i}:`, {
           name: p.name,
           category: cat?.name,
-          topLevelCategory: top ?? "None", // ✅ FIXED HERE
+          topLevelCategory: top ?? "None",
         });
         return { ...p, topLevelCategory: top };
       });
@@ -58,9 +60,10 @@ export async function GET(req: Request) {
     console.log("🌐 URL:", url);
 
     const [page, categories] = await Promise.all([
-      inflowFetch<ProductDetail[]>(url),
-      getCategories(),
+      inflowFetch<ProductDetail[]>(url, { forceRefresh }), // 👈 PASS FLAG HERE TOO
+      getCategories(forceRefresh),
     ]);
+
     console.log("✅ Data fetched:", {
       products: page.length,
       categories: categories.length,
@@ -72,7 +75,7 @@ export async function GET(req: Request) {
       console.log(`📦 Product ${i}:`, {
         name: p.name,
         category: cat?.name,
-        topLevelCategory: top ?? "None", // ✅ FIXED HERE
+        topLevelCategory: top ?? "None",
       });
       return { ...p, topLevelCategory: top };
     });

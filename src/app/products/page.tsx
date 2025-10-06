@@ -2,9 +2,17 @@ import ProductCatalog from "../components/ProductCatalog";
 import { getProductsPage } from "../services/inflow";
 import type { ProductSummaryUI } from "../services/inflow";
 
-export default async function ProductsPage() {
-  // fetch initial batch
-  const { products = [] } = await getProductsPage(80);
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ forceRefresh?: string }>;
+}) {
+  // ✅ await the new async searchParams API
+  const params = await searchParams;
+  const forceRefresh = params?.forceRefresh === "true";
+
+  // fetch initial batch (bypass cache only when needed)
+  const { products = [] } = await getProductsPage(80, undefined, forceRefresh);
 
   // ✅ hardcoded top-level categories
   const TOP_LEVELS = [

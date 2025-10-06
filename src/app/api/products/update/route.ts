@@ -9,9 +9,9 @@ export async function POST(req: Request) {
     const { productId, updates } = await req.json();
     console.log("📥 Parsed request body:", { productId, updates });
 
-    // 1. Get fresh product to grab latest timestamp
-    console.log("🔄 Fetching latest product data for ID:", productId);
-    const fresh = await getProduct(productId);
+    // 🧠 Always bypass cache to ensure we get the freshest timestamp
+    console.log("🔄 Fetching latest product data (forceRefresh=true) for ID:", productId);
+    const fresh = await getProduct(productId, true);
     console.log("✅ Fresh product fetched:", fresh ? fresh.productId : "Not found");
 
     if (!fresh) {
@@ -22,10 +22,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Build minimal payload with fresh timestamp + edits
+    // 1️⃣ Build update payload using the latest data
     const payload = {
       productId: fresh.productId,
-      timestamp: fresh.timestamp,
+      timestamp: fresh.timestamp, // critical for optimistic concurrency
       name: updates.name ?? fresh.name,
       description: updates.description ?? fresh.description,
       remarks: updates.remarks ?? fresh.remarks,
@@ -39,21 +39,43 @@ export async function POST(req: Request) {
 
     console.log("🧱 Built update payload:", payload);
 
-    // 3. PUT update to inFlow
-    console.log("📡 Sending PUT request to /products...");
-    const putResponse = await inflowFetch("/products", {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-    console.log("✅ PUT request completed successfully:", putResponse);
+    // 2️⃣ Attempt PUT with retry logic
+    let putResponse: any;
+    try {
+      console.log("📡 Sending PUT request to /products...");
+      putResponse = await inflowFetch("/products", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      console.log("✅ PUT success, new timestamp:", putResponse?.timestamp);
+    } catch (err: any) {
+      const errMsg = err?.message || "";
+      if (errMsg.includes("entity_modified") || errMsg.includes("409")) {
+        console.warn("⚠️ Conflict detected — waiting briefly before retry...");
+        await new Promise((res) => setTimeout(res, 300));
 
-    // 4. Re-fetch the updated product to get the NEW timestamp ✅
-    console.log("🔁 Re-fetching updated product...");
-    const updatedFresh = await getProduct(productId);
-    console.log("✅ Updated product re-fetched:", updatedFresh ? updatedFresh.productId : "None");
+        // ⚙️ Re-fetch the product with cache bypass
+        const latest = await getProduct(productId, true);
+        console.log("🕓 Latest fetched timestamp (after conflict):", latest?.timestamp);
 
-    console.log("🎉 Returning updated product in response");
-    return NextResponse.json(updatedFresh);
+        if (!latest) throw new Error("Failed to refetch product for retry.");
+
+        const retryPayload = { ...payload, timestamp: latest.timestamp };
+        console.log("🔁 Retrying PUT with new timestamp:", latest.timestamp);
+
+        putResponse = await inflowFetch("/products", {
+          method: "PUT",
+          body: JSON.stringify(retryPayload),
+        });
+        console.log("✅ Retry success, new timestamp:", putResponse?.timestamp);
+      } else {
+        throw err;
+      }
+    }
+
+    // 3️⃣ Use the PUT response directly — no immediate re-fetch needed
+    console.log("🎉 Returning updated product directly from PUT response");
+    return NextResponse.json(putResponse);
   } catch (err: unknown) {
     if (err instanceof Error) {
       console.error("💥 [products/update] Error:", err.message);
