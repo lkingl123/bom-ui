@@ -2,8 +2,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus, Save } from "lucide-react";
-import type { ComponentEditable, ProductSummary, ProductDetail } from "../types";
+import {
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
+  Plus,
+  Save,
+} from "lucide-react";
+import type {
+  ComponentEditable,
+  ProductSummary,
+  ProductDetail,
+} from "../types";
 import IngredientSearch from "./IngredientSearch";
 import { getProduct } from "../services/inflow";
 import { useRouter } from "next/navigation";
@@ -62,7 +73,10 @@ export default function IngredientTable({
           },
         }));
       } catch (err) {
-        console.error(`Failed to fetch inFlow details for ${childProductId}`, err);
+        console.error(
+          `Failed to fetch inFlow details for ${childProductId}`,
+          err
+        );
       } finally {
         setLoadingRows((prev) => ({ ...prev, [index]: false }));
       }
@@ -78,7 +92,9 @@ export default function IngredientTable({
   const handleAddIngredient = (): void => setShowSearch(true);
 
   const handleIngredientSelect = (ingredient: ProductSummary): void => {
-    const unitCost = ingredient.cost?.cost ? parseFloat(ingredient.cost.cost) : 0;
+    const unitCost = ingredient.cost?.cost
+      ? parseFloat(ingredient.cost.cost)
+      : 0;
     const newIngredient: ComponentEditable = {
       name: ingredient.name,
       sku: ingredient.sku,
@@ -122,56 +138,71 @@ export default function IngredientTable({
     setComponents(updated);
   };
 
-// ✅ Save components to /api/products/update-boms
-const handleSaveComponents = async (): Promise<void> => {
-  const confirmed = window.confirm(
-    "Are you sure you want to save all component changes to inFlow?"
-  );
-  if (!confirmed) return;
+  // ✅ Save components to /api/products/update-boms
+  const handleSaveComponents = async (): Promise<void> => {
+    const confirmed = window.confirm(
+      "Are you sure you want to save all component changes to inFlow?"
+    );
+    if (!confirmed) return;
 
-  setSaving(true);
-  try {
-    const payload = {
-      productId,
-      itemBoms: components.map((c) => ({
-        itemBomId: (c as any).itemBomId ?? crypto.randomUUID(),
+    setSaving(true);
+    try {
+      const payload = {
         productId,
-        childProductId: c.childProductId,
-        quantity: {
-          standardQuantity: c.quantity.toFixed(4),
-          uomQuantity: c.quantity.toFixed(4),
-          uom: c.uom || "kg",
-          serialNumbers: [],
-        },
-      })),
-    };
+        itemBoms: components.map((c) => {
+          // ✅ Type-safe fallback for optional itemBomId
+          const maybeWithId = c as Partial<ComponentEditable> & {
+            itemBomId?: string;
+          };
+          const itemBomId =
+            typeof maybeWithId.itemBomId === "string"
+              ? maybeWithId.itemBomId
+              : crypto.randomUUID();
 
-    console.log("📦 Saving components:", payload);
+          return {
+            itemBomId,
+            productId,
+            childProductId: c.childProductId ?? "",
+            quantity: {
+              standardQuantity: c.quantity.toFixed(4),
+              uomQuantity: c.quantity.toFixed(4),
+              uom: c.uom || "kg",
+              serialNumbers: [] as string[],
+            },
+          };
+        }),
+      };
 
-    const res = await fetch("/api/products/update-boms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      console.log("📦 Saving components:", payload);
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text);
+      const res = await fetch("/api/products/update-boms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+
+      alert("✅ Components saved successfully to inFlow!");
+      sessionStorage.setItem("forceRefreshProducts", "true");
+
+      // ✅ Redirect to product catalog
+      router.push("/products?forceRefresh=true");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("❌ Failed to save components:", err.message);
+        alert(`❌ Failed to update components in inFlow: ${err.message}`);
+      } else {
+        console.error("❌ Unknown error saving components:", err);
+        alert("❌ Unknown error occurred while saving components.");
+      }
+    } finally {
+      setSaving(false);
     }
-
-    alert("✅ Components saved successfully to inFlow!");
-    sessionStorage.setItem("forceRefreshProducts", "true");
-
-    // ✅ Redirect to product catalog
-    router.push("/products?forceRefresh=true");
-  } catch (err) {
-    console.error("❌ Failed to save components:", err);
-    alert("❌ Failed to update components in inFlow");
-  } finally {
-    setSaving(false);
-  }
-};
-
+  };
 
   return (
     <div>
@@ -256,13 +287,19 @@ const handleSaveComponents = async (): Promise<void> => {
                         onChange={(e) => handlePercentEdit(i, e.target.value)}
                         className="w-20 text-right border rounded px-2 py-1 text-sm font-mono bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       />
-                      <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">%</span>
+                      <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">
+                        %
+                      </span>
                     </td>
                     <td className="px-4 py-2 text-right font-mono">
-                      {c.unit_cost !== undefined ? `$${c.unit_cost.toFixed(2)}` : "$0.00"}
+                      {c.unit_cost !== undefined
+                        ? `$${c.unit_cost.toFixed(2)}`
+                        : "$0.00"}
                     </td>
                     <td className="px-4 py-2 text-right font-mono">
-                      {c.line_cost !== undefined ? `$${c.line_cost.toFixed(2)}` : "$0.00"}
+                      {c.line_cost !== undefined
+                        ? `$${c.line_cost.toFixed(2)}`
+                        : "$0.00"}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
@@ -290,19 +327,27 @@ const handleSaveComponents = async (): Promise<void> => {
                             <div>
                               <span className="font-semibold">INCI: </span>
                               {extraDetails[i]?.inci || (
-                                <span className="italic text-gray-400">N/A</span>
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
                               )}
                             </div>
                             <div>
-                              <span className="font-semibold">Description: </span>
+                              <span className="font-semibold">
+                                Description:{" "}
+                              </span>
                               {extraDetails[i]?.description || (
-                                <span className="italic text-gray-400">N/A</span>
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
                               )}
                             </div>
                             <div>
                               <span className="font-semibold">Remarks: </span>
                               {extraDetails[i]?.remarks || (
-                                <span className="italic text-gray-400">N/A</span>
+                                <span className="italic text-gray-400">
+                                  N/A
+                                </span>
                               )}
                             </div>
                           </div>
@@ -327,14 +372,18 @@ const handleSaveComponents = async (): Promise<void> => {
                 <td colSpan={3} className="px-4 py-3 text-right">
                   Labor $
                 </td>
-                <td className="px-4 py-3 text-right font-mono">${laborCost.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right font-mono">
+                  ${laborCost.toFixed(2)}
+                </td>
                 <td></td>
               </tr>
               <tr className="italic border-t dark:border-gray-700">
                 <td colSpan={3} className="px-4 py-3 text-right">
                   Packaging $
                 </td>
-                <td className="px-4 py-3 text-right font-mono">${packagingTotal.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right font-mono">
+                  ${packagingTotal.toFixed(2)}
+                </td>
                 <td></td>
               </tr>
             </tbody>
