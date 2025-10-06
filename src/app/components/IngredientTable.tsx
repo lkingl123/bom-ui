@@ -2,12 +2,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus } from "lucide-react";
+import { Minus, ChevronDown, ChevronUp, RotateCcw, Plus, Save } from "lucide-react";
 import type { ComponentEditable, ProductSummary, ProductDetail } from "../types";
 import IngredientSearch from "./IngredientSearch";
 import { getProduct } from "../services/inflow";
+import { useRouter } from "next/navigation";
 
 interface IngredientTableProps {
+  productId: string; // ✅ added to know what parent to save to
   components: ComponentEditable[];
   setComponents: (c: ComponentEditable[]) => void;
   laborCost: number;
@@ -17,6 +19,7 @@ interface IngredientTableProps {
 }
 
 export default function IngredientTable({
+  productId,
   components,
   setComponents,
   laborCost,
@@ -27,9 +30,11 @@ export default function IngredientTable({
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [loadingRows, setLoadingRows] = useState<Record<number, boolean>>({});
   const [showSearch, setShowSearch] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [extraDetails, setExtraDetails] = useState<
     Record<number, { inci?: string; description?: string; remarks?: string }>
   >({});
+  const router = useRouter(); // ✅ initialize router
 
   // 🔑 Expand row → fetch details
   const toggleExpand = async (index: number, childProductId?: string) => {
@@ -92,7 +97,6 @@ export default function IngredientTable({
     const updated = [...components];
     updated.splice(index, 1);
     setComponents(updated);
-
     const { [index]: _, ...rest } = extraDetails;
     setExtraDetails(rest);
   };
@@ -102,14 +106,9 @@ export default function IngredientTable({
     0
   );
 
-  const round2 = (num: number): number =>
-    Math.round((num + Number.EPSILON) * 100) / 100;
-
   const handleEdit = (index: number, field: "name", value: string): void => {
     const updated = [...components];
-    if (field === "name") {
-      updated[index].name = value;
-    }
+    if (field === "name") updated[index].name = value;
     setComponents(updated);
   };
 
@@ -123,6 +122,57 @@ export default function IngredientTable({
     setComponents(updated);
   };
 
+// ✅ Save components to /api/products/update-boms
+const handleSaveComponents = async (): Promise<void> => {
+  const confirmed = window.confirm(
+    "Are you sure you want to save all component changes to inFlow?"
+  );
+  if (!confirmed) return;
+
+  setSaving(true);
+  try {
+    const payload = {
+      productId,
+      itemBoms: components.map((c) => ({
+        itemBomId: (c as any).itemBomId ?? crypto.randomUUID(),
+        productId,
+        childProductId: c.childProductId,
+        quantity: {
+          standardQuantity: c.quantity.toFixed(4),
+          uomQuantity: c.quantity.toFixed(4),
+          uom: c.uom || "kg",
+          serialNumbers: [],
+        },
+      })),
+    };
+
+    console.log("📦 Saving components:", payload);
+
+    const res = await fetch("/api/products/update-boms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
+
+    alert("✅ Components saved successfully to inFlow!");
+    sessionStorage.setItem("forceRefreshProducts", "true");
+
+    // ✅ Redirect to product catalog
+    router.push("/products?forceRefresh=true");
+  } catch (err) {
+    console.error("❌ Failed to save components:", err);
+    alert("❌ Failed to update components in inFlow");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
   return (
     <div>
       {showSearch && (
@@ -134,13 +184,29 @@ export default function IngredientTable({
 
       {/* Toolbar */}
       <div className="flex justify-between mb-4 mt-6">
-        <button
-          onClick={handleAddIngredient}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#0e5439] text-white hover:bg-[#0c4630] transition text-sm font-medium shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Add Component
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAddIngredient}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#0e5439] text-white hover:bg-[#0c4630] transition text-sm font-medium shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Component
+          </button>
+
+          <button
+            disabled={saving}
+            onClick={handleSaveComponents}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium shadow-sm transition ${
+              saving
+                ? "bg-gray-400 cursor-not-allowed text-white"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Saving..." : "Save Components"}
+          </button>
+        </div>
+
         <button
           onClick={handleReset}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm font-medium shadow-sm"
@@ -192,11 +258,9 @@ export default function IngredientTable({
                       />
                       <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">%</span>
                     </td>
-                    {/* Read-only Cost/kg */}
                     <td className="px-4 py-2 text-right font-mono">
                       {c.unit_cost !== undefined ? `$${c.unit_cost.toFixed(2)}` : "$0.00"}
                     </td>
-                    {/* Read-only Cost */}
                     <td className="px-4 py-2 text-right font-mono">
                       {c.line_cost !== undefined ? `$${c.line_cost.toFixed(2)}` : "$0.00"}
                     </td>
@@ -251,19 +315,25 @@ export default function IngredientTable({
 
               {/* Totals */}
               <tr className="bg-gray-50 dark:bg-gray-800 font-semibold border-t dark:border-gray-700">
-                <td colSpan={3} className="px-4 py-3 text-right">Total Cost Per KG</td>
+                <td colSpan={3} className="px-4 py-3 text-right">
+                  Total Cost Per KG
+                </td>
                 <td className="px-4 py-3 text-right text-[#0e5439] font-mono">
                   ${baseCost.toFixed(2)}
                 </td>
                 <td></td>
               </tr>
               <tr className="italic border-t dark:border-gray-700">
-                <td colSpan={3} className="px-4 py-3 text-right">Labor $</td>
+                <td colSpan={3} className="px-4 py-3 text-right">
+                  Labor $
+                </td>
                 <td className="px-4 py-3 text-right font-mono">${laborCost.toFixed(2)}</td>
                 <td></td>
               </tr>
               <tr className="italic border-t dark:border-gray-700">
-                <td colSpan={3} className="px-4 py-3 text-right">Packaging $</td>
+                <td colSpan={3} className="px-4 py-3 text-right">
+                  Packaging $
+                </td>
                 <td className="px-4 py-3 text-right font-mono">${packagingTotal.toFixed(2)}</td>
                 <td></td>
               </tr>

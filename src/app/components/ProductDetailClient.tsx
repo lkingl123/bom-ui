@@ -396,6 +396,7 @@ export default function ProductDetailClient({
             <tr>
               <td colSpan={2} className="px-4 py-2">
                 <IngredientTable
+                  productId={productId}
                   components={editableComponents}
                   setComponents={setEditableComponents}
                   laborCost={product.labor_cost ?? 0}
@@ -407,6 +408,7 @@ export default function ProductDetailClient({
                   originalComponents={originalComponents}
                   packagingTotal={packagingTotal}
                 />
+
                 <PackagingTable
                   packagingItems={packagingItems}
                   setPackagingItems={setPackagingItems}
