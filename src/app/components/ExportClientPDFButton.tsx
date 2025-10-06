@@ -6,14 +6,20 @@ import LoadingSpinner from "./LoadingSpinner";
 import type { ProductCalc, Customer, EstimateForm } from "../types";
 import { ArrowLeft, X } from "lucide-react";
 
-export default function ExportClientPDFButton({ product }: { product: ProductCalc }) {
+export default function ExportClientPDFButton({
+  product,
+}: {
+  product: ProductCalc;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [search, setSearch] = useState("");
   const [showErrors, setShowErrors] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
 
   const [form, setForm] = useState<EstimateForm>({
     customerId: "",
@@ -34,11 +40,14 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
 
   // 🔎 Fetch customers
   useEffect(() => {
-    if (!isOpen || search.length < 2 || isCreatingNew || selectedCustomer) return;
+    if (!isOpen || search.length < 2 || isCreatingNew || selectedCustomer)
+      return;
     const fetchCustomers = async () => {
       setLoadingCustomers(true);
       try {
-        const res = await fetch(`/api/customers?smart=${encodeURIComponent(search)}`);
+        const res = await fetch(
+          `/api/customers?smart=${encodeURIComponent(search)}`
+        );
         if (!res.ok) throw new Error("Failed to fetch customers");
         const data: Customer[] = await res.json();
         setCustomers(data);
@@ -72,16 +81,27 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
       doc.text(`Email: ${form.email}`, 14, 70);
 
       doc.text(`Estimate #: ${form.estimateNo}`, 200, 42, { align: "right" });
-      doc.text(`Estimate Date: ${form.estimateDate}`, 200, 49, { align: "right" });
+      doc.text(`Estimate Date: ${form.estimateDate}`, 200, 49, {
+        align: "right",
+      });
       doc.text(`Valid For: ${form.validFor}`, 200, 56, { align: "right" });
 
       autoTable(doc, {
         startY: 80,
-        head: [["Description", ...Object.keys(product.tiered_pricing ?? {}).map((q) => `${q} Units`)]],
+        head: [
+          [
+            "Description",
+            ...Object.keys(product.tiered_pricing ?? {}).map(
+              (q) => `${q} Units`
+            ),
+          ],
+        ],
         body: [
           [
             product.name,
-            ...Object.values(product.tiered_pricing ?? {}).map((d) => `$${d.price.toFixed(2)}`),
+            ...Object.values(product.tiered_pricing ?? {}).map(
+              (d) => `$${d.price.toFixed(2)}`
+            ),
           ],
         ],
         styles: { halign: "center" },
@@ -89,7 +109,8 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
       });
 
       const finalY =
-        (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100;
+        (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable
+          ?.finalY ?? 100;
 
       doc.text("Notes:", 14, finalY + 15);
       doc.text(form.notes || "-", 14, finalY + 22);
@@ -206,12 +227,16 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
               </button>
             )}
 
-            <h2 className="text-xl font-semibold mb-4 text-center">Client Estimate</h2>
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Client Estimate
+            </h2>
 
             {/* 🔍 Customer Search */}
             {!isCreatingNew && !selectedCustomer && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium">Search Customer</label>
+                <label className="block text-sm font-medium">
+                  Search Customer
+                </label>
                 <input
                   placeholder="Type at least 2 characters..."
                   value={search}
@@ -232,7 +257,9 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
                         className="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                       >
                         <p className="font-medium">{c.name}</p>
-                        <p className="text-sm text-gray-500">{c.contactName || c.email}</p>
+                        <p className="text-sm text-gray-500">
+                          {c.contactName || c.email}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -255,7 +282,9 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
               <div className="flex items-center justify-between border-b pb-2 mb-4 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1">
                 <div>
                   <p className="font-semibold">{form.company}</p>
-                  <p className="text-sm text-gray-600">{form.name || form.email}</p>
+                  <p className="text-sm text-gray-600">
+                    {form.name || form.email}
+                  </p>
                   <p className="text-xs text-gray-500">{form.phone}</p>
                 </div>
                 <button
@@ -269,11 +298,21 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
 
             {/* 👤 Customer Info */}
             <div className="space-y-3 mt-3">
-              {["name", "company", "address", "phone", "email"].map((f) => (
+              {(
+                [
+                  "name",
+                  "company",
+                  "address",
+                  "phone",
+                  "email",
+                ] as (keyof EstimateForm)[]
+              ).map((f) => (
                 <div key={f}>
-                  <label className="block text-xs font-medium capitalize mb-1">{f}</label>
+                  <label className="block text-xs font-medium capitalize mb-1">
+                    {f}
+                  </label>
                   <input
-                    value={(form as any)[f]}
+                    value={form[f] ?? ""}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, [f]: e.target.value }))
                     }
@@ -288,7 +327,9 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
             <div className="space-y-3 mt-4">
               {/* Estimate No */}
               <div>
-                <label className="block text-xs font-medium mb-1">Estimate No</label>
+                <label className="block text-xs font-medium mb-1">
+                  Estimate No
+                </label>
                 <input
                   type="text"
                   value={form.estimateNo}
@@ -302,12 +343,17 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
 
               {/* Estimate Date */}
               <div>
-                <label className="block text-xs font-medium mb-1">Estimate Date</label>
+                <label className="block text-xs font-medium mb-1">
+                  Estimate Date
+                </label>
                 <input
                   type="date"
                   value={form.estimateDate}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, estimateDate: e.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      estimateDate: e.target.value,
+                    }))
                   }
                   className="w-full border rounded px-3 py-1.5 bg-white dark:bg-gray-800"
                 />
@@ -315,7 +361,9 @@ export default function ExportClientPDFButton({ product }: { product: ProductCal
 
               {/* Valid For */}
               <div>
-                <label className="block text-xs font-medium mb-1">Valid For</label>
+                <label className="block text-xs font-medium mb-1">
+                  Valid For
+                </label>
                 <input
                   type="text"
                   value={form.validFor}
