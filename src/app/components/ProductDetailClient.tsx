@@ -77,6 +77,12 @@ export default function ProductDetailClient({
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log(
+          "🚀 [ProductDetailClient] Fetching product + BOM:",
+          productId
+        );
+
+        // 1️⃣ Get main product
         const data = await getProduct(productId, true);
         if (!data) {
           console.warn(
@@ -85,29 +91,61 @@ export default function ProductDetailClient({
           return;
         }
 
+        // 2️⃣ Get all BOMs
         const expandedBom = await getExpandedBom(productId);
+        console.log(`🧩 Found ${expandedBom.length} BOM entries.`);
 
-        const rawComponents: ComponentEditable[] = expandedBom.map((bom) => ({
-          name: bom.name,
-          sku: bom.sku,
-          quantity: bom.quantity,
-          uom: bom.uom || "ea",
-          has_cost: true,
-          unit_cost: bom.cost,
-          line_cost: bom.cost * bom.quantity,
-          childProductId: bom.childProductId, // Added for component detail fetching
-        }));
+        // 3️⃣ Enrich BOM entries with missing names, sku, cost
+        const enrichedComponents: ComponentEditable[] = await Promise.all(
+          expandedBom.map(async (bom) => {
+            let name = bom.name;
+            let sku = bom.sku;
+            let cost = bom.cost;
 
+            // Only fetch child if data missing or incomplete
+            if (!name || !sku || !cost) {
+              try {
+                const child = await getProduct(bom.childProductId);
+                if (child) {
+                  name = child.name ?? name;
+                  sku = child.sku ?? sku;
+                  cost = child.cost?.cost ? parseFloat(child.cost.cost) : cost;
+                }
+              } catch (err) {
+                console.warn(
+                  `⚠️ Failed to enrich child product: ${bom.childProductId}`,
+                  err
+                );
+              }
+            }
+
+            return {
+              name: name ?? "Unnamed Component",
+              sku,
+              quantity: bom.quantity,
+              uom: bom.uom || "ea",
+              has_cost: true,
+              unit_cost: cost || 0,
+              line_cost: (cost || 0) * bom.quantity,
+              childProductId: bom.childProductId,
+            };
+          })
+        );
+
+        // 4️⃣ Compose final enriched product
         const productObject: ProductCalc = {
           ...data,
-          components: rawComponents,
+          components: enrichedComponents,
         };
 
-        setOriginalComponents(rawComponents);
-        setEditableComponents(rawComponents);
+        console.log(
+          "✅ [ProductDetailClient] Product + Enriched Components ready."
+        );
+        setOriginalComponents(enrichedComponents);
+        setEditableComponents(enrichedComponents);
         setProduct(productObject);
       } catch (err) {
-        console.error("Error fetching product:", err);
+        console.error("💥 [ProductDetailClient] Error fetching product:", err);
       }
     };
 
