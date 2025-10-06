@@ -77,7 +77,7 @@ export default function ProductDetailClient({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getProduct(productId);
+        const data = await getProduct(productId, true);
         if (!data) {
           console.warn(
             `[ProductDetailClient] No product found for ${productId}`
