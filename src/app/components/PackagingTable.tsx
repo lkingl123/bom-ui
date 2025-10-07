@@ -98,12 +98,7 @@ export default function PackagingTable({
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) => handleEdit(index, "name", e.target.value)}
-                      className="flex-1 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                    />
+                    <span  className="flex-1 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100">{item.name}</span>
                   </td>
 
                   {/* Read-only Unit Cost */}

@@ -20,7 +20,7 @@ import { getProduct } from "../services/inflow";
 import { useRouter } from "next/navigation";
 
 interface IngredientTableProps {
-  productId: string; // ✅ added to know what parent to save to
+  productId: string;
   components: ComponentEditable[];
   setComponents: (c: ComponentEditable[]) => void;
   laborCost: number;
@@ -45,9 +45,8 @@ export default function IngredientTable({
   const [extraDetails, setExtraDetails] = useState<
     Record<number, { inci?: string; description?: string; remarks?: string }>
   >({});
-  const router = useRouter(); // ✅ initialize router
+  const router = useRouter();
 
-  // 🔑 Expand row → fetch details
   const toggleExpand = async (index: number, childProductId?: string) => {
     if (expandedRows[index]) {
       setExpandedRows((prev) => ({ ...prev, [index]: false }));
@@ -122,12 +121,6 @@ export default function IngredientTable({
     0
   );
 
-  const handleEdit = (index: number, field: "name", value: string): void => {
-    const updated = [...components];
-    if (field === "name") updated[index].name = value;
-    setComponents(updated);
-  };
-
   const handlePercentEdit = (index: number, value: string): void => {
     const updated = [...components];
     let num = parseFloat(value);
@@ -138,7 +131,6 @@ export default function IngredientTable({
     setComponents(updated);
   };
 
-  // ✅ Save components to /api/products/update-boms
   const handleSaveComponents = async (): Promise<void> => {
     const confirmed = window.confirm(
       "Are you sure you want to save all component changes to inFlow?"
@@ -150,7 +142,6 @@ export default function IngredientTable({
       const payload = {
         productId,
         itemBoms: components.map((c) => {
-          // ✅ Type-safe fallback for optional itemBomId
           const maybeWithId = c as Partial<ComponentEditable> & {
             itemBomId?: string;
           };
@@ -189,7 +180,6 @@ export default function IngredientTable({
       alert("✅ Components saved successfully to inFlow!");
       sessionStorage.setItem("forceRefreshProducts", "true");
 
-      // ✅ Redirect to product catalog
       router.push("/products?forceRefresh=true");
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -272,12 +262,10 @@ export default function IngredientTable({
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <input
-                        type="text"
-                        value={c.name}
-                        onChange={(e) => handleEdit(i, "name", e.target.value)}
-                        className="flex-1 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                      />
+                      {/* 🔒 Non-editable component name */}
+                      <span className="flex-1 border rounded px-2 py-1 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 cursor-default">
+                        {c.name}
+                      </span>
                     </td>
                     <td className="px-4 py-2 text-right">
                       <input
