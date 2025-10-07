@@ -35,34 +35,34 @@ export default function ProductCatalog({
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // ✅ category filter
+  // ✅ category + active status filters
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [showActiveOnly, setShowActiveOnly] = useState<boolean>(false);
+
   const observerRef = useRef<HTMLDivElement | null>(null);
 
-  // filtered by category
-  const filteredProducts =
-    selectedCategory === "All"
-      ? products
-      : products.filter((p) => p.topLevelCategory === selectedCategory);
+  // --- Filtered products (category + active toggle) ---
+  const filteredProducts = products.filter((p) => {
+    const categoryMatch =
+      selectedCategory === "All" ||
+      p.topLevelCategory === selectedCategory;
 
-  // initial logging
+    const activeMatch = showActiveOnly ? p.isActive : true;
+
+    return categoryMatch && activeMatch;
+  });
+
+  // --- Initial logging ---
   useEffect(() => {
     console.log("[ProductCatalog] Initial products loaded:", initialProducts);
-    console.log(
-      "[ProductCatalog] Distinct categories from initialProducts:",
-      Array.from(new Set(initialProducts.map((p) => p.topLevelCategory)))
-    );
   }, [initialProducts]);
 
-  // update parent count
+  // --- Update count in parent ---
   useEffect(() => {
     onCountChange?.(filteredProducts.length);
-    console.log(
-      `[ProductCatalog] Active filter="${selectedCategory}", showing ${filteredProducts.length} products`
-    );
   }, [filteredProducts.length, onCountChange, selectedCategory]);
 
-  // 🔍 search effect
+  // --- Search effect ---
   useEffect(() => {
     let cancelled = false;
 
@@ -84,7 +84,6 @@ export default function ProductCatalog({
     }
 
     if (debouncedQuery.trim() === "") {
-      // reset to initial
       setProducts(initialProducts);
       setLastId(
         initialProducts.length > 0
@@ -101,7 +100,7 @@ export default function ProductCatalog({
     };
   }, [debouncedQuery, initialProducts]);
 
-  // ♾️ infinite scroll
+  // --- Infinite scroll ---
   useEffect(() => {
     if (!observerRef.current) return;
 
@@ -116,7 +115,6 @@ export default function ProductCatalog({
               )}&after=${lastId ?? ""}`
             );
             const data = await res.json();
-            console.log("[ProductCatalog] Infinite scroll results:", data);
             setProducts((prev) => [...prev, ...(data.products ?? [])]);
             setLastId(data.lastId);
             setHasMore(Boolean(data.lastId));
@@ -134,27 +132,44 @@ export default function ProductCatalog({
 
   return (
     <div>
-      {/* Search bar */}
-      <div className="mb-6">
+      {/* 🔍 Search bar + Active toggle */}
+      <div className="flex items-center justify-between mb-6">
         <input
           type="text"
           placeholder="Search products..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#0e5439]"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#0e5439]"
         />
+
+        {/* ✅ Active Only Toggle */}
+        <div className="flex items-center gap-2 ml-4">
+          <label htmlFor="activeToggle" className="text-sm text-gray-700 font-bold">
+            Active Products Only
+          </label>
+          <button
+            id="activeToggle"
+            onClick={() => setShowActiveOnly(!showActiveOnly)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+              showActiveOnly ? "bg-green-600" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                showActiveOnly ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
-      {/* Category filter buttons */}
+      {/* 🏷️ Category filter */}
       {categories && categories.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => {
-                console.log(`[ProductCatalog] Selected category="${cat}"`);
-                setSelectedCategory(cat);
-              }}
+              onClick={() => setSelectedCategory(cat)}
               className={`cursor-pointer px-4 py-2 rounded-full text-sm font-medium transition ${
                 selectedCategory === cat
                   ? "bg-[#0e5439] text-white shadow"
@@ -167,10 +182,10 @@ export default function ProductCatalog({
         </div>
       )}
 
-      {/* Product table */}
+      {/* 📦 Product table */}
       <ProductTable products={filteredProducts} />
 
-      {/* Loader sentinel */}
+      {/* 🌀 Loader sentinel */}
       <div ref={observerRef} className="h-16 flex justify-center items-center">
         {loading ? (
           <LoadingSpinner />

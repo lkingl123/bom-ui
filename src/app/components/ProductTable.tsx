@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ProductSummaryUI } from "../services/inflow"; // ✅ use enriched type
+import type { ProductSummaryUI } from "../services/inflow";
 
 export default function ProductTable({ products }: { products: ProductSummaryUI[] }) {
   return (
@@ -11,6 +11,8 @@ export default function ProductTable({ products }: { products: ProductSummaryUI[
           ? Number(p.totalQuantityOnHand).toLocaleString()
           : "N/A";
 
+        const isActive = p.isActive ?? false; // default to false if undefined
+
         return (
           <Link
             key={p.productId}
@@ -18,14 +20,26 @@ export default function ProductTable({ products }: { products: ProductSummaryUI[
             className="group block rounded-2xl border border-gray-200 bg-white p-6 shadow-md hover:shadow-xl transition transform hover:-translate-y-1"
           >
             {/* Card Header */}
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 group-hover:text-[#0e5439] transition">
-                {p.name}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {/* ✅ Prefer the top-level category if available */}
-                {p.topLevelCategory || p.category || "Uncategorized"}
-              </p>
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 group-hover:text-[#0e5439] transition">
+                  {p.name}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {p.topLevelCategory || p.category || "Uncategorized"}
+                </p>
+              </div>
+
+              {/* ✅ Active/Inactive status badge */}
+              <span
+                className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
+                  isActive
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {isActive ? "Active" : "Inactive"}
+              </span>
             </div>
 
             <hr className="my-4 border-gray-200" />
